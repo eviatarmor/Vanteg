@@ -1,0 +1,52 @@
+{
+  "name": "client",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "^4.0.96",
+    "@ai-sdk/xai": "^4.0.54",
+    "@monaco-editor/react": "^4.7.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.14.10",
+    "@workspace/ui": "*",
+    "@xyflow/react": "^12.11.6",
+    "ai": "^7.0.93",
+    "lucide-react": "^1.41.0",
+    "monaco-editor": "^0.56.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router": "^8.3.1",
+    "sonner": "^2.0.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10",
+    "@tailwindcss/vite": "^4",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6",
+    "eslint": "^10",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17",
+    "jsdom": "^30.0.1",
+    "typescript": "~6",
+    "typescript-eslint": "^8",
+    "vite": "^8",
+    "vitest": "^5.0.0"
+  }
+}

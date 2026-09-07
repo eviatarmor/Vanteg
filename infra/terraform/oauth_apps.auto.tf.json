@@ -1,0 +1,641 @@
+{
+  "locals": {
+    "oauth_apps": {
+      "google": {
+        "name": "Google",
+        "client_id_env": "FREEZE_GOOGLE_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_GOOGLE_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth",
+        "token_url": "https://oauth2.googleapis.com/token",
+        "redirect_path": "/integrations/oauth/google/callback",
+        "scopes": [
+          "https://www.googleapis.com/auth/spreadsheets",
+          "https://www.googleapis.com/auth/gmail.modify",
+          "https://www.googleapis.com/auth/drive",
+          "https://www.googleapis.com/auth/calendar",
+          "https://www.googleapis.com/auth/documents",
+          "https://www.googleapis.com/auth/contacts",
+          "https://www.googleapis.com/auth/chat.messages",
+          "https://www.googleapis.com/auth/tasks",
+          "https://www.googleapis.com/auth/analytics.readonly",
+          "https://www.googleapis.com/auth/youtube",
+          "https://www.googleapis.com/auth/adwords",
+          "https://www.googleapis.com/auth/bigquery",
+          "https://www.googleapis.com/auth/devstorage.read_write",
+          "https://www.googleapis.com/auth/forms.body"
+        ]
+      },
+      "microsoft": {
+        "name": "Microsoft",
+        "client_id_env": "FREEZE_MICROSOFT_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_MICROSOFT_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+        "token_url": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        "redirect_path": "/integrations/oauth/microsoft/callback",
+        "scopes": [
+          "Mail.ReadWrite",
+          "Calendars.ReadWrite",
+          "Files.ReadWrite.All",
+          "Sites.ReadWrite.All",
+          "Chat.ReadWrite",
+          "Tasks.ReadWrite",
+          "User.Read"
+        ]
+      },
+      "slack": {
+        "name": "Slack",
+        "client_id_env": "FREEZE_SLACK_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_SLACK_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://slack.com/oauth/v2/authorize",
+        "token_url": "https://slack.com/api/oauth.v2.access",
+        "redirect_path": "/integrations/oauth/slack/callback",
+        "scopes": [
+          "channels:read",
+          "chat:write",
+          "reactions:write",
+          "users:read"
+        ]
+      },
+      "github": {
+        "name": "GitHub",
+        "client_id_env": "FREEZE_GITHUB_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_GITHUB_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://github.com/login/oauth/authorize",
+        "token_url": "https://github.com/login/oauth/access_token",
+        "redirect_path": "/integrations/oauth/github/callback",
+        "scopes": [
+          "repo",
+          "read:org",
+          "workflow"
+        ]
+      },
+      "gitlab": {
+        "name": "GitLab",
+        "client_id_env": "FREEZE_GITLAB_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_GITLAB_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://gitlab.com/oauth/authorize",
+        "token_url": "https://gitlab.com/oauth/token",
+        "redirect_path": "/integrations/oauth/gitlab/callback",
+        "scopes": [
+          "api",
+          "read_user"
+        ]
+      },
+      "bitbucket": {
+        "name": "Bitbucket",
+        "client_id_env": "FREEZE_BITBUCKET_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_BITBUCKET_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://bitbucket.org/site/oauth2/authorize",
+        "token_url": "https://bitbucket.org/site/oauth2/access_token",
+        "redirect_path": "/integrations/oauth/bitbucket/callback",
+        "scopes": [
+          "repository",
+          "pullrequest",
+          "issue"
+        ]
+      },
+      "notion": {
+        "name": "Notion",
+        "client_id_env": "FREEZE_NOTION_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_NOTION_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://api.notion.com/v1/oauth/authorize",
+        "token_url": "https://api.notion.com/v1/oauth/token",
+        "redirect_path": "/integrations/oauth/notion/callback",
+        "scopes": []
+      },
+      "hubspot": {
+        "name": "HubSpot",
+        "client_id_env": "FREEZE_HUBSPOT_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_HUBSPOT_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.hubspot.com/oauth/authorize",
+        "token_url": "https://api.hubapi.com/oauth/v1/token",
+        "redirect_path": "/integrations/oauth/hubspot/callback",
+        "scopes": [
+          "crm.objects.contacts.write",
+          "crm.objects.companies.write"
+        ]
+      },
+      "salesforce": {
+        "name": "Salesforce",
+        "client_id_env": "FREEZE_SALESFORCE_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_SALESFORCE_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://login.salesforce.com/services/oauth2/authorize",
+        "token_url": "https://login.salesforce.com/services/oauth2/token",
+        "redirect_path": "/integrations/oauth/salesforce/callback",
+        "scopes": [
+          "api",
+          "refresh_token"
+        ]
+      },
+      "zoom": {
+        "name": "Zoom",
+        "client_id_env": "FREEZE_ZOOM_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_ZOOM_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://zoom.us/oauth/authorize",
+        "token_url": "https://zoom.us/oauth/token",
+        "redirect_path": "/integrations/oauth/zoom/callback",
+        "scopes": [
+          "meeting:write",
+          "user:read"
+        ]
+      },
+      "dropbox": {
+        "name": "Dropbox",
+        "client_id_env": "FREEZE_DROPBOX_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_DROPBOX_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.dropbox.com/oauth2/authorize",
+        "token_url": "https://api.dropboxapi.com/oauth2/token",
+        "redirect_path": "/integrations/oauth/dropbox/callback",
+        "scopes": [
+          "files.content.write",
+          "files.content.read"
+        ]
+      },
+      "linkedin": {
+        "name": "LinkedIn",
+        "client_id_env": "FREEZE_LINKEDIN_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_LINKEDIN_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.linkedin.com/oauth/v2/authorization",
+        "token_url": "https://www.linkedin.com/oauth/v2/accessToken",
+        "redirect_path": "/integrations/oauth/linkedin/callback",
+        "scopes": [
+          "w_member_social",
+          "r_liteprofile"
+        ]
+      },
+      "x": {
+        "name": "X",
+        "client_id_env": "FREEZE_X_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_X_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://twitter.com/i/oauth2/authorize",
+        "token_url": "https://api.twitter.com/2/oauth2/token",
+        "redirect_path": "/integrations/oauth/x/callback",
+        "scopes": [
+          "tweet.read",
+          "tweet.write",
+          "users.read"
+        ]
+      },
+      "facebook": {
+        "name": "Facebook",
+        "client_id_env": "FREEZE_FACEBOOK_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_FACEBOOK_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.facebook.com/v21.0/dialog/oauth",
+        "token_url": "https://graph.facebook.com/v21.0/oauth/access_token",
+        "redirect_path": "/integrations/oauth/facebook/callback",
+        "scopes": [
+          "pages_manage_posts",
+          "instagram_basic",
+          "ads_management"
+        ]
+      },
+      "shopify": {
+        "name": "Shopify",
+        "client_id_env": "FREEZE_SHOPIFY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_SHOPIFY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://{shop}.myshopify.com/admin/oauth/authorize",
+        "token_url": "https://{shop}.myshopify.com/admin/oauth/access_token",
+        "redirect_path": "/integrations/oauth/shopify/callback",
+        "scopes": [
+          "write_products",
+          "write_orders",
+          "read_customers"
+        ]
+      },
+      "atlassian": {
+        "name": "Atlassian",
+        "client_id_env": "FREEZE_ATLASSIAN_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_ATLASSIAN_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://auth.atlassian.com/authorize",
+        "token_url": "https://auth.atlassian.com/oauth/token",
+        "redirect_path": "/integrations/oauth/atlassian/callback",
+        "scopes": [
+          "read:jira-work",
+          "write:jira-work",
+          "read:confluence-content.all"
+        ]
+      },
+      "asana": {
+        "name": "Asana",
+        "client_id_env": "FREEZE_ASANA_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_ASANA_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.asana.com/-/oauth_authorize",
+        "token_url": "https://app.asana.com/-/oauth_token",
+        "redirect_path": "/integrations/oauth/asana/callback",
+        "scopes": [
+          "default"
+        ]
+      },
+      "clickup": {
+        "name": "ClickUp",
+        "client_id_env": "FREEZE_CLICKUP_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_CLICKUP_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.clickup.com/api",
+        "token_url": "https://api.clickup.com/api/v2/oauth/token",
+        "redirect_path": "/integrations/oauth/clickup/callback",
+        "scopes": []
+      },
+      "monday": {
+        "name": "Monday.com",
+        "client_id_env": "FREEZE_MONDAY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_MONDAY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://auth.monday.com/oauth2/authorize",
+        "token_url": "https://auth.monday.com/oauth2/token",
+        "redirect_path": "/integrations/oauth/monday/callback",
+        "scopes": [
+          "boards:write",
+          "updates:write"
+        ]
+      },
+      "linear": {
+        "name": "Linear",
+        "client_id_env": "FREEZE_LINEAR_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_LINEAR_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://linear.app/oauth/authorize",
+        "token_url": "https://api.linear.app/oauth/token",
+        "redirect_path": "/integrations/oauth/linear/callback",
+        "scopes": [
+          "read",
+          "write"
+        ]
+      },
+      "intercom": {
+        "name": "Intercom",
+        "client_id_env": "FREEZE_INTERCOM_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_INTERCOM_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.intercom.com/oauth",
+        "token_url": "https://api.intercom.io/auth/eagle/token",
+        "redirect_path": "/integrations/oauth/intercom/callback",
+        "scopes": []
+      },
+      "zendesk": {
+        "name": "Zendesk",
+        "client_id_env": "FREEZE_ZENDESK_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_ZENDESK_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://{subdomain}.zendesk.com/oauth/authorizations/new",
+        "token_url": "https://{subdomain}.zendesk.com/oauth/tokens",
+        "redirect_path": "/integrations/oauth/zendesk/callback",
+        "scopes": [
+          "tickets:write",
+          "users:write"
+        ]
+      },
+      "mailchimp": {
+        "name": "Mailchimp",
+        "client_id_env": "FREEZE_MAILCHIMP_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_MAILCHIMP_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://login.mailchimp.com/oauth2/authorize",
+        "token_url": "https://login.mailchimp.com/oauth2/token",
+        "redirect_path": "/integrations/oauth/mailchimp/callback",
+        "scopes": []
+      },
+      "paypal": {
+        "name": "PayPal",
+        "client_id_env": "FREEZE_PAYPAL_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_PAYPAL_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.paypal.com/signin/authorize",
+        "token_url": "https://api-m.paypal.com/v1/oauth2/token",
+        "redirect_path": "/integrations/oauth/paypal/callback",
+        "scopes": [
+          "https://uri.paypal.com/services/payments/payment"
+        ]
+      },
+      "square": {
+        "name": "Square",
+        "client_id_env": "FREEZE_SQUARE_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_SQUARE_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://connect.squareup.com/oauth2/authorize",
+        "token_url": "https://connect.squareup.com/oauth2/token",
+        "redirect_path": "/integrations/oauth/square/callback",
+        "scopes": [
+          "PAYMENTS_WRITE",
+          "ORDERS_WRITE"
+        ]
+      },
+      "box": {
+        "name": "Box",
+        "client_id_env": "FREEZE_BOX_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_BOX_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://account.box.com/api/oauth2/authorize",
+        "token_url": "https://api.box.com/oauth2/token",
+        "redirect_path": "/integrations/oauth/box/callback",
+        "scopes": [
+          "root_readwrite"
+        ]
+      },
+      "figma": {
+        "name": "Figma",
+        "client_id_env": "FREEZE_FIGMA_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_FIGMA_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.figma.com/oauth",
+        "token_url": "https://www.figma.com/api/oauth/token",
+        "redirect_path": "/integrations/oauth/figma/callback",
+        "scopes": [
+          "file_read"
+        ]
+      },
+      "canva": {
+        "name": "Canva",
+        "client_id_env": "FREEZE_CANVA_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_CANVA_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.canva.com/api/oauth/authorize",
+        "token_url": "https://api.canva.com/rest/v1/oauth/token",
+        "redirect_path": "/integrations/oauth/canva/callback",
+        "scopes": [
+          "design:content:write"
+        ]
+      },
+      "miro": {
+        "name": "Miro",
+        "client_id_env": "FREEZE_MIRO_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_MIRO_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://miro.com/oauth/authorize",
+        "token_url": "https://api.miro.com/v1/oauth/token",
+        "redirect_path": "/integrations/oauth/miro/callback",
+        "scopes": [
+          "boards:write"
+        ]
+      },
+      "webflow": {
+        "name": "Webflow",
+        "client_id_env": "FREEZE_WEBFLOW_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_WEBFLOW_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://webflow.com/oauth/authorize",
+        "token_url": "https://api.webflow.com/oauth/access_token",
+        "redirect_path": "/integrations/oauth/webflow/callback",
+        "scopes": [
+          "cms:write",
+          "sites:read"
+        ]
+      },
+      "spotify": {
+        "name": "Spotify",
+        "client_id_env": "FREEZE_SPOTIFY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_SPOTIFY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://accounts.spotify.com/authorize",
+        "token_url": "https://accounts.spotify.com/api/token",
+        "redirect_path": "/integrations/oauth/spotify/callback",
+        "scopes": [
+          "playlist-modify-public",
+          "user-read-email"
+        ]
+      },
+      "docusign": {
+        "name": "DocuSign",
+        "client_id_env": "FREEZE_DOCUSIGN_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_DOCUSIGN_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://account.docusign.com/oauth/auth",
+        "token_url": "https://account.docusign.com/oauth/token",
+        "redirect_path": "/integrations/oauth/docusign/callback",
+        "scopes": [
+          "signature",
+          "impersonation"
+        ]
+      },
+      "calendly": {
+        "name": "Calendly",
+        "client_id_env": "FREEZE_CALENDLY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_CALENDLY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://auth.calendly.com/oauth/authorize",
+        "token_url": "https://auth.calendly.com/oauth/token",
+        "redirect_path": "/integrations/oauth/calendly/callback",
+        "scopes": [
+          "default"
+        ]
+      },
+      "typeform": {
+        "name": "Typeform",
+        "client_id_env": "FREEZE_TYPEFORM_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_TYPEFORM_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://api.typeform.com/oauth/authorize",
+        "token_url": "https://api.typeform.com/oauth/token",
+        "redirect_path": "/integrations/oauth/typeform/callback",
+        "scopes": [
+          "forms:write",
+          "responses:read"
+        ]
+      },
+      "quickbooks": {
+        "name": "QuickBooks",
+        "client_id_env": "FREEZE_QUICKBOOKS_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_QUICKBOOKS_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://appcenter.intuit.com/connect/oauth2",
+        "token_url": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+        "redirect_path": "/integrations/oauth/quickbooks/callback",
+        "scopes": [
+          "com.intuit.quickbooks.accounting"
+        ]
+      },
+      "xero": {
+        "name": "Xero",
+        "client_id_env": "FREEZE_XERO_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_XERO_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://login.xero.com/identity/connect/authorize",
+        "token_url": "https://identity.xero.com/connect/token",
+        "redirect_path": "/integrations/oauth/xero/callback",
+        "scopes": [
+          "accounting.transactions",
+          "accounting.contacts"
+        ]
+      },
+      "gusto": {
+        "name": "Gusto",
+        "client_id_env": "FREEZE_GUSTO_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_GUSTO_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://api.gusto.com/oauth/authorize",
+        "token_url": "https://api.gusto.com/oauth/token",
+        "redirect_path": "/integrations/oauth/gusto/callback",
+        "scopes": [
+          "employees:read",
+          "payrolls:write"
+        ]
+      },
+      "rippling": {
+        "name": "Rippling",
+        "client_id_env": "FREEZE_RIPPLING_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_RIPPLING_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.rippling.com/api/o/authorize",
+        "token_url": "https://app.rippling.com/api/o/token",
+        "redirect_path": "/integrations/oauth/rippling/callback",
+        "scopes": []
+      },
+      "okta": {
+        "name": "Okta",
+        "client_id_env": "FREEZE_OKTA_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_OKTA_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://{domain}/oauth2/v1/authorize",
+        "token_url": "https://{domain}/oauth2/v1/token",
+        "redirect_path": "/integrations/oauth/okta/callback",
+        "scopes": [
+          "okta.users.manage"
+        ]
+      },
+      "auth0": {
+        "name": "Auth0",
+        "client_id_env": "FREEZE_AUTH0_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_AUTH0_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://{domain}/authorize",
+        "token_url": "https://{domain}/oauth/token",
+        "redirect_path": "/integrations/oauth/auth0/callback",
+        "scopes": [
+          "create:users",
+          "read:users"
+        ]
+      },
+      "discord": {
+        "name": "Discord",
+        "client_id_env": "FREEZE_DISCORD_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_DISCORD_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://discord.com/oauth2/authorize",
+        "token_url": "https://discord.com/api/oauth2/token",
+        "redirect_path": "/integrations/oauth/discord/callback",
+        "scopes": [
+          "bot",
+          "identify",
+          "guilds"
+        ]
+      },
+      "airtable": {
+        "name": "Airtable",
+        "client_id_env": "FREEZE_AIRTABLE_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_AIRTABLE_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://airtable.com/oauth2/v1/authorize",
+        "token_url": "https://airtable.com/oauth2/v1/token",
+        "redirect_path": "/integrations/oauth/airtable/callback",
+        "scopes": [
+          "data.records:read",
+          "data.records:write"
+        ]
+      },
+      "trello": {
+        "name": "Trello",
+        "client_id_env": "FREEZE_TRELLO_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_TRELLO_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://trello.com/1/authorize",
+        "token_url": "https://trello.com/1/OAuthGetAccessToken",
+        "redirect_path": "/integrations/oauth/trello/callback",
+        "scopes": [
+          "read",
+          "write"
+        ]
+      },
+      "pipedrive": {
+        "name": "Pipedrive",
+        "client_id_env": "FREEZE_PIPEDRIVE_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_PIPEDRIVE_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://oauth.pipedrive.com/oauth/authorize",
+        "token_url": "https://oauth.pipedrive.com/oauth/token",
+        "redirect_path": "/integrations/oauth/pipedrive/callback",
+        "scopes": [
+          "deals:full",
+          "contacts:full"
+        ]
+      },
+      "reddit": {
+        "name": "Reddit",
+        "client_id_env": "FREEZE_REDDIT_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_REDDIT_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.reddit.com/api/v1/authorize",
+        "token_url": "https://www.reddit.com/api/v1/access_token",
+        "redirect_path": "/integrations/oauth/reddit/callback",
+        "scopes": [
+          "identity",
+          "submit",
+          "read"
+        ]
+      },
+      "pinterest": {
+        "name": "Pinterest",
+        "client_id_env": "FREEZE_PINTEREST_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_PINTEREST_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.pinterest.com/oauth/",
+        "token_url": "https://api.pinterest.com/v5/oauth/token",
+        "redirect_path": "/integrations/oauth/pinterest/callback",
+        "scopes": [
+          "boards:read",
+          "pins:write"
+        ]
+      },
+      "tiktok": {
+        "name": "TikTok",
+        "client_id_env": "FREEZE_TIKTOK_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_TIKTOK_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.tiktok.com/v2/auth/authorize/",
+        "token_url": "https://open.tiktokapis.com/v2/oauth/token/",
+        "redirect_path": "/integrations/oauth/tiktok/callback",
+        "scopes": [
+          "user.info.basic",
+          "video.upload"
+        ]
+      },
+      "buffer": {
+        "name": "Buffer",
+        "client_id_env": "FREEZE_BUFFER_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_BUFFER_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://bufferapp.com/oauth2/authorize",
+        "token_url": "https://api.bufferapp.com/1/oauth2/token.json",
+        "redirect_path": "/integrations/oauth/buffer/callback",
+        "scopes": []
+      },
+      "netlify": {
+        "name": "Netlify",
+        "client_id_env": "FREEZE_NETLIFY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_NETLIFY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.netlify.com/authorize",
+        "token_url": "https://api.netlify.com/oauth/token",
+        "redirect_path": "/integrations/oauth/netlify/callback",
+        "scopes": []
+      },
+      "surveymonkey": {
+        "name": "SurveyMonkey",
+        "client_id_env": "FREEZE_SURVEYMONKEY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_SURVEYMONKEY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://api.surveymonkey.com/oauth/authorize",
+        "token_url": "https://api.surveymonkey.com/oauth/token",
+        "redirect_path": "/integrations/oauth/surveymonkey/callback",
+        "scopes": []
+      },
+      "ebay": {
+        "name": "eBay",
+        "client_id_env": "FREEZE_EBAY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_EBAY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://auth.ebay.com/oauth2/authorize",
+        "token_url": "https://api.ebay.com/identity/v1/oauth2/token",
+        "redirect_path": "/integrations/oauth/ebay/callback",
+        "scopes": [
+          "sell.inventory",
+          "sell.fulfillment"
+        ]
+      },
+      "zoho": {
+        "name": "Zoho",
+        "client_id_env": "FREEZE_ZOHO_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_ZOHO_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://accounts.zoho.com/oauth/v2/auth",
+        "token_url": "https://accounts.zoho.com/oauth/v2/token",
+        "redirect_path": "/integrations/oauth/zoho/callback",
+        "scopes": [
+          "ZohoCRM.modules.ALL"
+        ]
+      },
+      "front": {
+        "name": "Front",
+        "client_id_env": "FREEZE_FRONT_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_FRONT_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.frontapp.com/oauth/authorize",
+        "token_url": "https://app.frontapp.com/oauth/token",
+        "redirect_path": "/integrations/oauth/front/callback",
+        "scopes": []
+      },
+      "helpscout": {
+        "name": "Help Scout",
+        "client_id_env": "FREEZE_HELPSCOUT_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_HELPSCOUT_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://secure.helpscout.net/authentication/authorizeClientApplication",
+        "token_url": "https://api.helpscout.net/v2/oauth2/token",
+        "redirect_path": "/integrations/oauth/helpscout/callback",
+        "scopes": []
+      }
+    }
+  }
+}
