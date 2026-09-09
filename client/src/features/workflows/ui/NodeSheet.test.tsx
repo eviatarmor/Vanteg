@@ -106,6 +106,44 @@ describe("NodeSheet", () => {
     expect(screen.getByText("{{Webhook.body}}")).toBeInTheDocument()
   })
 
+  it("renders Slack message as a textarea and unfurl as a switch", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const node = createVantegNode("slack", { x: 0, y: 0 })
+
+    renderSheet(node, onChange)
+
+    expect(screen.getByLabelText("Message").tagName).toBe("TEXTAREA")
+    expect(screen.getByRole("switch", { name: "Unfurl links" })).toBeChecked()
+    expect(node.data.config.unfurlLinks).toBe("true")
+
+    await user.click(screen.getByRole("switch", { name: "Unfurl links" }))
+    expect(onChange).toHaveBeenCalledWith(
+      node.id,
+      expect.objectContaining({
+        config: expect.objectContaining({ unfurlLinks: "false" }),
+      })
+    )
+  })
+
+  it("renders emoji as a select for Slack reactions", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const node = createVantegNode("slack-add-reaction", { x: 0, y: 0 })
+
+    renderSheet(node, onChange)
+
+    expect(screen.getByLabelText("Emoji")).toHaveTextContent(":eyes:")
+    await user.click(screen.getByLabelText("Emoji"))
+    await user.click(screen.getByRole("option", { name: ":thumbsup:" }))
+    expect(onChange).toHaveBeenCalledWith(
+      node.id,
+      expect.objectContaining({
+        config: expect.objectContaining({ emoji: "thumbsup" }),
+      })
+    )
+  })
+
   it("lets HTTP Request pick a custom credential and hides the inline secret", async () => {
     const user = userEvent.setup()
     const created = await createCustomCredential({
