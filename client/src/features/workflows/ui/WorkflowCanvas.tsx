@@ -33,6 +33,7 @@ import {
 
 import { NodePickerDialog } from "./NodePickerDialog"
 import { NodeSheet } from "./NodeSheet"
+import { WorkflowRunHistorySheet } from "./WorkflowRunHistorySheet"
 import { WorkflowRunBar, type WorkflowSaveState } from "./WorkflowToolbar"
 
 export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
@@ -58,6 +59,7 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
   const [locked, setLocked] = useState(false)
   const [saveState, setSaveState] = useState<WorkflowSaveState>("idle")
   const saveClearTimer = useRef<number | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const { screenToFlowPosition, fitView } = useReactFlow()
 
   function revealNodes() {
@@ -220,6 +222,7 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
                 workflowId={workflow.id}
                 workflowName={workflow.name}
                 saveState={saveState}
+                onOpenHistory={() => setHistoryOpen(true)}
               />
             </Panel>
             {nodes.length === 0 ? (
@@ -268,6 +271,12 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onAdd={addNode}
+      />
+      <WorkflowRunHistorySheet
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        workflowId={workflow.id}
+        workflowName={workflow.name}
       />
     </div>
   )
