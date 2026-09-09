@@ -411,4 +411,31 @@ describe("integrations registry", () => {
       expect.arrayContaining(["Google", "Microsoft", "Communication", "CRM", "AI"])
     )
   })
+
+  it("uses number and datetime FieldControls on payment, CRM, and calendar methods", () => {
+    const hubspot = getApp("hubspot")
+    const amount = hubspot?.methods
+      .find((method) => method.id === "hubspot-create-deal")
+      ?.fields.find((field) => field.key === "amount")
+    expect(amount?.control).toBe("number")
+
+    const stripe = getApp("stripe")
+    expect(
+      stripe?.methods
+        .find((method) => method.id === "stripe-create-charge")
+        ?.fields.find((field) => field.key === "amount")?.control
+    ).toBe("number")
+    expect(
+      stripe?.methods
+        .find((method) => method.id === "stripe-create-invoice")
+        ?.fields.find((field) => field.key === "amount")?.control
+    ).toBe("number")
+
+    const calendar = getApp("google-calendar")
+    expect(
+      calendar?.methods
+        .find((method) => method.id === "google-calendar-create-event")
+        ?.fields.find((field) => field.key === "start")?.control
+    ).toBe("datetime")
+  })
 })
