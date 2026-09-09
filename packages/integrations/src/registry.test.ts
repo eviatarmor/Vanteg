@@ -167,6 +167,26 @@ describe("integrations registry", () => {
     }
   })
 
+  it("keeps formId as input with clearer help and message as textarea", () => {
+    for (const id of ["typeform", "google-forms", "surveymonkey"] as const) {
+      const app = getApp(id)
+      expect(app, id).toBeDefined()
+
+      const submission = app!.methods.find((method) => method.id === `${id}-new-submission`)
+      const formId = submission?.fields.find((field) => field.key === "formId")
+      expect(formId?.control ?? "input", id).toBe("input")
+      expect(formId?.label, id).toBe("Form ID")
+      expect(formId?.help, id).toMatch(/form id|settings|title/i)
+
+      const notify = app!.methods.find((method) => method.id === `${id}-notify-respondent`)
+      const message = notify?.fields.find((field) => field.key === "message")
+      expect(message?.control, id).toBe("textarea")
+      expect(notify?.fields.find((field) => field.key === "formId")?.control ?? "input", id).toBe(
+        "input"
+      )
+    }
+  })
+
   it("uses select controls for currency, ticket status, CRM stage, and GitHub action", () => {
     const stripeCharge = getApp("stripe")?.methods.find((method) => method.id === "stripe-new-charge")
     const currency = stripeCharge?.fields.find((field) => field.key === "currency")
