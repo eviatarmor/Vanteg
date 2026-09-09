@@ -60,7 +60,7 @@ describe("AssistantPage", () => {
     renderAssistant()
 
     expect(screen.getByRole("status", { name: "Loading history" })).toBeInTheDocument()
-    expect(screen.getByText("Loading history\u2026")).toBeInTheDocument()
+    expect(screen.getByText("Loading history…")).toBeInTheDocument()
   })
 
   it("shows error state when stored history is invalid", () => {
