@@ -116,6 +116,8 @@ describe("integrations registry", () => {
       { appId: "google-forms", key: "formId", resourceType: "forms.form", min: 3 },
       { appId: "typeform", key: "formId", resourceType: "forms.form", min: 3 },
       { appId: "surveymonkey", key: "formId", resourceType: "forms.form", min: 3 },
+      { appId: "microsoft-teams", key: "team", resourceType: "teams.team", min: 7 },
+      { appId: "microsoft-teams", key: "channel", resourceType: "teams.channel", min: 4 },
     ]
     for (const { appId, key, resourceType, min } of cases) {
       const app = getApp(appId)
@@ -127,6 +129,26 @@ describe("integrations registry", () => {
         expect(field.control, `${appId}.${key}`).toBe("resource")
         expect(field.resourceType, `${appId}.${key}`).toBe(resourceType)
       }
+    }
+  })
+
+  it("marks Microsoft Teams team and channel MethodFields as resource-select", () => {
+    const teams = getApp("microsoft-teams")
+    const teamFields = (teams?.methods ?? []).flatMap((method) =>
+      method.fields.filter((field) => field.key === "team")
+    )
+    const channelFields = (teams?.methods ?? []).flatMap((method) =>
+      method.fields.filter((field) => field.key === "channel")
+    )
+    expect(teamFields.length).toBeGreaterThanOrEqual(7)
+    expect(channelFields.length).toBeGreaterThanOrEqual(4)
+    for (const field of teamFields) {
+      expect(field.control).toBe("resource")
+      expect(field.resourceType).toBe("teams.team")
+    }
+    for (const field of channelFields) {
+      expect(field.control).toBe("resource")
+      expect(field.resourceType).toBe("teams.channel")
     }
   })
 
