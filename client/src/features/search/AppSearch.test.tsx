@@ -108,6 +108,19 @@ describe("AppSearch", () => {
     expect(screen.getByText(/\/workflows\//)).toBeInTheDocument()
   })
 
+  it("creates an agent from the palette", async () => {
+    const user = userEvent.setup()
+    renderSearch()
+
+    await user.click(screen.getByRole("searchbox", { name: "Search" }))
+    await user.type(screen.getByRole("searchbox", { name: "Search" }), "create agent")
+
+    expect(screen.getByRole("option", { name: "Create agent" })).toBeInTheDocument()
+    await user.click(screen.getByRole("option", { name: "Create agent" }))
+
+    expect(screen.getByText(/\/agents\//)).toBeInTheDocument()
+  })
+
   it("opens the assistant from the palette", async () => {
     const user = userEvent.setup()
     renderSearch()

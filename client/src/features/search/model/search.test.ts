@@ -90,6 +90,11 @@ describe("searchWorkspace", () => {
     expect(teamHits.some((hit) => hit.command === "create-team")).toBe(true)
     expect(integrations.some((hit) => hit.path === "/integrations")).toBe(true)
     expect(templates.some((hit) => hit.path === "/templates")).toBe(true)
+    expect(
+      searchWorkspace("templates", []).filter(
+        (hit) => hit.group === "Pages" && hit.path === "/templates"
+      )
+    ).toHaveLength(1)
     expect(assistant.some((hit) => hit.command === "open-assistant")).toBe(true)
     expect(settings.some((hit) => hit.path === "/settings")).toBe(true)
     expect(data.some((hit) => hit.title === "Go to Data" && hit.path === "/data")).toBe(true)

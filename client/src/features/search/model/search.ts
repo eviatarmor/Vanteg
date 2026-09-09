@@ -155,17 +155,6 @@ export function buildSearchIndex(workflows: readonly Workflow[]): SearchHit[] {
     })
   }
 
-  // Templates is not in the shell nav on master yet; keep it searchable as a page jump.
-  if (!pages.some((page) => page.path === "/templates")) {
-    pages.push({
-      id: "page-templates",
-      title: "Templates",
-      subtitle: "Go to this page",
-      group: "Pages",
-      path: "/templates",
-    })
-  }
-
   const workflowHits: SearchHit[] = [...workflows]
     .sort(byUpdatedAtDesc)
     .map((workflow) => ({
