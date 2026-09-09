@@ -253,19 +253,33 @@ function calendarFamily(prefix: string, name: string): Method[] {
   ]
 }
 
+function formIdField(name: string): MethodField {
+  return field("formId", "Form ID", "contact-form", {
+    help: `${name} form ID from the form URL or settings (not the form title).`,
+  })
+}
+
+function formMessageField(placeholder: string): MethodField {
+  return field("message", "Message", placeholder, { control: "textarea" })
+}
+
 function formFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-submission`, "trigger", "New submission", `Start when a ${name} form is submitted.`, [
-      field("formId", "Form ID", "contact-form"),
+      formIdField(name),
     ]),
     method(`${prefix}-form-updated`, "trigger", "Form updated", `Start when a ${name} form definition changes.`, [
-      field("formId", "Form ID", "contact-form"),
+      formIdField(name),
     ]),
     method(`${prefix}-list-responses`, "action", "List responses", `List ${name} responses.`, [
-      field("formId", "Form ID", "contact-form"),
+      formIdField(name),
     ]),
     method(`${prefix}-get-form`, "action", "Get form", `Read a ${name} form and its questions.`, [
-      field("formId", "Form ID", "contact-form"),
+      formIdField(name),
+    ]),
+    method(`${prefix}-notify-respondent`, "action", "Notify respondent", `Send a follow-up message to a ${name} respondent.`, [
+      formIdField(name),
+      formMessageField("Thanks for your response."),
     ]),
   ]
 }
