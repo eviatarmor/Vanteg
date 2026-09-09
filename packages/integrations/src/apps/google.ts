@@ -2,8 +2,10 @@ import { field, integrationApp, method, oauth } from "../define.ts"
 import type { MethodField } from "../types.ts"
 
 function sheetField(placeholder = "Leads"): MethodField {
-  return field("sheet", "Sheet ID", placeholder, {
-    help: "Spreadsheet or sheet tab id or name (resource select later).",
+  return field("sheet", "Sheet", placeholder, {
+    control: "resource",
+    resourceType: "sheets.sheet",
+    help: "Pick a spreadsheet sheet from the connected Google account, or enter a custom sheet name.",
   })
 }
 

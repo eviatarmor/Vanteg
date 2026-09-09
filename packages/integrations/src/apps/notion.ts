@@ -1,9 +1,11 @@
 import { field, integrationApp, method, oauth } from "../define.ts"
 import type { MethodField } from "../types.ts"
 
-function pageField(label = "Page ID", placeholder = "Tasks"): MethodField {
+function pageField(label = "Page", placeholder = "Tasks"): MethodField {
   return field("page", label, placeholder, {
-    help: "Notion page id or title (resource select later).",
+    control: "resource",
+    resourceType: "notion.page",
+    help: "Pick a Notion page from the connected workspace, or enter a custom page name.",
   })
 }
 
@@ -37,16 +39,16 @@ export const notion = integrationApp({
   sheetsTemplate: "sheet",
   methods: [
     method("notion-page-updated", "trigger", "Page updated", "Start when a Notion page changes.", [
-      pageField("Page or database ID"),
+      pageField("Page or database"),
     ]),
     method("notion-new-page", "trigger", "New page", "Start when a Notion page is created.", [
-      pageField("Parent page or database ID"),
+      pageField("Parent page or database"),
     ]),
     method("notion-new-database-item", "trigger", "New database item", "Start when a Notion database row is added.", [
       databaseField(),
     ]),
     method("notion", "action", "Create page", "Create or update a Notion page or database row.", [
-      pageField("Page or database ID"),
+      pageField("Page or database"),
       propertiesField(),
       contentField("Status: done"),
     ]),
