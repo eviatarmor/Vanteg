@@ -59,7 +59,7 @@ export type ConnectorCategory =
 
 export type MethodKind = "trigger" | "action"
 
-export type FieldControl = "input" | "textarea" | "code" | "select" | "boolean"
+export type FieldControl = "input" | "textarea" | "code" | "select" | "boolean" | "resource"
 
 export interface MethodField {
   key: string
@@ -69,6 +69,8 @@ export interface MethodField {
   control?: FieldControl
   language?: "javascript" | "json"
   options?: readonly { value: string; label: string }[]
+  /** Connection-scoped resource catalog key, e.g. "slack.channel". Used when control is "resource". */
+  resourceType?: string
 }
 
 export interface Method {

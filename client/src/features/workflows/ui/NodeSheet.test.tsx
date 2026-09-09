@@ -395,4 +395,23 @@ describe("NodeSheet", () => {
     expect(screen.getByRole("textbox", { name: "Body" }).tagName).toBe("TEXTAREA")
     expect(screen.getByRole("textbox", { name: "Headers" }).tagName).toBe("TEXTAREA")
   })
+
+  it("renders Slack Channel as a resource-select combobox", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const node = createVantegNode("slack", { x: 0, y: 0 })
+
+    renderSheet(node, onChange)
+
+    const channel = await screen.findByRole("combobox", { name: "Channel" })
+    expect(channel).toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "Channel" })).not.toBeInTheDocument()
+
+    await user.click(channel)
+    expect(await screen.findByText("#ops - Operations")).toBeInTheDocument()
+    await user.click(screen.getByText("#ops - Operations"))
+    expect(onChange).toHaveBeenCalled()
+    const patch = onChange.mock.calls.at(-1)?.[1]
+    expect(patch?.config?.channel).toBe("#ops")
+  })
 })

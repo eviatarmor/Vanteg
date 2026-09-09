@@ -17,6 +17,7 @@ import { isInlineAuthSuperseded, patchConfigForCredential } from "../model/auth-
 import type { VantegNode, VantegNodePatch, WorkflowNodeType } from "../model/types"
 import { CodeField } from "./CodeField"
 import { CredentialPicker } from "./CredentialPicker"
+import { ResourceSelectField } from "./ResourceSelectField"
 
 export function NodeConfigFields({
   node,
@@ -96,6 +97,22 @@ export function NodeConfigFields({
                     config: {
                       ...node.data.config,
                       [field.key]: event.target.value,
+                    },
+                  })
+                }
+              />
+            ) : field.control === "resource" && field.resourceType ? (
+              <ResourceSelectField
+                id={`node-${field.key}`}
+                label={field.label}
+                value={node.data.config[field.key] ?? ""}
+                placeholder={field.placeholder}
+                resourceType={field.resourceType}
+                onChange={(value) =>
+                  onChange(node.id, {
+                    config: {
+                      ...node.data.config,
+                      [field.key]: value,
                     },
                   })
                 }

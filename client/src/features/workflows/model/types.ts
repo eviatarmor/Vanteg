@@ -4,7 +4,14 @@ export type WorkflowStatus = "draft" | "dev" | "prod"
 
 export type NodeKind = "trigger" | "action" | "logic"
 
-export type FieldControl = "input" | "textarea" | "code" | "select" | "credential" | "boolean"
+export type FieldControl =
+  | "input"
+  | "textarea"
+  | "code"
+  | "select"
+  | "credential"
+  | "boolean"
+  | "resource"
 
 export interface NodeFieldOption {
   value: string
@@ -26,6 +33,8 @@ export interface NodeField {
    * Hidden in the editor when `config.credentialId` matches a saved credential.
    */
   inlineAuth?: boolean
+  /** Connection-scoped resource catalog key, e.g. "slack.channel". Used when control is "resource". */
+  resourceType?: string
 }
 
 export type PortColor =
