@@ -25,7 +25,7 @@ Credential and secret fields in connect / Setup UIs use **`SecretInput`** — se
 Featured (and polished) method Setup fields use `MethodField.control` in `@workspace/integrations`:
 
 | Control | Role |
-|---|---|---|
+|---|---|
 | `select` | Fixed options (`options` on the field) |
 | `textarea` | Multi-line text (bodies, content, values) |
 | `resource` | Connection-scoped searchable picker (`resourceType`, e.g. `slack.channel`, `teams.team`, `teams.channel`) via `listResources` |
