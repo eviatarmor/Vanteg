@@ -71,3 +71,6 @@ export {
 } from "./custom-credentials.ts"
 
 export { createMockIntegrationsAdapter } from "./mock-adapter.ts"
+
+export type { ResourceOption } from "./resources.ts"
+export { listResourceTypes, listResources } from "./resources.ts"
