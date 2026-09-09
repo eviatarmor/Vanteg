@@ -1,3 +1,8 @@
+import { clearSession } from "../../auth/model/session"
+
 export function logout(): void {
-  window.location.assign("/")
+  if (!clearSession()) {
+    return
+  }
+  window.location.assign("/login")
 }
