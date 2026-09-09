@@ -215,4 +215,63 @@ describe("workflow node catalog", () => {
     )
     expect(database?.methods.map((method) => method.id)).toContain("database-insert-row")
   })
+
+  it("exposes textarea/select/number Setup fields on AI, Classify, and Extract", () => {
+    for (const id of ["ai", "ai-classify", "ai-extract"] as const) {
+      const node = getNodeType(id)
+      expect(node?.fields.find((field) => field.key === "prompt")).toMatchObject({
+        control: "textarea",
+      })
+      const model = node?.fields.find((field) => field.key === "model")
+      expect(model?.control).toBe("select")
+      expect(model?.options?.map((option) => option.value)).toEqual(
+        expect.arrayContaining(["grok-4.6", "gpt-5.5", "claude-sonnet-5"])
+      )
+      const temperature = node?.fields.find((field) => field.key === "temperature")
+      expect(temperature?.control ?? "input").toBe("input")
+      expect(temperature?.help).toMatch(/temperature/i)
+      expect(temperature?.placeholder).toBe("0.7")
+    }
+
+    expect(getNodeType("ai")?.fields.map((field) => field.key)).toEqual([
+      "prompt",
+      "model",
+      "temperature",
+    ])
+    expect(getNodeType("ai-classify")?.fields.map((field) => field.key)).toEqual([
+      "prompt",
+      "labels",
+      "model",
+      "temperature",
+    ])
+    expect(getNodeType("ai-extract")?.fields.map((field) => field.key)).toEqual([
+      "prompt",
+      "schema",
+      "model",
+      "temperature",
+    ])
+  })
+
+  it("exposes operation select, query textarea, and table input on Database CRUD", () => {
+    const database = getNodeType("database")
+    expect(database?.fields.map((field) => field.key)).toEqual([
+      "operation",
+      "table",
+      "query",
+    ])
+    const operation = database?.fields.find((field) => field.key === "operation")
+    expect(operation?.control).toBe("select")
+    expect(operation?.options?.map((option) => option.value)).toEqual([
+      "insert",
+      "update",
+      "select",
+      "delete",
+    ])
+    expect(database?.fields.find((field) => field.key === "query")).toMatchObject({
+      control: "textarea",
+    })
+    const table = database?.fields.find((field) => field.key === "table")
+    expect(table?.control ?? "input").toBe("input")
+    expect(table?.placeholder).toBe("jobs")
+  })
 })
