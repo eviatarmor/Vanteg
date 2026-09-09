@@ -113,6 +113,56 @@ describe("integrations registry", () => {
     )
   })
 
+
+  it("fills payment refund and invoice trigger fields with filters", () => {
+    for (const id of ["stripe", "paypal", "square"] as const) {
+      const app = getApp(id)
+      expect(app, id).toBeDefined()
+      const refund = app!.methods.find((method) => method.id === `${id}-refund-issued`)
+      const invoice = app!.methods.find((method) => method.id === `${id}-invoice-paid`)
+      expect(refund?.fields.map((field) => field.key), id).toEqual(
+        expect.arrayContaining(["currency", "chargeId"])
+      )
+      expect(invoice?.fields.map((field) => field.key), id).toEqual(
+        expect.arrayContaining(["currency", "customerId", "invoiceId"])
+      )
+      expect(refund!.fields.length, id).toBeGreaterThan(0)
+      expect(invoice!.fields.length, id).toBeGreaterThan(0)
+    }
+  })
+
+  it("uses select controls for currency, ticket status, CRM stage, and GitHub action", () => {
+    const stripeCharge = getApp("stripe")?.methods.find((method) => method.id === "stripe-new-charge")
+    const currency = stripeCharge?.fields.find((field) => field.key === "currency")
+    expect(currency?.control).toBe("select")
+    expect(currency?.options?.map((option) => option.value)).toEqual(
+      expect.arrayContaining(["usd", "eur", "gbp"])
+    )
+
+    const zendeskStatus = getApp("zendesk")?.methods.find(
+      (method) => method.id === "zendesk-ticket-status-changed"
+    )
+    const status = zendeskStatus?.fields.find((field) => field.key === "status")
+    expect(status?.control).toBe("select")
+    expect(status?.options?.map((option) => option.value)).toEqual(
+      expect.arrayContaining(["open", "solved", "closed"])
+    )
+
+    const hubspotStage = getApp("hubspot")?.methods.find(
+      (method) => method.id === "hubspot-deal-stage-changed"
+    )
+    const stage = hubspotStage?.fields.find((field) => field.key === "stage")
+    expect(stage?.control).toBe("select")
+    expect(stage?.options?.map((option) => option.value)).toEqual(
+      expect.arrayContaining(["closed_won", "closed_lost"])
+    )
+
+    const githubAction = getApp("github")?.methods.find((method) => method.id === "github")
+    const action = githubAction?.fields.find((field) => field.key === "action")
+    expect(action?.control).toBe("select")
+    expect(action?.options?.length).toBeGreaterThan(0)
+  })
+
   it("groups connectors into named categories", () => {
     expect(listConnectorCategories()).toEqual(
       expect.arrayContaining(["Google", "Microsoft", "Communication", "CRM", "AI"])
