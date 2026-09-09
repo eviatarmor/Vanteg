@@ -22,6 +22,7 @@ import {
   httpTimeoutField,
   httpUrlField,
 } from "./http-fields"
+import { logicGateNodes } from "./logic-nodes"
 
 function method(
   id: string,
@@ -306,41 +307,7 @@ export const platformNodes: WorkflowNodeType[] = [
     { key: "audience", label: "Audience", placeholder: "ops-oncall" },
     { key: "title", label: "Title", placeholder: "Incident opened" },
   ]),
-  {
-    id: "if",
-    label: "If",
-    description: "Branch true or false.",
-    kind: "logic",
-    category: "Logic",
-    fields: [{ key: "condition", label: "Condition", placeholder: "status = open" }],
-  },
-  {
-    id: "switch",
-    label: "Switch",
-    description: "Route by multiple cases.",
-    kind: "logic",
-    category: "Logic",
-    fields: [{ key: "field", label: "Field", placeholder: "status" }],
-  },
-  {
-    id: "filter",
-    label: "Filter",
-    description: "Keep only items that match a rule.",
-    kind: "logic",
-    category: "Logic",
-    fields: [{ key: "rule", label: "Rule", placeholder: "amount > 0" }],
-  },
-  {
-    id: "delay",
-    label: "Delay",
-    description: "Wait before continuing.",
-    kind: "logic",
-    category: "Logic",
-    fields: [
-      { key: "duration", label: "Duration", placeholder: "5m", help: "Wait this long, or leave empty and set Until." },
-      { key: "until", label: "Until", placeholder: "2026-09-08T09:00" },
-    ],
-  },
+  ...logicGateNodes,
   {
     id: "code",
     label: "Code",

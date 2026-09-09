@@ -253,6 +253,32 @@ describe("NodeSheet", () => {
     expect(last?.[1]?.config?.token).toBeUndefined()
   })
 
+  it("renders If/Switch/Filter/Delay Setup field controls", () => {
+    const ifNode = createVantegNode("if", { x: 0, y: 0 })
+    const { unmount: unmountIf } = renderSheet(ifNode)
+    expect(screen.getByLabelText("Condition").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Operator")).toHaveTextContent("Equals")
+    unmountIf()
+
+    const filter = createVantegNode("filter", { x: 0, y: 0 })
+    const { unmount: unmountFilter } = renderSheet(filter)
+    expect(screen.getByLabelText("Condition").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Operator")).toHaveTextContent("Greater than")
+    unmountFilter()
+
+    const sw = createVantegNode("switch", { x: 0, y: 0 })
+    const { unmount: unmountSwitch } = renderSheet(sw)
+    expect(screen.getByLabelText("Expression")).toBeInTheDocument()
+    expect(screen.getByLabelText("Cases").tagName).toBe("TEXTAREA")
+    unmountSwitch()
+
+    const delay = createVantegNode("delay", { x: 0, y: 0 })
+    renderSheet(delay)
+    expect(screen.getByLabelText("Duration")).toBeInTheDocument()
+    expect(screen.getByLabelText("Unit")).toHaveTextContent("Minutes")
+    expect(screen.getByLabelText("Until")).toBeInTheDocument()
+  })
+
   it("shows the inline secret again when the saved credential is gone", async () => {
     const node = createVantegNode("http", { x: 0, y: 0 })
     node.data.config.credentialId = "cred_deleted"
