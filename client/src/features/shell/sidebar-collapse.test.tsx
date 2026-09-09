@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 import { SidebarProvider } from "@workspace/ui/components/sidebar"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
+import { ThemeProvider } from "@/components/theme-provider"
 import { KeyboardShortcutsProvider } from "@/features/shortcuts/KeyboardShortcutsProvider"
 
 import { AppSidebar } from "./AppSidebar"
@@ -12,16 +13,18 @@ import { AppTopbar } from "./AppTopbar"
 
 function renderShell() {
   return render(
-    <MemoryRouter>
-      <TooltipProvider>
-        <KeyboardShortcutsProvider>
-          <SidebarProvider defaultOpen>
-            <AppSidebar />
-            <AppTopbar title="Home" />
-          </SidebarProvider>
-        </KeyboardShortcutsProvider>
-      </TooltipProvider>
-    </MemoryRouter>
+    <ThemeProvider defaultTheme="system">
+      <MemoryRouter>
+        <TooltipProvider>
+          <KeyboardShortcutsProvider>
+            <SidebarProvider defaultOpen>
+              <AppSidebar />
+              <AppTopbar title="Home" />
+            </SidebarProvider>
+          </KeyboardShortcutsProvider>
+        </TooltipProvider>
+      </MemoryRouter>
+    </ThemeProvider>
   )
 }
 

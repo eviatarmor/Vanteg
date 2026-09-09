@@ -8,19 +8,23 @@ import { TooltipProvider } from "@workspace/ui/components/tooltip"
 import { resetInbox } from "@/features/inbox/model/store"
 import { KeyboardShortcutsProvider } from "@/features/shortcuts/KeyboardShortcutsProvider"
 
+import { ThemeProvider } from "@/components/theme-provider"
+
 import { AppSidebar } from "./AppSidebar"
 
 function renderSidebar() {
   return render(
-    <MemoryRouter>
-      <TooltipProvider>
-        <KeyboardShortcutsProvider>
-          <SidebarProvider>
-            <AppSidebar />
-          </SidebarProvider>
-        </KeyboardShortcutsProvider>
-      </TooltipProvider>
-    </MemoryRouter>
+    <ThemeProvider defaultTheme="system">
+      <MemoryRouter>
+        <TooltipProvider>
+          <KeyboardShortcutsProvider>
+            <SidebarProvider>
+              <AppSidebar />
+            </SidebarProvider>
+          </KeyboardShortcutsProvider>
+        </TooltipProvider>
+      </MemoryRouter>
+    </ThemeProvider>
   )
 }
 
@@ -56,7 +60,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByText("Bay")).not.toBeInTheDocument()
   })
 
-  it("opens the avatar menu with Settings and Log out", async () => {
+  it("opens the avatar menu with Settings, Log out, and appearance themes", async () => {
     const user = userEvent.setup()
     renderSidebar()
 
@@ -64,5 +68,22 @@ describe("AppSidebar", () => {
 
     expect(screen.getByRole("menuitem", { name: "Settings" })).toBeInTheDocument()
     expect(screen.getByRole("menuitem", { name: "Log out" })).toBeInTheDocument()
+    expect(screen.getByText("Appearance")).toBeInTheDocument()
+    expect(screen.getByRole("menuitemradio", { name: "System" })).toBeInTheDocument()
+    expect(screen.getByRole("menuitemradio", { name: "Light" })).toBeInTheDocument()
+    expect(screen.getByRole("menuitemradio", { name: "Dark" })).toBeInTheDocument()
+  })
+
+  it("applies the selected appearance preference from the user menu", async () => {
+    const user = userEvent.setup()
+    localStorage.clear()
+    document.documentElement.classList.remove("light", "dark")
+    renderSidebar()
+
+    await user.click(screen.getByRole("button", { name: /account menu/i }))
+    await user.click(screen.getByRole("menuitemradio", { name: "Dark" }))
+
+    expect(document.documentElement.classList.contains("dark")).toBe(true)
+    expect(localStorage.getItem("theme")).toBe("dark")
   })
 })
