@@ -1,9 +1,10 @@
-import { Check, FlaskConical, Loader2, Play, Rocket } from "lucide-react"
+import { Check, FlaskConical, History, Loader2, Play, Rocket } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 
+import { startMockRun } from "../model/run-store"
 import { getWorkflow, saveWorkflow, useWorkflows } from "../model/store"
 import { workflowStatusLabel } from "../model/status-labels"
 import type { WorkflowStatus } from "../model/types"
@@ -20,10 +21,12 @@ export function WorkflowRunBar({
   workflowId,
   workflowName,
   saveState = "idle",
+  onOpenHistory,
 }: {
   workflowId: string
   workflowName: string
   saveState?: WorkflowSaveState
+  onOpenHistory?: () => void
 }) {
   useWorkflows()
   const workflow = getWorkflow(workflowId)
@@ -71,11 +74,20 @@ export function WorkflowRunBar({
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => toast.success(`Running ${workflowName}`)}
+        onClick={() => {
+          startMockRun({ workflowId, workflowName, triggerLabel: "Manual" })
+          toast.success(`Running ${workflowName}`)
+        }}
       >
         <Play />
         Run
       </Button>
+      {onOpenHistory ? (
+        <Button type="button" variant="outline" size="sm" onClick={onOpenHistory}>
+          <History />
+          History
+        </Button>
+      ) : null}
       <Button
         type="button"
         size="sm"
