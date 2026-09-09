@@ -210,6 +210,25 @@ describe("integrations registry", () => {
     ])
   })
 
+  it("uses textarea, select, and boolean controls for Slack and Discord", () => {
+    const slackSend = getApp("slack")?.methods.find((method) => method.id === "slack")
+    expect(slackSend?.fields.find((field) => field.key === "message")?.control).toBe("textarea")
+    expect(slackSend?.fields.find((field) => field.key === "unfurlLinks")?.control).toBe("boolean")
+
+    const slackReaction = getApp("slack")?.methods.find((method) => method.id === "slack-add-reaction")
+    const slackEmoji = slackReaction?.fields.find((field) => field.key === "emoji")
+    expect(slackEmoji?.control).toBe("select")
+    expect(slackEmoji?.options?.map((option) => option.value)).toEqual([
+      "eyes",
+      "thumbsup",
+      "white_check_mark",
+    ])
+
+    const discordSend = getApp("discord")?.methods.find((method) => method.id === "discord")
+    expect(discordSend?.fields.find((field) => field.key === "message")?.control).toBe("textarea")
+    const discordReaction = getApp("discord")?.methods.find((method) => method.id === "discord-add-reaction")
+    expect(discordReaction?.fields.find((field) => field.key === "emoji")?.control).toBe("select")
+  })
   it("groups connectors into named categories", () => {
     expect(listConnectorCategories()).toEqual(
       expect.arrayContaining(["Google", "Microsoft", "Communication", "CRM", "AI"])
