@@ -253,6 +253,34 @@ describe("NodeSheet", () => {
     expect(last?.[1]?.config?.token).toBeUndefined()
   })
 
+  it("renders Code/Transform/Set/Merge/Loop Setup field controls", () => {
+    const code = createVantegNode("code", { x: 0, y: 0 })
+    const { unmount: unmountCode } = renderSheet(code)
+    expect(screen.getByLabelText("Language")).toHaveTextContent("JavaScript")
+    expect(screen.getByRole("textbox", { name: "Code" }).tagName).toBe("TEXTAREA")
+    unmountCode()
+
+    const set = createVantegNode("set", { x: 0, y: 0 })
+    const { unmount: unmountSet } = renderSheet(set)
+    expect(screen.getByLabelText("Mapping").tagName).toBe("TEXTAREA")
+    unmountSet()
+
+    const merge = createVantegNode("merge", { x: 0, y: 0 })
+    const { unmount: unmountMerge } = renderSheet(merge)
+    expect(screen.getByLabelText("Mode")).toHaveTextContent("Append")
+    unmountMerge()
+
+    const loop = createVantegNode("loop", { x: 0, y: 0 })
+    const { unmount: unmountLoop } = renderSheet(loop)
+    expect(screen.getByLabelText("Items").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Concurrency")).toBeInTheDocument()
+    unmountLoop()
+
+    const transform = createVantegNode("transform", { x: 0, y: 0 })
+    renderSheet(transform)
+    expect(screen.getByLabelText("Expression").tagName).toBe("TEXTAREA")
+  })
+
   it("renders If/Switch/Filter/Delay Setup field controls", () => {
     const ifNode = createVantegNode("if", { x: 0, y: 0 })
     const { unmount: unmountIf } = renderSheet(ifNode)

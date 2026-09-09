@@ -23,6 +23,7 @@ import {
   httpUrlField,
 } from "./http-fields"
 import { logicGateNodes } from "./logic-nodes"
+import { codeTransformNodes } from "./code-transform-nodes"
 
 function method(
   id: string,
@@ -308,81 +309,7 @@ export const platformNodes: WorkflowNodeType[] = [
     { key: "title", label: "Title", placeholder: "Incident opened" },
   ]),
   ...logicGateNodes,
-  {
-    id: "code",
-    label: "Code",
-    description: "Run JavaScript.",
-    kind: "logic",
-    category: "Logic",
-    fields: [
-      {
-        key: "language",
-        label: "Language",
-        placeholder: "javascript",
-        control: "select",
-        options: [
-          { value: "javascript", label: "JavaScript" },
-          { value: "python", label: "Python" },
-        ],
-      },
-      {
-        key: "code",
-        label: "Code",
-        placeholder: "return items",
-        control: "code",
-        language: "javascript",
-        help: "Snippet that runs for each item. Return the data to pass downstream.",
-      },
-    ],
-  },
-  {
-    id: "set",
-    label: "Edit fields",
-    description: "Set or rename fields.",
-    kind: "logic",
-    category: "Logic",
-    fields: [
-      {
-        key: "mapping",
-        label: "Mapping",
-        placeholder: "name = first + last",
-        control: "textarea",
-        help: "Assign or rename fields, one mapping per line.",
-      },
-    ],
-  },
-  {
-    id: "merge",
-    label: "Merge",
-    description: "Combine branches.",
-    kind: "logic",
-    category: "Logic",
-    fields: [{ key: "mode", label: "Mode", placeholder: "append" }],
-  },
-  {
-    id: "loop",
-    label: "Loop",
-    description: "Iterate over items.",
-    kind: "logic",
-    category: "Logic",
-    fields: [{ key: "items", label: "Items path", placeholder: "$.rows" }],
-  },
-  {
-    id: "transform",
-    label: "Transform",
-    description: "Map, pick, or reshape data.",
-    kind: "logic",
-    category: "Logic",
-    fields: [
-      {
-        key: "expression",
-        label: "Expression",
-        placeholder: "{{ json.body }}",
-        control: "textarea",
-        help: "Expression used to map or pick values from the current item.",
-      },
-    ],
-  },
+  ...codeTransformNodes,
   {
     id: "paths",
     label: "Paths",

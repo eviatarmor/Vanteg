@@ -25,4 +25,9 @@ describe("createVantegNode", () => {
     expect(createVantegNode("filter", { x: 0, y: 0 }).data.config.operator).toBe("gt")
     expect(createVantegNode("delay", { x: 0, y: 0 }).data.config.unit).toBe("minutes")
   })
+
+  it("defaults Code language and Merge mode from select placeholders", () => {
+    expect(createVantegNode("code", { x: 0, y: 0 }).data.config.language).toBe("javascript")
+    expect(createVantegNode("merge", { x: 0, y: 0 }).data.config.mode).toBe("append")
+  })
 })
