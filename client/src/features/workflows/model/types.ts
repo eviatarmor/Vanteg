@@ -69,7 +69,7 @@ export type NodeVar = {
   id: string
   key: string
   value: string
-  /** Secret-sensitive I/O variable. */
+  /** When true, ExplorerTree masks the value/hint and uses the secret icon. */
   secret?: boolean
 }
 
