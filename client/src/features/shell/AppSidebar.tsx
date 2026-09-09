@@ -28,6 +28,8 @@ import {
 
 import { usePendingInbox } from "@/features/inbox/model/store"
 
+import { ShortcutsFooterButton } from "./ShortcutsFooterButton"
+
 import {
   getCurrentUser,
   getFooterNav,
@@ -208,6 +210,7 @@ export function AppSidebar() {
                 pathname={location.pathname}
               />
             ))}
+            <ShortcutsFooterButton />
           </SidebarMenu>
           <UserMenu />
         </div>
