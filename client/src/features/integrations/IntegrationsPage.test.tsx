@@ -26,19 +26,30 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     resetIntegrationsStore()
   })
 
-  it("shows connected connectors under the title with no tabs", () => {
+  it("shows Integrations and Custom Credentials tabs by default", () => {
     renderIntegrations()
 
     expect(screen.getByRole("heading", { name: "Integrations" })).toBeInTheDocument()
-    expect(screen.queryByRole("heading", { name: "Configured connectors" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("tab")).not.toBeInTheDocument()
-    expect(screen.queryByRole("textbox", { name: "Search connectors" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Google Sheets" })).not.toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Integrations" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Custom Credentials" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Integrations" })).toHaveAttribute("data-state", "active")
     expect(screen.getByRole("heading", { name: "No connectors configured" })).toBeInTheDocument()
     expect(screen.getAllByRole("button", { name: "Add connector" }).length).toBeGreaterThan(0)
-    expect(
-      screen.getByRole("heading", { name: "Integrations" }).closest("div")?.parentElement
-    ).toHaveClass("border-b")
+  })
+
+  it("switches to Custom Credentials empty state via ?tab=", async () => {
+    const user = userEvent.setup()
+    renderIntegrations("/integrations?tab=custom-credentials")
+
+    expect(screen.getByRole("tab", { name: "Custom Credentials" })).toHaveAttribute(
+      "data-state",
+      "active"
+    )
+    expect(screen.getByRole("heading", { name: "No custom credentials yet" })).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "New credential" }).length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole("tab", { name: "Integrations" }))
+    expect(screen.getByRole("heading", { name: "No connectors configured" })).toBeInTheDocument()
   })
 
   it("opens a catalog dialog with only a search bar", async () => {
@@ -132,5 +143,38 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
       expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_test_vanteg")
     })
     expect(screen.getByText("Stripe")).toBeInTheDocument()
+  })
+
+  it("shows validation errors when creating a custom credential without required fields", async () => {
+    const user = userEvent.setup()
+    renderIntegrations("/integrations?tab=custom-credentials")
+
+    await user.click(screen.getAllByRole("button", { name: "New credential" })[0]!)
+    expect(screen.getByRole("dialog", { name: "New credential" })).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Create" }))
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Required").length).toBeGreaterThan(0)
+    })
+    expect(getIntegrationsSnapshot().customCredentials).toHaveLength(0)
+  })
+
+  it("creates a custom bearer credential and lists a masked preview", async () => {
+    const user = userEvent.setup()
+    renderIntegrations("/integrations?tab=custom-credentials")
+
+    await user.click(screen.getAllByRole("button", { name: "New credential" })[0]!)
+    await user.type(screen.getByLabelText("Name"), "Agent token")
+    await user.type(screen.getByLabelText("Token"), "super-secret-token")
+    await user.click(screen.getByRole("button", { name: "Create" }))
+
+    await waitFor(() => {
+      expect(getIntegrationsSnapshot().customCredentials).toHaveLength(1)
+    })
+    expect(screen.getByText("Agent token")).toBeInTheDocument()
+    expect(screen.getByText("Bearer")).toBeInTheDocument()
+    expect(screen.queryByText("super-secret-token")).not.toBeInTheDocument()
+    expect(screen.getByText(/\*{5}/)).toBeInTheDocument()
   })
 })
