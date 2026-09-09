@@ -5,11 +5,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
+import {
+  createCustomCredential,
+  resetIntegrationsStore,
+} from "@/features/integrations/model/store"
 import { resetMemoryStore } from "@/features/memory/model/store"
 
 import { AgentsPage } from "./AgentsPage"
 import { getAgent, resetAgents } from "./model/store"
-
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -41,6 +44,7 @@ describe("AgentsPage", () => {
     resetAgents()
     resetMemoryStore()
     vi.clearAllMocks()
+    resetIntegrationsStore()
   })
 
   it("lists seeded agents and a create action", () => {
@@ -114,6 +118,35 @@ describe("AgentsPage", () => {
     await user.click(within(picker).getByRole("option", { name: /GPT-6 Astra/i }))
 
     expect(screen.getByRole("button", { name: "Model" })).toHaveTextContent("GPT-6 Astra")
+  })
+
+  it("assigns a custom credential by id without showing raw secrets", async () => {
+    const user = userEvent.setup()
+    const created = await createCustomCredential({
+      name: "Support API",
+      kind: "api-key",
+      fields: { apiKey: "sk_live_should_not_appear" },
+    })
+    expect(created.ok).toBe(true)
+    if (!created.ok) {
+      return
+    }
+
+    renderAgents("/agents/agent-research")
+
+    expect(await screen.findByRole("heading", { name: "Custom credentials" })).toBeInTheDocument()
+    expect(screen.queryByText("sk_live_should_not_appear")).not.toBeInTheDocument()
+    expect(document.querySelector('input[type="password"]')).toBeNull()
+
+    const checkbox = await screen.findByRole("checkbox", { name: "Support API" })
+    await user.click(checkbox)
+    expect(screen.getByRole("checkbox", { name: "Support API" })).toBeChecked()
+    expect(getAgent("agent-research")?.credentialIds).toEqual([])
+
+    await user.click(screen.getByRole("button", { name: "Save agent" }))
+    await waitFor(() => {
+      expect(getAgent("agent-research")?.credentialIds).toEqual([created.data.id])
+    })
   })
 
   it("creates an agent from the name prompt", async () => {
