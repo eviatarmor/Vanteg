@@ -26,6 +26,7 @@ describe("current user", () => {
   it("exposes the owner shown in the shell footer", () => {
     expect(getCurrentUser()).toEqual({
       displayName: "Darren",
+      email: "darren@vanteg.app",
       role: "Owner",
       initials: "DH",
     })
