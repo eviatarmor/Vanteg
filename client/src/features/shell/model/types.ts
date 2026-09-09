@@ -4,6 +4,7 @@ export type NavIconId =
   | "workflows"
   | "agents"
   | "teams"
+  | "templates"
   | "data"
   | "memory"
   | "integrations"
