@@ -7,26 +7,56 @@ import { cn } from "@workspace/ui/lib/utils"
 import { ExplorerTree, type ExplorerNode } from "@/features/data/ui/ExplorerTree"
 import { EmptyState } from "@/features/empty-state/EmptyState"
 import { ResizableSidebar } from "@/features/layout/ResizableSidebar"
+import { ExplorerSkeleton, ResourceError } from "@/features/load-state/ResourceStatus"
 
 import { readKnowledgeFile } from "../model/files"
 import {
   addKnowledgeDocument,
+  retryMemoryLoad,
   selectKnowledgeBase,
   useMemoryStore,
 } from "../model/store"
 
 import { KnowledgeDocumentsGrid } from "./KnowledgeDocumentsGrid"
 
-export function KnowledgeBaseExplorer() {
+export function KnowledgeBaseExplorer({ onCreate }: { onCreate?: () => void }) {
   const snapshot = useMemoryStore()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+
+  if (snapshot.loadState === "loading") {
+    return <ExplorerSkeleton label="Loading knowledge bases" />
+  }
+
+  if (snapshot.loadState === "error") {
+    return (
+      <ResourceError
+        title="Could not load knowledge bases"
+        message={snapshot.loadError ?? "Something went wrong while loading knowledge."}
+        onRetry={() => retryMemoryLoad()}
+      />
+    )
+  }
+
+  if (snapshot.knowledgeBases.length === 0) {
+    return (
+      <EmptyState
+        icon={BookOpen}
+        title="No knowledge bases yet"
+        description="Create a knowledge base, then upload files for retrieval."
+        actionLabel="New knowledge base"
+        onCreate={onCreate}
+        className="min-h-0 flex-1"
+      />
+    )
+  }
+
   const selected =
     snapshot.knowledgeBases.find((base) => base.id === snapshot.selectedKnowledgeBaseId) ??
     snapshot.knowledgeBases[0]
   const documents = selected
     ? snapshot.documents.filter((document) => document.knowledgeBaseId === selected.id)
     : []
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [dragging, setDragging] = useState(false)
 
   const nodes: ExplorerNode[] = snapshot.knowledgeBases.map((base) => ({
     id: base.id,
@@ -110,7 +140,7 @@ export function KnowledgeBaseExplorer() {
                 <EmptyState
                   icon={BookOpen}
                   title="No files yet"
-                  description="Drop files to index for retrieval. Text files are indexed; other types are stored."
+                  description="Drop files here or upload to index them for retrieval. Text files are indexed; other types are stored."
                   actionLabel="Upload files"
                   onCreate={() => inputRef.current?.click()}
                   className="min-h-0 flex-1"
