@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { getNodeTypeForEditor } from "./auth-fields"
 import {
   getNodeType,
   listCommonIntegrations,
@@ -153,6 +154,53 @@ describe("workflow node catalog", () => {
         "google-drive-new-folder",
       ])
     )
+  })
+
+  it("exposes Setup fields on HTTP Request and related HTTP nodes", () => {
+    const http = getNodeType("http")
+    expect(http?.fields.map((field) => field.key)).toEqual([
+      "method",
+      "url",
+      "query",
+      "headers",
+      "body",
+      "timeout",
+    ])
+    expect(http?.fields.find((field) => field.key === "method")?.control).toBe("select")
+    expect(http?.fields.find((field) => field.key === "method")?.options?.map((o) => o.value)).toEqual(
+      expect.arrayContaining(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"])
+    )
+    expect(http?.fields.find((field) => field.key === "query")?.control).toBe("textarea")
+    expect(http?.fields.find((field) => field.key === "headers")).toMatchObject({
+      control: "code",
+      language: "json",
+    })
+    expect(http?.fields.find((field) => field.key === "body")?.control).toBe("textarea")
+    expect(http?.fields.find((field) => field.key === "timeout")?.placeholder).toBe("30000")
+
+    const poll = getNodeType("http-poll")
+    expect(poll?.fields.map((field) => field.key)).toEqual([
+      "method",
+      "url",
+      "query",
+      "headers",
+    ])
+    expect(poll?.fields.find((field) => field.key === "headers")?.control).toBe("code")
+
+    const download = getNodeType("http-download")
+    expect(download?.fields.map((field) => field.key)).toEqual(["url", "headers", "path"])
+    expect(download?.fields.find((field) => field.key === "headers")?.control).toBe("code")
+
+    expect(getNodeTypeForEditor("http")?.fields.map((field) => field.key)).toEqual([
+      "method",
+      "url",
+      "query",
+      "headers",
+      "body",
+      "timeout",
+      "credentialId",
+      "token",
+    ])
   })
 
   it("covers CRM, payments, and the missing database insert action", () => {

@@ -6,26 +6,14 @@ import {
 } from "@workspace/integrations"
 
 import type { NodeField, WorkflowNodeType } from "./types"
-
-const HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-] as const
-
-function httpMethodField(placeholder: string): NodeField {
-  return {
-    key: "method",
-    label: "Method",
-    placeholder,
-    control: "select",
-    options: HTTP_METHODS.map((value) => ({ value, label: value })),
-  }
-}
+import {
+  httpHeadersField,
+  httpMethodField,
+  httpQueryField,
+  httpUrlField,
+  httpBodyField,
+  httpTimeoutField,
+} from "./http-fields"
 
 function method(
   id: string,
@@ -148,7 +136,11 @@ const platformNodes: WorkflowNodeType[] = [
     category: "Actions",
     fields: [
       httpMethodField("GET"),
-      { key: "url", label: "URL", placeholder: "https://api.example.com" },
+      httpUrlField("https://api.example.com"),
+      httpQueryField(),
+      httpHeadersField(),
+      httpBodyField(),
+      httpTimeoutField(),
     ],
   },
   {
@@ -206,10 +198,13 @@ const platformNodes: WorkflowNodeType[] = [
   },
   method("http-poll", "trigger", "Poll URL", "Start when an HTTP endpoint changes.", [
     httpMethodField("GET"),
-    { key: "url", label: "URL", placeholder: "https://api.example.com/status" },
+    httpUrlField("https://api.example.com/status"),
+    httpQueryField(),
+    httpHeadersField(),
   ]),
   method("http-download", "action", "Download file", "Download a file over HTTP.", [
-    { key: "url", label: "URL", placeholder: "https://example.com/file.csv" },
+    httpUrlField("https://example.com/file.csv"),
+    httpHeadersField(),
     { key: "path", label: "Save as", placeholder: "/tmp/file.csv" },
   ]),
   method("email-new-attachment", "trigger", "New attachment", "Start when an email with an attachment arrives.", [

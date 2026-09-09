@@ -154,6 +154,16 @@ describe("NodeSheet", () => {
     )
   })
 
+  it("shows HTTP Request query, timeout, and credential fields", () => {
+    const node = createVantegNode("http", { x: 0, y: 0 })
+
+    renderSheet(node)
+
+    expect(screen.getByLabelText("Query").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Timeout (ms)")).toBeInTheDocument()
+    expect(screen.getByLabelText("Bearer token / API key")).toBeInTheDocument()
+  })
+
   it("lets HTTP Request pick a custom credential and hides the inline secret", async () => {
     const user = userEvent.setup()
     const created = await createCustomCredential({
