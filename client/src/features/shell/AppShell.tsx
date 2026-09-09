@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar"
 
 import { isAuthenticated } from "@/features/auth/model/session"
 import { AssistantDock } from "@/features/assistant/AssistantDock"
+import { OnboardingRouteTracker } from "@/features/home/ui/OnboardingRouteTracker"
 
 import { AppSidebar } from "./AppSidebar"
 import { AppTopbar } from "./AppTopbar"
@@ -27,6 +28,7 @@ export function AppShell() {
 
   return (
     <SidebarProvider className="h-svh overflow-hidden bg-sidebar">
+      <OnboardingRouteTracker />
       <AppSidebar />
       <SidebarInset className="min-h-0 min-w-0 overflow-hidden bg-background">
         <AppTopbar title={title} />
