@@ -1,4 +1,13 @@
 import { field, integrationApp, method, oauth } from "../define.ts"
+import type { MethodField } from "../types.ts"
+
+function sheetField(placeholder = "Leads"): MethodField {
+  return field("sheet", "Sheet", placeholder, {
+    control: "resource",
+    resourceType: "sheets.sheet",
+    help: "Pick a spreadsheet sheet from the connected Google account, or enter a custom sheet name.",
+  })
+}
 
 export const googleSheets = integrationApp({
   id: "google-sheets",
@@ -11,20 +20,20 @@ export const googleSheets = integrationApp({
   pickerGroup: "google",
   methods: [
     method("spreadsheet-new-row", "trigger", "New row", "Start when a spreadsheet row is added.", [
-      field("sheet", "Sheet", "Leads"),
+      sheetField(),
     ]),
     method("spreadsheet-updated-row", "trigger", "Updated row", "Start when a spreadsheet row changes.", [
-      field("sheet", "Sheet", "Leads"),
+      sheetField(),
     ]),
     method("spreadsheet", "action", "Update row", "Create or update a spreadsheet row.", [
-      field("sheet", "Sheet", "Leads"),
+      sheetField(),
     ]),
     method("spreadsheet-create-row", "action", "Create row", "Append a spreadsheet row.", [
-      field("sheet", "Sheet", "Leads"),
+      sheetField(),
       field("values", "Values", "Ada, ada@acme.com", { control: "textarea" }),
     ]),
     method("spreadsheet-delete-row", "action", "Delete row", "Delete a spreadsheet row.", [
-      field("sheet", "Sheet", "Leads"),
+      sheetField(),
       field("row", "Row", "12"),
     ]),
   ],

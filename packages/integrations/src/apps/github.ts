@@ -1,4 +1,13 @@
 import { field, integrationApp, method, oauth } from "../define.ts"
+import type { MethodField } from "../types.ts"
+
+function repoField(placeholder = "acme/app"): MethodField {
+  return field("repo", "Repository", placeholder, {
+    control: "resource",
+    resourceType: "github.repo",
+    help: "Pick a repository from the connected GitHub account, or enter owner/repo.",
+  })
+}
 
 export const github = integrationApp({
   id: "github",
@@ -10,56 +19,56 @@ export const github = integrationApp({
   sheetsTemplate: "issue",
   methods: [
     method("github-new-issue", "trigger", "New issue", "Start when a GitHub issue is opened.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
     ]),
     method("github-pull-request", "trigger", "Pull request opened", "Start when a GitHub pull request is opened.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
     ]),
     method("github-pr-merged", "trigger", "Pull request merged", "Start when a GitHub pull request is merged.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
     ]),
     method("github-pr-closed", "trigger", "Pull request closed", "Start when a GitHub pull request is closed without merging.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
     ]),
     method("github-issue-closed", "trigger", "Issue closed", "Start when a GitHub issue is closed.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
     ]),
     method("github-new-commit", "trigger", "New commit", "Start when a commit is pushed.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("branch", "Branch", "main"),
     ]),
     method("github-new-release", "trigger", "Release published", "Start when a GitHub release is published.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
     ]),
     method("github", "action", "Create issue", "Create issues, comments, or pull requests.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("action", "Action", "create issue"),
     ]),
     method("github-comment", "action", "Create comment", "Comment on a GitHub issue or pull request.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("body", "Comment", "Looks good"),
     ]),
     method("github-create-pr", "action", "Create pull request", "Open a GitHub pull request.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("title", "Title", "Fix login"),
       field("head", "Head branch", "fix/login"),
       field("base", "Base branch", "main"),
     ]),
     method("github-add-label", "action", "Add label", "Add a label to a GitHub issue or pull request.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("number", "Issue or PR", "12"),
       field("label", "Label", "bug"),
     ]),
     method("github-close-issue", "action", "Close issue", "Close a GitHub issue.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("number", "Issue", "12"),
     ]),
     method("github-merge-pr", "action", "Merge pull request", "Merge a GitHub pull request.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("number", "Pull request", "34"),
     ]),
     method("github-create-release", "action", "Create release", "Publish a GitHub release.", [
-      field("repo", "Repository", "acme/app"),
+      repoField(),
       field("tag", "Tag", "v1.2.0"),
       field("name", "Name", "1.2.0"),
     ]),
