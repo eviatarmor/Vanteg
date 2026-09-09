@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { BookOpen, CircleHelp, LifeBuoy, Search } from "lucide-react"
+import { BookOpen, CircleHelp, ExternalLink, LifeBuoy, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@workspace/ui/components/button"
@@ -23,7 +23,13 @@ import { EmptyState } from "@/features/empty-state/EmptyState"
 import { PageHeader } from "@/features/page-header/PageHeader"
 import { getPageCopy } from "@/features/shell/model/catalog"
 
-import { filterFaq, HELP_DOC_LINKS, HELP_FAQ } from "./model/faq"
+import {
+  filterFaq,
+  HELP_DOC_LINKS,
+  HELP_FAQ,
+  HELP_STATUS_HREF,
+  HELP_SUPPORT_EMAIL,
+} from "./model/faq"
 
 export function HelpPage() {
   const { title, subtitle } = getPageCopy("/help")
@@ -47,7 +53,7 @@ export function HelpPage() {
                 id="help-search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search FAQs, integrations, secrets…"
+                placeholder="Search FAQs, billing, compliance, secrets…"
                 className="pl-8"
                 autoComplete="off"
               />
@@ -58,7 +64,7 @@ export function HelpPage() {
             <CardHeader className="border-b">
               <CardTitle>FAQ</CardTitle>
               <CardDescription>
-                Common questions about the shell, workflows, and connectors.
+                Common questions about the shell, billing, compliance, and connectors.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-(--card-spacing)">
@@ -129,21 +135,27 @@ export function HelpPage() {
             <CardContent className="flex flex-col gap-3 pt-(--card-spacing) sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
                 Support inbox is a stub for now — we will open a ticket draft
-                locally.
+                locally. Check status for incidents.
               </p>
-              <Button
-                type="button"
-                className="shrink-0"
-                onClick={() =>
-                  toast.message("Support request started", {
-                    description:
-                      "Contact form is not wired yet. Email support@vanteg.app.",
-                  })
-                }
-              >
-                <LifeBuoy className="size-4" aria-hidden />
-                Contact support
-              </Button>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button asChild variant="outline">
+                  <a href={HELP_STATUS_HREF} target="_blank" rel="noreferrer">
+                    <ExternalLink className="size-4" aria-hidden />
+                    Status page
+                  </a>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    toast.message("Support request started", {
+                      description: `Contact form is not wired yet. Email ${HELP_SUPPORT_EMAIL}.`,
+                    })
+                  }
+                >
+                  <LifeBuoy className="size-4" aria-hidden />
+                  Contact support
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
