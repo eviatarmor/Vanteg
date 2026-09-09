@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react"
-import { Link, Navigate, useNavigate } from "react-router"
+import { Link, Navigate } from "react-router"
 
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
@@ -10,13 +10,12 @@ import { Spinner } from "@workspace/ui/components/spinner"
 import { SecretInput } from "@/components/secret-input"
 
 import { hasMockSession, setSession } from "./model/session"
+import { useMockAuthSubmit } from "./model/use-mock-auth-submit"
 import { validateLogin, type FieldErrors } from "./model/validation"
 import { AuthLayout } from "./ui/AuthLayout"
 
-const MOCK_DELAY_MS = 400
-
 export function LoginPage() {
-  const navigate = useNavigate()
+  const { returnTo, waitThenFinish } = useMockAuthSubmit()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -24,7 +23,7 @@ export function LoginPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   if (hasMockSession()) {
-    return <Navigate to="/" replace />
+    return <Navigate to={returnTo} replace />
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -35,17 +34,17 @@ export function LoginPage() {
     if (Object.keys(nextErrors).length > 0) return
 
     setPending(true)
-    try {
-      await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS))
-      const trimmed = email.trim()
+    const trimmed = email.trim()
+    const result = await waitThenFinish(() =>
       setSession({
         email: trimmed,
         name: trimmed.split("@")[0] || trimmed,
       })
-      navigate("/", { replace: true })
-    } catch {
+    )
+    if (result === "failed") {
       setFormError("Something went wrong. Try again.")
-    } finally {
+    }
+    if (result !== "cancelled") {
       setPending(false)
     }
   }
@@ -57,12 +56,16 @@ export function LoginPage() {
       footer={
         <p>
           New here?{" "}
-          <Link
-            to="/sign-up"
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-          >
-            Create an account
-          </Link>
+          {pending ? (
+            <span className="font-medium text-muted-foreground">Create an account</span>
+          ) : (
+            <Link
+              to="/sign-up"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Create an account
+            </Link>
+          )}
         </p>
       }
     >

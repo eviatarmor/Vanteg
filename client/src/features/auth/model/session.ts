@@ -17,11 +17,12 @@ function readRaw(): string | null {
   }
 }
 
-function writeRaw(value: string): void {
+function writeRaw(value: string): boolean {
   try {
     localStorage.setItem(AUTH_STORAGE_KEY, value)
+    return localStorage.getItem(AUTH_STORAGE_KEY) === value
   } catch {
-    // Ignore quota / private-mode failures in the mock shell.
+    return false
   }
 }
 
@@ -64,8 +65,8 @@ export function getSession(): MockAuthSession | null {
   }
 }
 
-export function setSession(session: MockAuthSession): void {
-  writeRaw(
+export function setSession(session: MockAuthSession): boolean {
+  return writeRaw(
     JSON.stringify({
       email: session.email.trim(),
       name: session.name.trim() || session.email.trim(),
@@ -73,8 +74,32 @@ export function setSession(session: MockAuthSession): void {
   )
 }
 
-export function clearSession(): void {
-  writeRaw(LOGGED_OUT)
+export function clearSession(): boolean {
+  return writeRaw(LOGGED_OUT) && readRaw() === LOGGED_OUT
+}
+
+export function safeReturnPath(from: unknown): string {
+  if (typeof from !== "string" || !from.startsWith("/") || from.startsWith("//")) {
+    return "/"
+  }
+  if (from.includes("\\") || from.includes("://")) {
+    return "/"
+  }
+  const hash = from.indexOf("#")
+  const withoutHash = hash >= 0 ? from.slice(0, hash) : from
+  const query = withoutHash.indexOf("?")
+  const pathname = query >= 0 ? withoutHash.slice(0, query) : withoutHash
+  if (pathname === "/login" || pathname === "/sign-up") {
+    return "/"
+  }
+  return withoutHash
+}
+
+export function returnPathFromState(state: unknown): string {
+  if (!state || typeof state !== "object") {
+    return "/"
+  }
+  return safeReturnPath((state as { from?: unknown }).from)
 }
 
 /** Reset storage for tests (no logged-out marker). */

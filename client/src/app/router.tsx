@@ -31,6 +31,11 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
   },
   {
+    path: "/integrations/oauth/callback",
+    Component: OAuthCallbackPage,
+    errorElement: <RouteErrorPage />,
+  },
+  {
     path: "/",
     Component: AppShell,
     errorElement: <RouteErrorPage />,
@@ -43,7 +48,6 @@ export const router = createBrowserRouter([
       { path: "teams/:teamId?", Component: TeamsPage },
       { path: "data", Component: DataPage },
       { path: "memory", Component: MemoryPage },
-      { path: "integrations/oauth/callback", Component: OAuthCallbackPage },
       { path: "integrations", Component: IntegrationsPage },
       { path: "api-keys", Component: ApiKeysPage },
       { path: "help", Component: HelpPage },

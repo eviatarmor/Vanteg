@@ -12,14 +12,18 @@ import {
   setSession,
 } from "./model/session"
 
-function renderLogin(path = "/login") {
+function renderLogin(
+  path = "/login",
+  state?: { from: string }
+) {
   const router = createMemoryRouter(
     [
       { path: "/login", Component: LoginPage },
       { path: "/sign-up", Component: SignUpPage },
       { path: "/", element: <div>Home</div> },
+      { path: "/workflows", element: <div>Workflows</div> },
     ],
-    { initialEntries: [path] }
+    { initialEntries: [{ pathname: path, state }] }
   )
   return { ...render(<RouterProvider router={router} />), router }
 }
@@ -93,5 +97,52 @@ describe("LoginPage", () => {
     setSession({ email: "alex@vanteg.test", name: "Alex" })
     renderLogin()
     expect(screen.getByText("Home")).toBeInTheDocument()
+  })
+
+  it("returns to the in-app from path after login", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    const { router } = renderLogin("/login", { from: "/workflows" })
+
+    await user.type(screen.getByLabelText("Email"), "alex@vanteg.test")
+    await user.type(screen.getByLabelText("Password"), "secret")
+    await user.click(screen.getByRole("button", { name: "Log in" }))
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/workflows")
+    })
+  })
+
+  it("stays on login and shows an error when the session cannot be stored", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota")
+    })
+    const { router } = renderLogin()
+
+    await user.type(screen.getByLabelText("Email"), "alex@vanteg.test")
+    await user.type(screen.getByLabelText("Password"), "secret")
+    await user.click(screen.getByRole("button", { name: "Log in" }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Something went wrong. Try again.")).toBeInTheDocument()
+    })
+    expect(router.state.location.pathname).toBe("/login")
+    expect(hasMockSession()).toBe(false)
+    vi.restoreAllMocks()
+  })
+
+  it("does not finish login after unmount during the mock delay", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    const { unmount } = renderLogin()
+
+    await user.type(screen.getByLabelText("Email"), "alex@vanteg.test")
+    await user.type(screen.getByLabelText("Password"), "secret")
+    await user.click(screen.getByRole("button", { name: "Log in" }))
+    expect(screen.getByRole("button", { name: /signing in/i })).toBeDisabled()
+    expect(screen.queryByRole("link", { name: "Create an account" })).not.toBeInTheDocument()
+
+    unmount()
+    await vi.runAllTimersAsync()
+    expect(hasMockSession()).toBe(false)
   })
 })
