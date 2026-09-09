@@ -1,4 +1,4 @@
-import { field, integrationApp, method, oauth } from "../define.ts"
+import { field, integrationApp, method, oauth, selectField } from "../define.ts"
 
 export const github = integrationApp({
   id: "github",
@@ -33,7 +33,11 @@ export const github = integrationApp({
     ]),
     method("github", "action", "Create issue", "Create issues, comments, or pull requests.", [
       field("repo", "Repository", "acme/app"),
-      field("action", "Action", "create issue"),
+      selectField("action", "Action", "create_issue", [
+        { value: "create_issue", label: "Create issue" },
+        { value: "create_comment", label: "Create comment" },
+        { value: "create_pull_request", label: "Create pull request" },
+      ]),
     ]),
     method("github-comment", "action", "Create comment", "Comment on a GitHub issue or pull request.", [
       field("repo", "Repository", "acme/app"),
