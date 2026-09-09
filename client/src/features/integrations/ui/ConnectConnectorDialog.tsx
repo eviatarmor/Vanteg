@@ -13,6 +13,7 @@ import {
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
 
+import { SecretInput } from "@/components/secret-input"
 import { getOAuthApp } from "@infra/integrations/oauth-apps"
 
 import {
@@ -104,18 +105,32 @@ export function ConnectConnectorDialog({
             {fields.map((field) => (
               <div key={field.id} className="grid gap-2">
                 <Label htmlFor={`credential-${field.id}`}>{field.label}</Label>
-                <Input
-                  id={`credential-${field.id}`}
-                  type={field.secret ? "password" : "text"}
-                  value={values[field.id] ?? ""}
-                  placeholder={field.placeholder}
-                  autoComplete={field.secret ? "off" : "off"}
-                  aria-invalid={Boolean(fieldErrors[field.id])}
-                  disabled={pending}
-                  onChange={(event) =>
-                    setValues((current) => ({ ...current, [field.id]: event.target.value }))
-                  }
-                />
+                {field.secret ? (
+                  <SecretInput
+                    id={`credential-${field.id}`}
+                    value={values[field.id] ?? ""}
+                    placeholder={field.placeholder}
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(fieldErrors[field.id])}
+                    disabled={pending}
+                    onValueChange={(value) =>
+                      setValues((current) => ({ ...current, [field.id]: value }))
+                    }
+                  />
+                ) : (
+                  <Input
+                    id={`credential-${field.id}`}
+                    type="text"
+                    value={values[field.id] ?? ""}
+                    placeholder={field.placeholder}
+                    autoComplete="off"
+                    aria-invalid={Boolean(fieldErrors[field.id])}
+                    disabled={pending}
+                    onChange={(event) =>
+                      setValues((current) => ({ ...current, [field.id]: event.target.value }))
+                    }
+                  />
+                )}
                 {fieldErrors[field.id] ? (
                   <p className="text-xs text-destructive">{fieldErrors[field.id]}</p>
                 ) : null}

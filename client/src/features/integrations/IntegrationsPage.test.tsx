@@ -136,7 +136,12 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
 
     await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
     await user.click(screen.getByRole("button", { name: "Stripe" }))
-    await user.type(screen.getByLabelText("API Key"), "sk_test_vanteg")
+
+    const apiKey = screen.getByLabelText("API Key")
+    expect(apiKey).not.toHaveAttribute("type", "password")
+    await user.type(apiKey, "sk_test_vanteg")
+    expect(apiKey).toHaveValue("*************g")
+
     await user.click(screen.getByRole("button", { name: "Connect" }))
 
     await waitFor(() => {
@@ -165,8 +170,14 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     renderIntegrations("/integrations?tab=custom-credentials")
 
     await user.click(screen.getAllByRole("button", { name: "New credential" })[0]!)
+    expect(screen.getByRole("dialog", { name: "New credential" })).toBeInTheDocument()
+
+    const token = screen.getByLabelText("Token")
+    expect(token).not.toHaveAttribute("type", "password")
     await user.type(screen.getByLabelText("Name"), "Agent token")
-    await user.type(screen.getByLabelText("Token"), "super-secret-token")
+    await user.type(token, "super-secret-token")
+    expect(token).toHaveValue("*****************n")
+
     await user.click(screen.getByRole("button", { name: "Create" }))
 
     await waitFor(() => {
