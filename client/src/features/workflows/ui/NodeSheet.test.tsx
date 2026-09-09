@@ -447,4 +447,21 @@ describe("NodeSheet", () => {
     renderSheet(node)
     expect(screen.getByLabelText("Start")).toHaveAttribute("type", "datetime-local")
   })
+
+  it("shows the Test webhook panel for webhook trigger nodes", () => {
+    const node = createVantegNode("webhook", { x: 0, y: 0 })
+    renderSheet(node)
+
+    expect(screen.getByRole("heading", { name: "Test webhook" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Send test" })).toBeInTheDocument()
+    expect(screen.getByLabelText("Signing secret")).toBeInTheDocument()
+    expect(screen.getByText("POST /hooks/vanteg")).toBeInTheDocument()
+  })
+
+  it("hides the Test webhook panel for non-webhook nodes", () => {
+    const node = createVantegNode("manual", { x: 0, y: 0 })
+    renderSheet(node)
+
+    expect(screen.queryByRole("heading", { name: "Test webhook" })).not.toBeInTheDocument()
+  })
 })
