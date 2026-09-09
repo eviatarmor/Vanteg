@@ -12,6 +12,8 @@ export type FieldControl =
   | "credential"
   | "boolean"
   | "resource"
+  | "number"
+  | "datetime"
 
 export interface NodeFieldOption {
   value: string
