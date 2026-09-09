@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import { createVantegNode } from "./create-node"
-import { mapUpstreamOutputs } from "./node-io"
+import {
+  defaultNodeIo,
+  isSecretIoKey,
+  isSecretNodeVar,
+  mapUpstreamOutputs,
+} from "./node-io"
 
 describe("node in/out", () => {
   it("gives webhook nodes output variables and slack nodes input variables", () => {
@@ -31,5 +36,40 @@ describe("node in/out", () => {
     expect(wired.inVars.find((item) => item.key === "body")?.value).toBe(
       "{{Webhook.body}}"
     )
+  })
+
+  it("tags secret-sensitive keys and never pastes live tokens into defaults", () => {
+    expect(isSecretIoKey("token")).toBe(true)
+    expect(isSecretIoKey("apiKey")).toBe(true)
+    expect(isSecretIoKey("clientSecret")).toBe(true)
+    expect(isSecretIoKey("credentialId")).toBe(true)
+    expect(isSecretIoKey("Authorization")).toBe(true)
+    expect(isSecretIoKey("password")).toBe(true)
+    expect(isSecretIoKey("channel")).toBe(false)
+    expect(isSecretIoKey("body")).toBe(false)
+
+    const io = defaultNodeIo("http")
+    expect(isSecretNodeVar({ key: "token", secret: true })).toBe(true)
+    expect(isSecretNodeVar({ key: "status" })).toBe(false)
+
+    const source = createVantegNode("http", { x: 0, y: 0 })
+    source.data.outVars = [
+      ...source.data.outVars,
+      { id: "tok", key: "token", value: "", secret: true },
+      { id: "cred", key: "credentialId", value: "" },
+    ]
+    expect(source.data.outVars.find((v) => v.key === "token")?.secret).toBe(true)
+    expect(isSecretNodeVar(source.data.outVars.find((v) => v.key === "credentialId")!)).toBe(
+      true
+    )
+
+    const target = createVantegNode("slack", { x: 80, y: 0 })
+    const wired = mapUpstreamOutputs(source, target)
+    const tokenIn = wired.inVars.find((item) => item.key === "token")
+    expect(tokenIn?.secret).toBe(true)
+    expect(tokenIn?.value).toBe("{{HTTP Request.token}}")
+    expect(tokenIn?.value).not.toMatch(/sk-|Bearer\s/i)
+
+    expect(io.outVars.find((item) => item.key === "status")?.secret).toBeUndefined()
   })
 })
