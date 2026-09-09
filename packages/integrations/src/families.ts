@@ -101,6 +101,7 @@ function ticketStatusActionField(placeholder: string): MethodField {
 
 function amountField(placeholder = "12000"): MethodField {
   return field("amount", "Amount", placeholder, {
+    control: "number",
     help: "Numeric amount (for example 12000). Enter digits only.",
   })
 }
@@ -177,7 +178,7 @@ function paymentFamily(prefix: string, name: string): Method[] {
       }),
     ]),
     method(`${prefix}-create-charge`, "action", "Create charge", `Create a ${name} charge.`, [
-      field("amount", "Amount", "2000"),
+      field("amount", "Amount", "2000", { control: "number" }),
       field("currency", "Currency", "usd"),
     ]),
     method(`${prefix}-issue-refund`, "action", "Issue refund", `Refund a ${name} charge.`, [
@@ -188,7 +189,7 @@ function paymentFamily(prefix: string, name: string): Method[] {
     ]),
     method(`${prefix}-create-invoice`, "action", "Create invoice", `Create a ${name} invoice.`, [
       field("customerId", "Customer ID", "cus_123"),
-      field("amount", "Amount", "2000"),
+      field("amount", "Amount", "2000", { control: "number" }),
     ]),
     method(`${prefix}-cancel-subscription`, "action", "Cancel subscription", `Cancel a ${name} subscription.`, [
       field("subscriptionId", "Subscription ID", "sub_123"),
@@ -225,9 +226,11 @@ function calendarFamily(prefix: string, name: string): Method[] {
       }),
       field("title", "Title", "Kickoff"),
       field("start", "Start", "2026-09-08T09:00", {
+        control: "datetime",
         help: "Event start time (ISO 8601 local or UTC).",
       }),
       field("until", "Until", "2026-09-08T10:00", {
+        control: "datetime",
         help: "Event end time (ISO 8601). Must be after start.",
       }),
       field("description", "Description", "Agenda and notes", { control: "textarea" }),
@@ -236,9 +239,11 @@ function calendarFamily(prefix: string, name: string): Method[] {
       field("eventId", "Event ID", "evt_123"),
       field("title", "Title", "Kickoff"),
       field("start", "Start", "2026-09-08T09:00", {
+        control: "datetime",
         help: "Event start time (ISO 8601 local or UTC).",
       }),
       field("until", "Until", "2026-09-08T10:00", {
+        control: "datetime",
         help: "Event end time (ISO 8601). Must be after start.",
       }),
       field("description", "Description", "Agenda and notes", { control: "textarea" }),
