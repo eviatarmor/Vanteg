@@ -63,6 +63,36 @@ describe("integrations registry", () => {
     expect(getConnector("slack")?.operations).not.toContain("post")
   })
 
+  it("promotes Microsoft Teams with featured methods and textarea message fields", () => {
+    const teams = getApp("microsoft-teams")
+    expect(teams?.featured).toBe(true)
+    expect(teams?.sheetsTemplate).toBe("chat")
+    expect(teams?.methods.map((method) => method.id)).toEqual(
+      expect.arrayContaining([
+        "microsoft-teams-new-message",
+        "microsoft-teams-channel-created",
+        "microsoft-teams-member-added",
+        "microsoft-teams",
+        "microsoft-teams-reply-in-thread",
+        "microsoft-teams-update-message",
+        "microsoft-teams-list-channels",
+      ])
+    )
+    expect(getConnector("microsoft-teams")?.operations).toEqual(
+      expect.arrayContaining(["Post message", "Reply in thread", "Update message", "List channels"])
+    )
+    expect(getConnector("microsoft-teams")?.operations).not.toContain("post")
+    const messageFields = teams!.methods
+      .filter((method) => method.kind === "action")
+      .flatMap((method) => method.fields)
+      .filter((field) => field.key === "message")
+    expect(messageFields.length).toBeGreaterThan(0)
+    expect(messageFields.every((field) => field.control === "textarea")).toBe(true)
+    expect(listFeaturedMethods().map((method) => method.id)).toEqual(
+      expect.arrayContaining(["microsoft-teams", "microsoft-teams-new-message"])
+    )
+  })
+
   it("groups Google Sheets, Drive, and Docs into one picker app", () => {
     const google = listPickerConnectorApps().find((app) => app.id === "google")
     expect(getApp("google-sheets")?.pickerGroup).toBe("google")
