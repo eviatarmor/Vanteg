@@ -35,7 +35,7 @@ describe("node in/out", () => {
       expect.arrayContaining(["body", "channel", "message"])
     )
     expect(wired.inVars.find((item) => item.key === "body")?.value).toBe(
-      "{{Webhook.body}}"
+      '{{Webhook.body}}'
     )
   })
 
@@ -43,11 +43,11 @@ describe("node in/out", () => {
     expect(isSecretIoKey("token")).toBe(true)
     expect(isSecretIoKey("apiKey")).toBe(true)
     expect(isSecretIoKey("clientSecret")).toBe(true)
+    expect(isSecretIoKey("credentialId")).toBe(true)
     expect(isSecretIoKey("Authorization")).toBe(true)
     expect(isSecretIoKey("password")).toBe(true)
     expect(isSecretIoKey("secretKey")).toBe(true)
     expect(isSecretIoKey("awsSecretKey")).toBe(true)
-    expect(isSecretIoKey("credentialId")).toBe(false)
     expect(isSecretIoKey("channel")).toBe(false)
     expect(isSecretIoKey("body")).toBe(false)
     expect(isSecretIoKey("nextToken")).toBe(false)
@@ -55,14 +55,14 @@ describe("node in/out", () => {
 
     expect(sanitizeIoVarValue(true, "sk-live")).toBe("")
     expect(sanitizeIoVarValue(true, "Bearer abc")).toBe("")
-    expect(sanitizeIoVarValue(true, "Bearer sk-{{")).toBe("")
-    expect(sanitizeIoVarValue(true, "{{HTTP Request.token}}")).toBe("{{HTTP Request.token}}")
+    expect(sanitizeIoVarValue(true, 'Bearer sk-{{')).toBe("")
+    expect(sanitizeIoVarValue(true, '{{HTTP Request.token}}')).toBe('{{HTTP Request.token}}')
     expect(sanitizeIoVarValue(false, "sk-live")).toBe("sk-live")
 
     const io = defaultNodeIo("http")
     expect(isSecretNodeVar({ key: "token", secret: true })).toBe(true)
     expect(isSecretNodeVar({ key: "status" })).toBe(false)
-    expect(isSecretNodeVar({ key: "credentialId" })).toBe(false)
+    expect(isSecretNodeVar({ key: "credentialId" })).toBe(true)
 
     const source = createVantegNode("http", { x: 0, y: 0 })
     source.data.outVars = [
@@ -71,12 +71,15 @@ describe("node in/out", () => {
       { id: "cred", key: "credentialId", value: "" },
     ]
     expect(source.data.outVars.find((v) => v.key === "token")?.secret).toBe(true)
+    expect(isSecretNodeVar(source.data.outVars.find((v) => v.key === "credentialId")!)).toBe(
+      true
+    )
 
     const target = createVantegNode("slack", { x: 80, y: 0 })
     const wired = mapUpstreamOutputs(source, target)
     const tokenIn = wired.inVars.find((item) => item.key === "token")
     expect(tokenIn?.secret).toBe(true)
-    expect(tokenIn?.value).toBe("{{HTTP Request.token}}")
+    expect(tokenIn?.value).toBe('{{HTTP Request.token}}')
 
     expect(io.outVars.find((item) => item.key === "status")?.secret).toBeUndefined()
   })
