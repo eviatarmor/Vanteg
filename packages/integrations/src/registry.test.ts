@@ -105,6 +105,28 @@ describe("integrations registry", () => {
     }
   })
 
+  it("marks featured app MethodFields as resource-select", () => {
+    const cases: Array<{ appId: string; key: string; resourceType: string; min: number }> = [
+      { appId: "github", key: "repo", resourceType: "github.repo", min: 10 },
+      { appId: "google-sheets", key: "sheet", resourceType: "sheets.sheet", min: 4 },
+      { appId: "discord", key: "channel", resourceType: "discord.channel", min: 5 },
+      { appId: "notion", key: "page", resourceType: "notion.page", min: 4 },
+      { appId: "google-calendar", key: "calendar", resourceType: "calendar.calendar", min: 4 },
+      { appId: "google-forms", key: "formId", resourceType: "forms.form", min: 3 },
+    ]
+    for (const { appId, key, resourceType, min } of cases) {
+      const app = getApp(appId)
+      const fields = (app?.methods ?? []).flatMap((method) =>
+        method.fields.filter((field) => field.key === key)
+      )
+      expect(fields.length, appId).toBeGreaterThanOrEqual(min)
+      for (const field of fields) {
+        expect(field.control, `${appId}.${key}`).toBe("resource")
+        expect(field.resourceType, `${appId}.${key}`).toBe(resourceType)
+      }
+    }
+  })
+
   it("groups Google Sheets, Drive, and Docs into one picker app", () => {
     const google = listPickerConnectorApps().find((app) => app.id === "google")
     expect(getApp("google-sheets")?.pickerGroup).toBe("google")
