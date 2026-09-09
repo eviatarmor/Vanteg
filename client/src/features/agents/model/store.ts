@@ -40,6 +40,7 @@ function createSeed(): Agent[] {
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
       capabilityIds: ["web_search", "file_retrieval", "memory_write"],
+      credentialIds: [],
       updatedAt: Date.parse("2026-04-05T08:00:00Z"),
     },
     {
@@ -53,6 +54,7 @@ function createSeed(): Agent[] {
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
       capabilityIds: ["web_search", "file_retrieval", "browser"],
+      credentialIds: [],
       updatedAt: Date.parse("2026-04-05T09:00:00Z"),
     },
     {
@@ -66,6 +68,7 @@ function createSeed(): Agent[] {
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
       capabilityIds: ["file_retrieval"],
+      credentialIds: [],
       updatedAt: Date.parse("2026-04-05T10:00:00Z"),
     },
     {
@@ -79,6 +82,7 @@ function createSeed(): Agent[] {
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
       capabilityIds: ["file_retrieval"],
+      credentialIds: [],
       updatedAt: Date.parse("2026-04-05T10:05:00Z"),
     },
     {
@@ -92,6 +96,7 @@ function createSeed(): Agent[] {
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
       capabilityIds: ["file_retrieval"],
+      credentialIds: [],
       updatedAt: Date.parse("2026-04-05T10:10:00Z"),
     },
     {
@@ -105,6 +110,7 @@ function createSeed(): Agent[] {
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
       capabilityIds: ["file_retrieval"],
+      credentialIds: [],
       updatedAt: Date.parse("2026-04-05T10:15:00Z"),
     },
   ]
@@ -148,6 +154,7 @@ export function createAgent(name?: string): Agent {
     knowledgeBaseIds: [],
     workflowIds: [],
     capabilityIds: ["file_retrieval", "memory_write"],
+    credentialIds: [],
     updatedAt: Date.now(),
   }
   agents = [agent, ...agents]
@@ -169,6 +176,7 @@ export function saveAgent(
       | "knowledgeBaseIds"
       | "workflowIds"
       | "capabilityIds"
+      | "credentialIds"
     >
   >
 ): Agent | undefined {
@@ -190,7 +198,7 @@ export function saveAgent(
 
 export function toggleAgentAssignment(
   id: string,
-  field: "memoryBaseIds" | "knowledgeBaseIds" | "workflowIds" | "capabilityIds",
+  field: "memoryBaseIds" | "knowledgeBaseIds" | "workflowIds" | "capabilityIds" | "credentialIds",
   value: string,
   enabled: boolean
 ): Agent | undefined {
