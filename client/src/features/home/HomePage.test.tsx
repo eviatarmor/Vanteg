@@ -74,10 +74,11 @@ describe("HomePage", () => {
       "href",
       "/agents/agent-support"
     )
-    expect(screen.getByRole("link", { name: /Browse templates/i })).toHaveAttribute(
-      "href",
-      "/templates"
-    )
+    const templateLinks = screen.getAllByRole("link", { name: /Browse templates/i })
+    expect(templateLinks.length).toBeGreaterThanOrEqual(1)
+    for (const link of templateLinks) {
+      expect(link).toHaveAttribute("href", "/templates")
+    }
     expect(
       screen.queryByRole("heading", { name: "Nothing on the dashboard yet" })
     ).not.toBeInTheDocument()

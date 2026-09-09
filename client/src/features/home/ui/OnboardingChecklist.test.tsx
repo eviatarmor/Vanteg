@@ -38,7 +38,10 @@ describe("OnboardingChecklist", () => {
     )
     expect(screen.getByRole("link", { name: "Open Workflows" })).toHaveAttribute("href", "/workflows")
     expect(screen.getByRole("link", { name: "Open Teams" })).toHaveAttribute("href", "/teams")
-    expect(screen.getByRole("link", { name: "Browse guides" })).toHaveAttribute("href", "/help")
+    expect(screen.getByRole("link", { name: "Browse templates" })).toHaveAttribute(
+      "href",
+      "/templates"
+    )
     expect(screen.getByRole("button", { name: "Ask Vanteg" })).toBeInTheDocument()
   })
 

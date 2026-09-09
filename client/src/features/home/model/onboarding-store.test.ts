@@ -16,6 +16,9 @@ describe("onboardingItemIdsForPath", () => {
   it("matches integrations and nested paths", () => {
     expect(onboardingItemIdsForPath("/integrations")).toEqual(["connect-integration"])
     expect(onboardingItemIdsForPath("/teams/team-swe")).toEqual(["invite-or-agent"])
+    expect(onboardingItemIdsForPath("/agents/agent-support")).toEqual(["invite-or-agent"])
+    expect(onboardingItemIdsForPath("/templates")).toEqual(["try-template"])
+    expect(onboardingItemIdsForPath("/help")).toEqual([])
     expect(onboardingItemIdsForPath("/")).toEqual([])
   })
 })
@@ -58,10 +61,12 @@ describe("onboarding store", () => {
 
   it("marks items complete when matching routes are visited", () => {
     markOnboardingPathVisited("/workflows/wf-1")
-    markOnboardingPathVisited("/help")
+    markOnboardingPathVisited("/templates")
+    markOnboardingPathVisited("/agents")
     expect(getOnboardingSnapshot().completed).toEqual({
       "create-workflow": true,
       "try-template": true,
+      "invite-or-agent": true,
     })
   })
 

@@ -13,6 +13,8 @@ export interface OnboardingItem {
   description: string
   /** Target route when action is navigate; null for assistant. */
   href: string | null
+  /** Extra paths that also complete this item (prefix match). */
+  matchHrefs?: readonly string[]
   action: OnboardingItemAction
   cta: string
 }
@@ -41,16 +43,17 @@ export const onboardingItems: readonly OnboardingItem[] = [
     title: "Invite a teammate or create an agent",
     description: "Add people to a team graph, or personalize an agent.",
     href: "/teams",
+    matchHrefs: ["/agents"],
     action: "navigate",
     cta: "Open Teams",
   },
   {
     id: "try-template",
     title: "Try a template",
-    description: "Browse starter guides and patterns to move faster.",
-    href: "/help",
+    description: "Start from an industry template instead of a blank canvas.",
+    href: "/templates",
     action: "navigate",
-    cta: "Browse guides",
+    cta: "Browse templates",
   },
   {
     id: "open-assistant",
@@ -71,6 +74,11 @@ export function pathMatchesOnboardingHref(pathname: string, href: string): boole
 
 export function onboardingItemIdsForPath(pathname: string): OnboardingItemId[] {
   return onboardingItems
-    .filter((item) => item.href !== null && pathMatchesOnboardingHref(pathname, item.href))
+    .filter((item) => {
+      const hrefs = [item.href, ...(item.matchHrefs ?? [])].filter(
+        (href): href is string => href !== null
+      )
+      return hrefs.some((href) => pathMatchesOnboardingHref(pathname, href))
+    })
     .map((item) => item.id)
 }
