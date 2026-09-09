@@ -17,6 +17,8 @@ Sources:
 
 ### Slack
 
+Channel fields use Setup `control: "resource"` with `resourceType: "slack.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`.
+
 **Triggers:** New message · New reaction · New channel · App mentioned
 
 **Actions:** Send message · Update message · Upload file · Add reaction
