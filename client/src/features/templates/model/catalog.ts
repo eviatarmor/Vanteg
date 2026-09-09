@@ -1,7 +1,8 @@
+import catalogData from "./catalog-data.json"
+
 import type { Industry, IndustryId, SubTemplate, TemplateType } from "./types"
 
-// Placeholder — replaced by full catalog in next commit.
-const industries: Industry[] = []
+const industries = catalogData as Industry[]
 
 export function listIndustries(): Industry[] {
   return industries
@@ -24,11 +25,36 @@ export function filterTemplates(options: {
   type?: TemplateType | "all"
   query?: string
 }): SubTemplate[] {
-  return listSubTemplates()
+  const industryId = options.industryId ?? "all"
+  const type = options.type ?? "all"
+  const query = options.query?.trim().toLowerCase() ?? ""
+
+  return listSubTemplates().filter((template) => {
+    if (industryId !== "all" && template.industryId !== industryId) {
+      return false
+    }
+    if (type !== "all" && template.type !== type) {
+      return false
+    }
+    if (!query) {
+      return true
+    }
+    const haystack = [
+      template.title,
+      template.description,
+      template.longDescription,
+      ...template.tags,
+      getIndustry(template.industryId)?.name ?? "",
+    ]
+      .join(" ")
+      .toLowerCase()
+    return haystack.includes(query)
+  })
 }
 
 let failNextLoad = false
 
+/** Test helper: force the next loadCatalog() to reject once. */
 export function failNextCatalogLoad(): void {
   failNextLoad = true
 }
