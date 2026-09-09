@@ -49,6 +49,7 @@ describe("nav catalog", () => {
     ])
     expect(sections[0]?.items.map((item) => item.label)).toEqual([
       "Home",
+      "Assistant",
       "Inbox",
     ])
     expect(sections[1]?.items.map((item) => item.label)).toEqual([
@@ -87,6 +88,8 @@ describe("nav catalog", () => {
 describe("getPageTitle", () => {
   it("returns the nav label for a known path", () => {
     expect(getPageTitle("/")).toBe("Home")
+    expect(getPageTitle("/assistant")).toBe("Assistant")
+    expect(getPageTitle("/assistant/abc")).toBe("Assistant")
     expect(getPageTitle("/inbox")).toBe("Inbox")
     expect(getPageTitle("/workflows")).toBe("Workflows")
     expect(getPageTitle("/data")).toBe("Data")
@@ -113,6 +116,10 @@ describe("getPageCopy", () => {
     expect(getPageCopy("/")).toEqual({
       title: "Home",
       subtitle: "Your workspace at a glance.",
+    })
+    expect(getPageCopy("/assistant")).toEqual({
+      title: "Assistant",
+      subtitle: "Full-page chat with Vanteg and your conversation history.",
     })
     expect(getPageCopy("/workflows")).toEqual({
       title: "Workflows",
