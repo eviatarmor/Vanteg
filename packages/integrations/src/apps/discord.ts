@@ -1,4 +1,25 @@
-import { field, integrationApp, method, oauth } from "../define.ts"
+import { field, integrationApp, method, oauth, selectField } from "../define.ts"
+
+const DISCORD_EMOJI_OPTIONS = [
+  { value: "✅", label: "✅ Check" },
+  { value: "👀", label: "👀 Eyes" },
+  { value: "👍", label: "👍 Thumbs up" },
+  { value: "👎", label: "👎 Thumbs down" },
+  { value: "🎉", label: "🎉 Tada" },
+  { value: "🔥", label: "🔥 Fire" },
+  { value: "❤️", label: "❤️ Heart" },
+  { value: "👏", label: "👏 Clap" },
+  { value: "🚀", label: "🚀 Rocket" },
+  { value: "⚠️", label: "⚠️ Warning" },
+] as const
+
+function discordEmojiField(placeholder = "✅") {
+  return selectField("emoji", "Emoji", placeholder, DISCORD_EMOJI_OPTIONS)
+}
+
+function discordMessageField(placeholder: string) {
+  return field("message", "Message", placeholder, { control: "textarea" })
+}
 
 export const discord = integrationApp({
   id: "discord",
@@ -23,15 +44,15 @@ export const discord = integrationApp({
     ]),
     method("discord", "action", "Send message", "Send a Discord channel message.", [
       field("channel", "Channel", "#alerts"),
-      field("message", "Message", "Workflow finished"),
+      discordMessageField("Workflow finished"),
     ]),
     method("discord-update-message", "action", "Update message", "Edit a Discord channel message.", [
       field("channel", "Channel", "#alerts"),
-      field("message", "Message", "Updated text"),
+      discordMessageField("Updated text"),
     ]),
     method("discord-add-reaction", "action", "Add reaction", "React to a Discord message.", [
       field("channel", "Channel", "#alerts"),
-      field("emoji", "Emoji", "✅"),
+      discordEmojiField(),
     ]),
     method("discord-delete-message", "action", "Delete message", "Delete a Discord channel message.", [
       field("channel", "Channel", "#alerts"),

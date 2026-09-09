@@ -1,4 +1,32 @@
-import { field, integrationApp, method, oauth } from "../define.ts"
+import { field, integrationApp, method, oauth, selectField } from "../define.ts"
+
+const SLACK_EMOJI_OPTIONS = [
+  { value: "eyes", label: ":eyes:" },
+  { value: "thumbsup", label: ":thumbsup:" },
+  { value: "thumbsdown", label: ":thumbsdown:" },
+  { value: "white_check_mark", label: ":white_check_mark:" },
+  { value: "tada", label: ":tada:" },
+  { value: "fire", label: ":fire:" },
+  { value: "heart", label: ":heart:" },
+  { value: "clap", label: ":clap:" },
+  { value: "rocket", label: ":rocket:" },
+  { value: "warning", label: ":warning:" },
+] as const
+
+function slackEmojiField(placeholder = "eyes") {
+  return selectField("emoji", "Emoji", placeholder, SLACK_EMOJI_OPTIONS)
+}
+
+function slackMessageField(placeholder: string) {
+  return field("message", "Message", placeholder, { control: "textarea" })
+}
+
+function unfurlLinksField() {
+  return field("unfurlLinks", "Unfurl links", "true", {
+    control: "boolean",
+    help: "Expand link previews when posting or updating Slack messages.",
+  })
+}
 
 export const slack = integrationApp({
   id: "slack",
@@ -41,11 +69,13 @@ export const slack = integrationApp({
     ]),
     method("slack", "action", "Send message", "Post a Slack message.", [
       field("channel", "Channel", "#ops"),
-      field("message", "Message", "Workflow finished"),
+      slackMessageField("Workflow finished"),
+      unfurlLinksField(),
     ]),
     method("slack-update-message", "action", "Update message", "Edit an existing Slack message.", [
       field("channel", "Channel", "#ops"),
-      field("message", "Message", "Updated text"),
+      slackMessageField("Updated text"),
+      unfurlLinksField(),
     ]),
     method("slack-upload-file", "action", "Upload file", "Upload a file to a Slack channel.", [
       field("channel", "Channel", "#ops"),
@@ -53,7 +83,7 @@ export const slack = integrationApp({
     ]),
     method("slack-add-reaction", "action", "Add reaction", "React to a Slack message.", [
       field("channel", "Channel", "#ops"),
-      field("emoji", "Emoji", "eyes"),
+      slackEmojiField(),
       field("ts", "Message ts", "{{Webhook.ts}}"),
     ]),
     method("slack-create-channel", "action", "Create channel", "Create a Slack channel.", [
@@ -62,7 +92,7 @@ export const slack = integrationApp({
     ]),
     method("slack-remove-reaction", "action", "Remove reaction", "Remove a reaction from a Slack message.", [
       field("channel", "Channel", "#ops"),
-      field("emoji", "Emoji", "eyes"),
+      slackEmojiField(),
       field("ts", "Message ts", "{{Webhook.ts}}"),
     ]),
     method("slack-invite-user", "action", "Invite user to channel", "Invite a user to a Slack channel.", [
