@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it, vi } from "vitest"
 
+import { KeyboardShortcutsProvider } from "@/features/shortcuts/KeyboardShortcutsProvider"
+
 import { HelpPage } from "./HelpPage"
 import { HELP_DOC_LINKS, HELP_FAQ } from "./model/faq"
 
@@ -17,7 +19,9 @@ vi.mock("sonner", () => ({
 function renderHelp() {
   return render(
     <MemoryRouter>
-      <HelpPage />
+      <KeyboardShortcutsProvider>
+        <HelpPage />
+      </KeyboardShortcutsProvider>
     </MemoryRouter>
   )
 }
@@ -42,6 +46,15 @@ describe("HelpPage", () => {
     }
 
     expect(screen.getByRole("button", { name: /Contact support/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Keyboard shortcuts/i })).toBeInTheDocument()
+  })
+
+  it("opens the keyboard shortcuts dialog from Help", async () => {
+    const user = userEvent.setup()
+    renderHelp()
+
+    await user.click(screen.getByRole("button", { name: /Keyboard shortcuts/i }))
+    expect(screen.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeInTheDocument()
   })
 
   it("filters FAQ results and shows empty state when nothing matches", async () => {

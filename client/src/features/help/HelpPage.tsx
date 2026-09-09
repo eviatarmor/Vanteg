@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { BookOpen, CircleHelp, LifeBuoy, Search } from "lucide-react"
+import { BookOpen, CircleHelp, Keyboard, LifeBuoy, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@workspace/ui/components/button"
@@ -21,12 +21,14 @@ import { Label } from "@workspace/ui/components/label"
 
 import { EmptyState } from "@/features/empty-state/EmptyState"
 import { PageHeader } from "@/features/page-header/PageHeader"
+import { useKeyboardShortcuts } from "@/features/shortcuts/KeyboardShortcutsProvider"
 import { getPageCopy } from "@/features/shell/model/catalog"
 
 import { filterFaq, HELP_DOC_LINKS, HELP_FAQ } from "./model/faq"
 
 export function HelpPage() {
   const { title, subtitle } = getPageCopy("/help")
+  const { openShortcuts } = useKeyboardShortcuts()
   const [query, setQuery] = useState("")
 
   const results = useMemo(() => filterFaq(query), [query])
@@ -36,22 +38,31 @@ export function HelpPage() {
       <PageHeader title={title} subtitle={subtitle} icon={CircleHelp} />
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6">
-          <div className="grid gap-2">
-            <Label htmlFor="help-search">Search help</Label>
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                id="help-search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search FAQs, integrations, secrets…"
-                className="pl-8"
-                autoComplete="off"
-              />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="grid min-w-0 flex-1 gap-2">
+              <Label htmlFor="help-search">Search help</Label>
+              <div className="relative">
+                <Search
+                  className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  id="help-search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search FAQs, integrations, secrets…"
+                  className="pl-8"
+                  autoComplete="off"
+                />
+              </div>
             </div>
+            <Button type="button" variant="outline" onClick={openShortcuts}>
+              <Keyboard />
+              Keyboard shortcuts
+              <kbd className="ml-1 rounded border border-border bg-muted px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground">
+                ?
+              </kbd>
+            </Button>
           </div>
 
           <Card>

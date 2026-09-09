@@ -6,6 +6,7 @@ import { SidebarProvider } from "@workspace/ui/components/sidebar"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { resetInbox } from "@/features/inbox/model/store"
+import { KeyboardShortcutsProvider } from "@/features/shortcuts/KeyboardShortcutsProvider"
 
 import { AppSidebar } from "./AppSidebar"
 
@@ -13,9 +14,11 @@ function renderSidebar() {
   return render(
     <MemoryRouter>
       <TooltipProvider>
-        <SidebarProvider>
-          <AppSidebar />
-        </SidebarProvider>
+        <KeyboardShortcutsProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </KeyboardShortcutsProvider>
       </TooltipProvider>
     </MemoryRouter>
   )
@@ -44,6 +47,7 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Integrations" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "API Keys" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Help" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Shortcuts" })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument()
     expect(screen.getByText("3")).toBeInTheDocument()
     expect(screen.getByText("Darren")).toBeInTheDocument()
