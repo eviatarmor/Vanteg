@@ -64,11 +64,39 @@ export const HELP_FAQ: HelpFaqItem[] = [
     tags: ["agents", "teams"],
   },
   {
+    id: "export-data",
+    question: "How do I export my data?",
+    answer:
+      "Open Settings → Privacy & data and choose Request export. When the mock job finishes, download the JSON package. For formal GDPR/CCPA access, use Settings → Compliance to queue an access or export request.",
+    tags: ["export", "gdpr", "ccpa", "privacy", "compliance", "data"],
+  },
+  {
+    id: "delete-account",
+    question: "How do I delete my account?",
+    answer:
+      "Settings → Privacy & data → Delete account asks for confirmation, then marks the mock account for deletion. Production deletions follow the DPA timeline after identity verification.",
+    tags: ["delete", "account", "gdpr", "privacy", "compliance"],
+  },
+  {
+    id: "dpa",
+    question: "Where is the Data Processing Agreement (DPA)?",
+    answer:
+      "Settings → Compliance links to the stub DPA at vanteg.app/legal/dpa. The same section lists subprocessors and an audit log viewer for compliance reviews.",
+    tags: ["dpa", "compliance", "legal", "subprocessors"],
+  },
+  {
+    id: "billing-plan",
+    question: "How does billing and upgrading work?",
+    answer:
+      "Settings → Billing shows your Free or Pro plan, usage meters, invoice stubs, and a masked payment method. Upgrade to Pro is a local mock — no real card processor runs. Update payment only stores last-four digits for demos.",
+    tags: ["billing", "plan", "pro", "invoices", "payment"],
+  },
+  {
     id: "support",
     question: "How do I get support?",
     answer:
-      "Search this Help page first, then use Contact support below. Include the page path and what you expected to happen.",
-    tags: ["support", "contact", "help"],
+      "Search this Help page first, then use Contact support below or check the status page stub. Include the page path and what you expected to happen.",
+    tags: ["support", "contact", "help", "status"],
   },
 ]
 
@@ -95,6 +123,9 @@ export const HELP_DOC_LINKS: HelpDocLink[] = [
     href: "https://github.com/eviatarmor/Vanteg/blob/master/docs/integrations.md",
   },
 ]
+
+export const HELP_STATUS_HREF = "https://status.vanteg.app"
+export const HELP_SUPPORT_EMAIL = "support@vanteg.app"
 
 export function filterFaq(query: string, items: HelpFaqItem[] = HELP_FAQ): HelpFaqItem[] {
   const normalized = query.trim().toLowerCase()
