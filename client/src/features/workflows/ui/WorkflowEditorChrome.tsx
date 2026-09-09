@@ -89,7 +89,7 @@ export function WorkflowEditorChrome() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                aria-label={`Workflow status: ${workflowStatusLabel[workflow.status]}`}
+                aria-label="Workflow environment"
                 title={workflowStatusDescription[workflow.status]}
               >
                 <Badge className={statusClass[workflow.status]}>

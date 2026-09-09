@@ -88,7 +88,7 @@ describe("AppTopbar", () => {
     expect(screen.getByRole("navigation", { name: "breadcrumb" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Workflows" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Untitled workflow" })).toBeInTheDocument()
-    expect(screen.getByLabelText("Workflow environment")).toHaveTextContent("draft")
+    expect(screen.getByLabelText("Workflow environment")).toHaveTextContent("Draft")
     expect(screen.queryByRole("heading", { name: "Workflows" })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Untitled workflow" }))

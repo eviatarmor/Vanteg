@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
-import { createDraft, getWorkflow, resetWorkflows } from "../model/store"
+import { createDraft, getWorkflow, resetWorkflows, saveWorkflow } from "../model/store"
 import { WorkflowCanvas } from "./WorkflowCanvas"
 
 function renderCanvas(workflow = createDraft()) {
@@ -108,6 +108,15 @@ describe("WorkflowCanvas", () => {
     expect(screen.getByRole("tab", { name: "Logic gates" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Connectors" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /RSS/ })).toBeInTheDocument()
+  })
+
+  it("hints when the canvas has no nodes", () => {
+    const workflow = createDraft()
+    saveWorkflow(workflow.id, { nodes: [] })
+    renderCanvas(getWorkflow(workflow.id) ?? workflow)
+
+    expect(screen.getByTestId("empty-canvas-hint")).toBeInTheDocument()
+    expect(screen.getByText("Empty canvas")).toBeInTheDocument()
   })
 
   it("deploys the workflow from the canvas toolbar", async () => {
