@@ -4,7 +4,7 @@ export type WorkflowStatus = "draft" | "dev" | "prod"
 
 export type NodeKind = "trigger" | "action" | "logic"
 
-export type FieldControl = "input" | "textarea" | "code" | "select"
+export type FieldControl = "input" | "textarea" | "code" | "select" | "resource"
 
 export interface NodeFieldOption {
   value: string
@@ -19,6 +19,8 @@ export interface NodeField {
   control?: FieldControl
   language?: "javascript" | "json"
   options?: readonly NodeFieldOption[]
+  /** Connection-scoped resource catalog key, e.g. "slack.channel". Used when control is "resource". */
+  resourceType?: string
 }
 
 export type PortColor =

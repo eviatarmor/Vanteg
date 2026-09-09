@@ -1,4 +1,13 @@
 import { field, integrationApp, method, oauth } from "../define.ts"
+import type { MethodField } from "../types.ts"
+
+function channelField(placeholder = "#ops"): MethodField {
+  return field("channel", "Channel", placeholder, {
+    control: "resource",
+    resourceType: "slack.channel",
+    help: "Pick a Slack channel from the connected workspace, or enter a custom channel name.",
+  })
+}
 
 export const slack = integrationApp({
   id: "slack",
@@ -25,34 +34,34 @@ export const slack = integrationApp({
   ],
   methods: [
     method("slack-new-message", "trigger", "New message", "Start when a Slack message is posted.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
     ]),
     method("slack-reaction", "trigger", "New reaction", "Start when someone reacts in Slack.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
     ]),
     method("slack-new-channel", "trigger", "New channel", "Start when a Slack channel is created.", [
       field("name", "Name contains", "incidents"),
     ]),
     method("slack-app-mentioned", "trigger", "App mentioned", "Start when this app is mentioned in Slack.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
     ]),
     method("slack-user-joined", "trigger", "User joined workspace", "Start when someone joins the Slack workspace.", [
       field("team", "Workspace", "Acme"),
     ]),
     method("slack", "action", "Send message", "Post a Slack message.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
       field("message", "Message", "Workflow finished"),
     ]),
     method("slack-update-message", "action", "Update message", "Edit an existing Slack message.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
       field("message", "Message", "Updated text"),
     ]),
     method("slack-upload-file", "action", "Upload file", "Upload a file to a Slack channel.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
       field("path", "File path", "/tmp/report.pdf"),
     ]),
     method("slack-add-reaction", "action", "Add reaction", "React to a Slack message.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
       field("emoji", "Emoji", "eyes"),
       field("ts", "Message ts", "{{Webhook.ts}}"),
     ]),
@@ -61,12 +70,12 @@ export const slack = integrationApp({
       field("topic", "Topic", "Acme renewal"),
     ]),
     method("slack-remove-reaction", "action", "Remove reaction", "Remove a reaction from a Slack message.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
       field("emoji", "Emoji", "eyes"),
       field("ts", "Message ts", "{{Webhook.ts}}"),
     ]),
     method("slack-invite-user", "action", "Invite user to channel", "Invite a user to a Slack channel.", [
-      field("channel", "Channel", "#ops"),
+      channelField(),
       field("user", "User", "@ada"),
     ]),
   ],
