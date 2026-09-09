@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router"
 
 import { AgentsPage } from "@/features/agents/AgentsPage"
+import { AssistantPage } from "@/features/assistant/AssistantPage"
 import { TeamsPage } from "@/features/teams/TeamsPage"
 import { ApiKeysPage } from "@/features/api-keys/ApiKeysPage"
 import { DataPage } from "@/features/data/DataPage"
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, Component: HomePage },
+      { path: "assistant/:threadId?", Component: AssistantPage },
       { path: "inbox", Component: InboxPage },
       { path: "workflows", Component: WorkflowsPage },
       { path: "workflows/:workflowId", Component: WorkflowEditorPage },
