@@ -32,6 +32,10 @@ export function AppShell() {
       <a
         href="#main-content"
         className="bg-background text-foreground ring-ring/50 absolute left-4 top-4 z-50 -translate-y-16 rounded-lg border border-transparent px-3 py-2 text-sm font-medium opacity-0 shadow-md outline-none transition focus:translate-y-0 focus:border-ring focus:opacity-100 focus:ring-3 focus-visible:border-ring focus-visible:opacity-100 focus-visible:ring-3 focus-visible:ring-ring/50"
+        onClick={(event) => {
+          event.preventDefault()
+          document.getElementById("main-content")?.focus()
+        }}
       >
         Skip to main content
       </a>
