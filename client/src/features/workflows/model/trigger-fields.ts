@@ -1,14 +1,5 @@
 import type { NodeField } from "./types"
-
-const HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-] as const
+import { httpMethodField } from "./http-fields"
 
 const COMMON_TIMEZONES = [
   { value: "UTC", label: "UTC" },
@@ -36,16 +27,6 @@ const POLL_INTERVALS = [
   { value: "12h", label: "Every 12 hours" },
   { value: "1d", label: "Every day" },
 ] as const
-
-export function triggerHttpMethodField(placeholder: string): NodeField {
-  return {
-    key: "method",
-    label: "Method",
-    placeholder,
-    control: "select",
-    options: HTTP_METHODS.map((value) => ({ value, label: value })),
-  }
-}
 
 export function scheduleCronField(placeholder = "0 9 * * 1-5"): NodeField {
   return {
@@ -82,7 +63,7 @@ export function webhookSecretField(): NodeField {
     key: "secret",
     label: "Secret",
     placeholder: "Optional signing secret",
-    control: "secret",
+    secret: true,
     help: "Optional shared secret for verifying webhook requests. Leave blank if unused.",
   }
 }
@@ -138,7 +119,7 @@ export function scheduleFields(): NodeField[] {
 export function webhookFields(): NodeField[] {
   return [
     webhookPathField(),
-    triggerHttpMethodField("POST"),
+    httpMethodField("POST"),
     webhookSecretField(),
   ]
 }

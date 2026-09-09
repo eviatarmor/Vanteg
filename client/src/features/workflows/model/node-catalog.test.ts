@@ -184,6 +184,7 @@ describe("workflow node catalog", () => {
       "url",
       "query",
       "headers",
+      "interval",
     ])
     expect(poll?.fields.find((field) => field.key === "headers")?.control).toBe("code")
 

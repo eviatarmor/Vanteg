@@ -24,6 +24,12 @@ import {
 } from "./http-fields"
 import { logicGateNodes } from "./logic-nodes"
 import { codeTransformNodes } from "./code-transform-nodes"
+import {
+  pollIntervalField,
+  rssFields,
+  scheduleFields,
+  webhookFields,
+} from "./trigger-fields"
 
 function method(
   id: string,
@@ -57,10 +63,7 @@ export const platformNodes: WorkflowNodeType[] = [
     description: "Start when an HTTP request arrives.",
     kind: "trigger",
     category: "Triggers",
-    fields: [
-      httpMethodField("POST"),
-      { key: "path", label: "Path", placeholder: "/hooks/vanteg" },
-    ],
+    fields: webhookFields(),
   },
   {
     id: "schedule",
@@ -68,7 +71,7 @@ export const platformNodes: WorkflowNodeType[] = [
     description: "Run on a cron expression or a repeating interval.",
     kind: "trigger",
     category: "Triggers",
-    fields: [{ key: "cron", label: "Cron", placeholder: "0 9 * * 1-5" }],
+    fields: scheduleFields(),
   },
   {
     id: "email",
@@ -103,7 +106,7 @@ export const platformNodes: WorkflowNodeType[] = [
     description: "Start when an RSS or Atom feed has a new item.",
     kind: "trigger",
     category: "Triggers",
-    fields: [{ key: "url", label: "Feed URL", placeholder: "https://example.com/feed" }],
+    fields: rssFields(),
   },
   {
     id: "inbound-call",
@@ -206,6 +209,7 @@ export const platformNodes: WorkflowNodeType[] = [
     httpUrlField("https://api.example.com/status"),
     httpQueryField(),
     httpHeadersField(),
+    pollIntervalField(),
   ]),
   method("http-download", "action", "Download file", "Download a file over HTTP.", [
     httpUrlField("https://example.com/file.csv"),
