@@ -61,10 +61,17 @@ export function useIntegrationsStore(): IntegrationsSnapshot {
   )
 }
 
+let customCredentialsLoadReset: (() => void) | null = null
+
+export function registerCustomCredentialsLoadReset(fn: () => void) {
+  customCredentialsLoadReset = fn
+}
+
 export function resetIntegrationsStore() {
   resetIntegrationsAdapter()
   snapshot = emptySnapshot()
   oauthCallbackInFlight.clear()
+  customCredentialsLoadReset?.()
   emit()
 }
 
@@ -507,6 +514,15 @@ export function insertDataRows(connectionId: string, rowIds?: string[]) {
       out: [...item.sheets.out, ...outRows],
     },
   }))
+}
+
+
+export function replaceCustomCredentials(items: CustomCredential[]) {
+  snapshot = {
+    ...snapshot,
+    customCredentials: items,
+  }
+  emit()
 }
 
 export async function createCustomCredential(

@@ -8,6 +8,7 @@ import { Spinner } from "@workspace/ui/components/spinner"
 
 import { useMemoryStore } from "@/features/memory/model/store"
 import { listWorkflows, useWorkflows } from "@/features/workflows/model/store"
+import { CredentialMultiPicker } from "@/features/workflows/ui/CredentialMultiPicker"
 
 import type { AgentCapabilityId } from "../model/capabilities"
 import { saveAgent } from "../model/store"
@@ -46,7 +47,8 @@ export function AgentForm({ agent }: { agent: Agent }) {
       !sameAgentIds(draft.memoryBaseIds, baseline.memoryBaseIds) ||
       !sameAgentIds(draft.knowledgeBaseIds, baseline.knowledgeBaseIds) ||
       !sameAgentIds(draft.workflowIds, baseline.workflowIds) ||
-      !sameAgentIds(draft.capabilityIds, baseline.capabilityIds)
+      !sameAgentIds(draft.capabilityIds, baseline.capabilityIds) ||
+      !sameAgentIds(draft.credentialIds, baseline.credentialIds)
     )
   }, [agent, draft])
 
@@ -62,7 +64,7 @@ export function AgentForm({ agent }: { agent: Agent }) {
   }
 
   function toggleId(
-    field: "memoryBaseIds" | "knowledgeBaseIds" | "workflowIds",
+    field: "memoryBaseIds" | "knowledgeBaseIds" | "workflowIds" | "credentialIds",
     id: string,
     checked: boolean
   ) {
@@ -111,6 +113,7 @@ export function AgentForm({ agent }: { agent: Agent }) {
         knowledgeBaseIds: draft.knowledgeBaseIds,
         workflowIds: draft.workflowIds,
         capabilityIds: draft.capabilityIds,
+        credentialIds: draft.credentialIds,
       })
       if (!saved) {
         toast.error("Could not save this agent.")
@@ -198,6 +201,11 @@ export function AgentForm({ agent }: { agent: Agent }) {
             checked: draft.workflowIds.includes(workflow.id),
           }))}
           onToggle={(id, checked) => toggleId("workflowIds", id, checked)}
+        />
+
+        <CredentialMultiPicker
+          value={draft.credentialIds}
+          onToggle={(id, checked) => toggleId("credentialIds", id, checked)}
         />
 
         <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-end gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">

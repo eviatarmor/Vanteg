@@ -11,6 +11,7 @@ export type AgentDraft = {
   knowledgeBaseIds: string[]
   workflowIds: string[]
   capabilityIds: AgentCapabilityId[]
+  credentialIds: string[]
 }
 
 export function toAgentDraft(agent: Agent): AgentDraft {
@@ -24,6 +25,7 @@ export function toAgentDraft(agent: Agent): AgentDraft {
     knowledgeBaseIds: [...agent.knowledgeBaseIds],
     workflowIds: [...agent.workflowIds],
     capabilityIds: [...agent.capabilityIds],
+    credentialIds: [...agent.credentialIds],
   }
 }
 

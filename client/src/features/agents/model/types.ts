@@ -63,5 +63,6 @@ export interface Agent {
   knowledgeBaseIds: string[]
   workflowIds: string[]
   capabilityIds: AgentCapabilityId[]
+  credentialIds: string[]
   updatedAt: number
 }

@@ -50,4 +50,13 @@ describe("agent store", () => {
     expect(getAgent("agent-research")).toBeUndefined()
     expect(deleteAgent("agent-research")).toBe(false)
   })
+
+  it("creates agents with empty credentialIds and toggles them", () => {
+    const agent = createAgent("Cred agent")
+    expect(agent.credentialIds).toEqual([])
+    toggleAgentAssignment(agent.id, "credentialIds", "cred_1", true)
+    expect(getAgent(agent.id)?.credentialIds).toEqual(["cred_1"])
+    toggleAgentAssignment(agent.id, "credentialIds", "cred_1", false)
+    expect(getAgent(agent.id)?.credentialIds).toEqual([])
+  })
 })

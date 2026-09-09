@@ -16,6 +16,11 @@ import {
   startManagedOAuthConnect,
   updateCustomCredential,
 } from "./store"
+import {
+  ensureCustomCredentialsLoaded,
+  getCustomCredentialsMeta,
+  setCustomCredentialsLoadFailureOnce,
+} from "./custom-credentials-load"
 
 describe("integrations store", () => {
   beforeEach(() => {
@@ -228,4 +233,33 @@ describe("integrations store", () => {
     expect(listed.ok && listed.data).toHaveLength(0)
   })
 
+})
+
+describe("custom credentials load status", () => {
+  beforeEach(() => {
+    resetIntegrationsStore()
+  })
+
+  it("hydrates credentials from the adapter", async () => {
+    const created = await createCustomCredential({
+      name: "Listed",
+      kind: "bearer",
+      fields: { token: "tok" },
+    })
+    expect(created.ok).toBe(true)
+    await ensureCustomCredentialsLoaded()
+    expect(getCustomCredentialsMeta().status).toBe("ready")
+    expect(getIntegrationsSnapshot().customCredentials.map((item) => item.name)).toContain(
+      "Listed"
+    )
+  })
+
+  it("records a load failure", async () => {
+    setCustomCredentialsLoadFailureOnce()
+    await ensureCustomCredentialsLoaded()
+    expect(getCustomCredentialsMeta()).toMatchObject({
+      status: "error",
+      error: "Failed to load custom credentials",
+    })
+  })
 })

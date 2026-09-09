@@ -17,6 +17,7 @@ const agent: Agent = {
   knowledgeBaseIds: [],
   workflowIds: [],
   capabilityIds: ["file_retrieval"],
+  credentialIds: [],
   updatedAt: 1,
 }
 
