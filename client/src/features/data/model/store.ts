@@ -14,6 +14,7 @@ import type {
   DatabaseSchema,
   DatabaseTable,
   DataSnapshot,
+  KeyValueGroup,
   KeyValueItem,
   SelectOption,
   TextFormat,
@@ -279,10 +280,27 @@ function createSeed(): DataSnapshot {
     selectedSchemaId: "schema-production-public",
     selectedVariableGroupId: "vars-global",
     selectedSecretGroupId: "secrets-global",
+    loadState: "ready",
+    loadError: null,
   }
 }
 
-let snapshot: DataSnapshot = createSeed()
+function emptyDataSnapshot(loadState: DataSnapshot["loadState"] = "ready"): DataSnapshot {
+  return {
+    databases: [],
+    variableGroups: [],
+    secretGroups: [],
+    selectedTableId: null,
+    selectedSchemaId: "",
+    selectedVariableGroupId: "",
+    selectedSecretGroupId: "",
+    loadState,
+    loadError: null,
+  }
+}
+
+/** Start loading so the first paint can show skeletons before hydration. */
+let snapshot: DataSnapshot = emptyDataSnapshot("loading")
 
 export function subscribeDataStore(listener: () => void): () => void {
   listeners.add(listener)
@@ -299,9 +317,44 @@ export function useDataStore(): DataSnapshot {
   return useSyncExternalStore(subscribeDataStore, getDataSnapshot, getDataSnapshot)
 }
 
+/** Test helper — seed + ready immediately (skips the loading frame). */
 export function resetDataStore(): void {
   snapshot = createSeed()
   emit()
+}
+
+export function setDataLoading(): void {
+  snapshot = emptyDataSnapshot("loading")
+  emit()
+}
+
+export function setDataLoadError(message: string): void {
+  snapshot = {
+    ...emptyDataSnapshot("error"),
+    loadError: message,
+  }
+  emit()
+}
+
+export function setDataEmptyReady(): void {
+  snapshot = emptyDataSnapshot("ready")
+  emit()
+}
+
+/** Apply seed workspace data. Only runs while loadState is loading (retry / first paint). */
+export function hydrateDataStore(): DataSnapshot {
+  if (snapshot.loadState !== "loading") {
+    return snapshot
+  }
+  snapshot = createSeed()
+  emit()
+  return snapshot
+}
+
+export function retryDataLoad(): DataSnapshot {
+  snapshot = emptyDataSnapshot("loading")
+  emit()
+  return hydrateDataStore()
 }
 
 export function findSchema(
@@ -713,12 +766,45 @@ export function deleteTableColumn(tableId: string, columnId: string): void {
   emit()
 }
 
+function ensureSchema(): { database: Database; schema: DatabaseSchema } {
+  const existing = findSchema(snapshot.databases, snapshot.selectedSchemaId)
+  if (existing) {
+    return existing
+  }
+  const first = snapshot.databases[0]?.schemas[0]
+    ? {
+        database: snapshot.databases[0],
+        schema: snapshot.databases[0].schemas[0],
+      }
+    : undefined
+  if (first) {
+    snapshot = { ...snapshot, selectedSchemaId: first.schema.id }
+    return first
+  }
+  const schema: DatabaseSchema = {
+    id: "schema-workspace-public",
+    name: "public",
+    tables: [],
+  }
+  const database: Database = {
+    id: "db-workspace",
+    name: "workspace",
+    schemas: [schema],
+  }
+  snapshot = {
+    ...snapshot,
+    databases: [database],
+    selectedSchemaId: schema.id,
+  }
+  return { database, schema }
+}
+
 export function createTable(name: string): DatabaseTable | undefined {
   const trimmed = name.trim()
   if (!trimmed) {
     return undefined
   }
-  const schemaMatch = findSchema(snapshot.databases, snapshot.selectedSchemaId)
+  const schemaMatch = ensureSchema()
   if (!schemaMatch) {
     return undefined
   }
@@ -776,6 +862,32 @@ export function setSecretItems(groupId: string, items: KeyValueItem[]): void {
   updateGroupItems("secrets", groupId, items)
 }
 
+function ensureKeyedGroup(kind: "variables" | "secrets"): KeyValueGroup {
+  const key = kind === "variables" ? "variableGroups" : "secretGroups"
+  const selectedKey =
+    kind === "variables" ? "selectedVariableGroupId" : "selectedSecretGroupId"
+  const groups = snapshot[key]
+  const selectedId = snapshot[selectedKey]
+  const existing = groups.find((item) => item.id === selectedId) ?? groups[0]
+  if (existing) {
+    if (snapshot[selectedKey] !== existing.id) {
+      snapshot = { ...snapshot, [selectedKey]: existing.id }
+    }
+    return existing
+  }
+  const group: KeyValueGroup = {
+    id: kind === "variables" ? "vars-global" : "secrets-global",
+    name: "Global",
+    items: [],
+  }
+  snapshot = {
+    ...snapshot,
+    [key]: [group],
+    [selectedKey]: group.id,
+  }
+  return group
+}
+
 function addKeyedItem(
   kind: "variables" | "secrets",
   key: string,
@@ -785,13 +897,7 @@ function addKeyedItem(
   if (!trimmed) {
     return undefined
   }
-  const groups = kind === "variables" ? snapshot.variableGroups : snapshot.secretGroups
-  const groupId =
-    kind === "variables" ? snapshot.selectedVariableGroupId : snapshot.selectedSecretGroupId
-  const group = groups.find((item) => item.id === groupId)
-  if (!group) {
-    return undefined
-  }
+  const group = ensureKeyedGroup(kind)
   if (group.items.some((item) => item.key === trimmed)) {
     return undefined
   }
@@ -813,10 +919,7 @@ export function createSecret(key: string, value = ""): KeyValueItem | undefined 
 }
 
 export function addKeyedRow(kind: "variables" | "secrets"): KeyValueItem | undefined {
-  const groups = kind === "variables" ? snapshot.variableGroups : snapshot.secretGroups
-  const groupId =
-    kind === "variables" ? snapshot.selectedVariableGroupId : snapshot.selectedSecretGroupId
-  const group = groups.find((item) => item.id === groupId)
+  const group = ensureKeyedGroup(kind)
   if (!group) {
     return undefined
   }
