@@ -203,6 +203,31 @@ describe("workflow node catalog", () => {
     ])
   })
 
+  it("polishes email send/reply/forward fields and form trigger controls", () => {
+    const send = getNodeType("email-send")
+    expect(send?.fields.map((field) => field.key)).toEqual(["to", "cc", "subject", "body"])
+    expect(send?.fields.find((field) => field.key === "to")?.help).toMatch(/comma/i)
+    expect(send?.fields.find((field) => field.key === "cc")?.help).toMatch(/comma/i)
+    expect(send?.fields.find((field) => field.key === "subject")?.control ?? "input").toBe("input")
+    expect(send?.fields.find((field) => field.key === "body")?.control).toBe("textarea")
+
+    const reply = getNodeType("email-reply")
+    expect(reply?.fields.map((field) => field.key)).toEqual(["to", "cc", "subject", "body"])
+    expect(reply?.fields.find((field) => field.key === "body")?.control).toBe("textarea")
+    expect(reply?.fields.find((field) => field.key === "to")?.help).toMatch(/comma/i)
+
+    const forward = getNodeType("email-forward")
+    expect(forward?.fields.map((field) => field.key)).toEqual(["to", "cc", "subject", "body"])
+    expect(forward?.fields.find((field) => field.key === "body")?.control).toBe("textarea")
+    expect(forward?.fields.find((field) => field.key === "body")?.label).toBe("Note")
+
+    const form = getNodeType("form")
+    const formId = form?.fields.find((field) => field.key === "formId")
+    expect(formId?.control ?? "input").toBe("input")
+    expect(formId?.label).toBe("Form ID")
+    expect(formId?.help).toMatch(/form id|slug/i)
+  })
+
   it("covers CRM, payments, and the missing database insert action", () => {
     const hubspot = listConnectorApps().find((app) => app.id === "hubspot")
     const stripe = listConnectorApps().find((app) => app.id === "stripe")
