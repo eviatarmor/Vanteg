@@ -6,6 +6,7 @@ import {
   logicExpressionField,
   logicOperatorField,
   logicUnitField,
+  logicUntilField,
 } from "./logic-fields"
 
 /** Platform logic gate nodes with polished Setup field controls. */
@@ -40,6 +41,6 @@ export const logicGateNodes: WorkflowNodeType[] = [
     description: "Wait before continuing.",
     kind: "logic",
     category: "Logic",
-    fields: [logicDurationField("5"), logicUnitField("minutes")],
+    fields: [logicDurationField("5"), logicUnitField("minutes"), logicUntilField()],
   },
 ]

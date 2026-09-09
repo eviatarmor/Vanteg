@@ -19,4 +19,10 @@ describe("createVantegNode", () => {
     const slack = createVantegNode("slack", { x: 0, y: 0 })
     expect(slack.data.config.unfurlLinks).toBe("true")
   })
+
+  it("defaults If/Filter operators and Delay unit from select placeholders", () => {
+    expect(createVantegNode("if", { x: 0, y: 0 }).data.config.operator).toBe("eq")
+    expect(createVantegNode("filter", { x: 0, y: 0 }).data.config.operator).toBe("gt")
+    expect(createVantegNode("delay", { x: 0, y: 0 }).data.config.unit).toBe("minutes")
+  })
 })

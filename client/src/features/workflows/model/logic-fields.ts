@@ -52,7 +52,7 @@ export function logicCasesField(): NodeField {
     placeholder: '{\n  "open": "open",\n  "closed": "closed"\n}',
     control: "code",
     language: "json",
-    help: "Case map as JSON object keys, or one case label per line.",
+    help: "Case map as a JSON object. Keys are case labels.",
   }
 }
 
@@ -61,7 +61,7 @@ export function logicDurationField(placeholder = "5"): NodeField {
     key: "duration",
     label: "Duration",
     placeholder,
-    help: "How long to wait before continuing.",
+    help: "How long to wait before continuing. Leave empty and set Until for a timestamp.",
   }
 }
 
@@ -72,5 +72,14 @@ export function logicUnitField(placeholder = "minutes"): NodeField {
     placeholder,
     control: "select",
     options: DELAY_UNITS.map((option) => ({ ...option })),
+  }
+}
+
+export function logicUntilField(placeholder = "2026-09-08T09:00"): NodeField {
+  return {
+    key: "until",
+    label: "Until",
+    placeholder,
+    help: "Wait until this time instead of Duration.",
   }
 }
