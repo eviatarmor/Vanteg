@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
@@ -109,7 +109,9 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
 
     await user.click(screen.getByRole("button", { name: "Connect with Google" }))
 
-    expect(screen.getByText("Google Sheets")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Google Sheets")).toBeInTheDocument()
+    })
     expect(screen.queryByRole("tab", { name: "In" })).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Data" })).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Out" })).not.toBeInTheDocument()
@@ -126,7 +128,9 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     await user.type(screen.getByLabelText("API Key"), "sk_test_vanteg")
     await user.click(screen.getByRole("button", { name: "Connect" }))
 
-    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_test_vanteg")
+    await waitFor(() => {
+      expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_test_vanteg")
+    })
     expect(screen.getByText("Stripe")).toBeInTheDocument()
   })
 })
