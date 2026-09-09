@@ -33,7 +33,7 @@ import {
 
 import { NodePickerDialog } from "./NodePickerDialog"
 import { NodeSheet } from "./NodeSheet"
-import { WorkflowRunBar } from "./WorkflowToolbar"
+import { WorkflowRunBar, type WorkflowSaveState } from "./WorkflowToolbar"
 
 export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
   return (
@@ -56,6 +56,8 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
   } | null>(null)
   const dropPosition = useRef({ x: 120, y: 160 })
   const [locked, setLocked] = useState(false)
+  const [saveState, setSaveState] = useState<WorkflowSaveState>("idle")
+  const saveClearTimer = useRef<number | null>(null)
   const { screenToFlowPosition, fitView } = useReactFlow()
 
   function revealNodes() {
@@ -65,7 +67,25 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
   }
 
   useEffect(() => {
+    setSaveState("saving")
     saveWorkflow(workflow.id, { nodes, edges })
+    if (saveClearTimer.current !== null) {
+      window.clearTimeout(saveClearTimer.current)
+    }
+    const savedTimer = window.setTimeout(() => {
+      setSaveState("saved")
+    }, 120)
+    saveClearTimer.current = window.setTimeout(() => {
+      setSaveState("idle")
+      saveClearTimer.current = null
+    }, 1600)
+    return () => {
+      window.clearTimeout(savedTimer)
+      if (saveClearTimer.current !== null) {
+        window.clearTimeout(saveClearTimer.current)
+        saveClearTimer.current = null
+      }
+    }
   }, [edges, nodes, workflow.id])
 
   const onConnect = useCallback(
@@ -199,8 +219,24 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
               <WorkflowRunBar
                 workflowId={workflow.id}
                 workflowName={workflow.name}
+                saveState={saveState}
               />
             </Panel>
+            {nodes.length === 0 ? (
+              <Panel
+                position="top-center"
+                className="pointer-events-none m-8 max-w-sm"
+                data-testid="empty-canvas-hint"
+              >
+                <div className="rounded-xl border border-dashed border-border bg-background/95 px-5 py-4 text-center shadow-sm">
+                  <p className="text-sm font-medium">Empty canvas</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Right-click the canvas to add a trigger or action, or use the
+                    menus to start building.
+                  </p>
+                </div>
+              </Panel>
+            ) : null}
           </FlowCanvasChrome>
         </ReactFlow>
       </div>

@@ -24,6 +24,25 @@ describe("EmptyState", () => {
     expect(onCreate).toHaveBeenCalledTimes(1)
   })
 
+  it("renders a secondary action when provided", async () => {
+    const user = userEvent.setup()
+    const onSecondary = vi.fn()
+    render(
+      <EmptyState
+        icon={Inbox}
+        title="No items yet"
+        description="Create one to get started."
+        actionLabel="New item"
+        onCreate={() => undefined}
+        secondaryActionLabel="Browse templates"
+        onSecondary={onSecondary}
+      />
+    )
+
+    await user.click(screen.getByRole("button", { name: "Browse templates" }))
+    expect(onSecondary).toHaveBeenCalledTimes(1)
+  })
+
   it("hides the button when no action is provided", () => {
     render(
       <EmptyState icon={Inbox} title="Nothing here" description="Check back later." />

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
-import { createDraft, getWorkflow, resetWorkflows } from "../model/store"
+import { createDraft, getWorkflow, resetWorkflows, saveWorkflow } from "../model/store"
 import { WorkflowCanvas } from "./WorkflowCanvas"
 
 function renderCanvas(workflow = createDraft()) {
@@ -41,7 +41,7 @@ describe("WorkflowCanvas", () => {
     expect(screen.getByRole("button", { name: "Lock canvas" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Test" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Deploy" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument()
 
     openPaneMenu()
 
@@ -110,11 +110,20 @@ describe("WorkflowCanvas", () => {
     expect(screen.getByRole("button", { name: /RSS/ })).toBeInTheDocument()
   })
 
+  it("hints when the canvas has no nodes", () => {
+    const workflow = createDraft()
+    saveWorkflow(workflow.id, { nodes: [] })
+    renderCanvas(getWorkflow(workflow.id) ?? workflow)
+
+    expect(screen.getByTestId("empty-canvas-hint")).toBeInTheDocument()
+    expect(screen.getByText("Empty canvas")).toBeInTheDocument()
+  })
+
   it("deploys the workflow from the canvas toolbar", async () => {
     const user = userEvent.setup()
     const workflow = renderCanvas()
 
-    await user.click(screen.getByRole("button", { name: "Deploy" }))
+    await user.click(screen.getByRole("button", { name: "Publish" }))
 
     expect(getWorkflow(workflow.id)?.status).toBe("prod")
   })

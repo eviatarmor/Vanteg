@@ -23,14 +23,18 @@ import {
 } from "@workspace/ui/components/editable"
 
 import { getWorkflow, saveWorkflow, useWorkflows } from "../model/store"
+import {
+  workflowStatusDescription,
+  workflowStatusLabel,
+} from "../model/status-labels"
 import type { WorkflowStatus } from "../model/types"
 
 const statuses: WorkflowStatus[] = ["draft", "dev", "prod"]
 
 const statusClass: Record<WorkflowStatus, string> = {
-  draft: "border-transparent bg-sidebar-accent text-sidebar-foreground capitalize",
-  dev: "border-transparent bg-amber-200/90 text-amber-950 capitalize",
-  prod: "border-transparent bg-emerald-200/90 text-emerald-950 capitalize",
+  draft: "border-transparent bg-sidebar-accent text-sidebar-foreground",
+  dev: "border-transparent bg-amber-200/90 text-amber-950",
+  prod: "border-transparent bg-emerald-200/90 text-emerald-950",
 }
 
 export function WorkflowEditorChrome() {
@@ -83,9 +87,13 @@ export function WorkflowEditorChrome() {
         <BreadcrumbItem>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button type="button" aria-label="Workflow environment">
+              <button
+                type="button"
+                aria-label="Workflow environment"
+                title={workflowStatusDescription[workflow.status]}
+              >
                 <Badge className={statusClass[workflow.status]}>
-                  {workflow.status}
+                  {workflowStatusLabel[workflow.status]}
                 </Badge>
               </button>
             </DropdownMenuTrigger>
@@ -93,10 +101,14 @@ export function WorkflowEditorChrome() {
               {statuses.map((status) => (
                 <DropdownMenuItem
                   key={status}
-                  className="capitalize"
                   onSelect={() => saveWorkflow(workflow.id, { status })}
                 >
-                  {status}
+                  <span className="flex flex-col gap-0.5">
+                    <span>{workflowStatusLabel[status]}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {workflowStatusDescription[status]}
+                    </span>
+                  </span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>

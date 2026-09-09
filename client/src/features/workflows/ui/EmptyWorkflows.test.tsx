@@ -5,21 +5,25 @@ import { describe, expect, it, vi } from "vitest"
 import { EmptyWorkflows } from "./EmptyWorkflows"
 
 describe("EmptyWorkflows", () => {
-  it("renders a card with a create action", async () => {
+  it("renders a card with create and browse templates actions", async () => {
     const user = userEvent.setup()
     const onCreate = vi.fn()
+    const onBrowseTemplates = vi.fn()
     render(
       <EmptyWorkflows
         title="No deployed workflows"
         description="Create a workflow to start connecting triggers and actions."
         actionLabel="New workflow"
         onCreate={onCreate}
+        onBrowseTemplates={onBrowseTemplates}
       />
     )
 
     expect(screen.getByRole("heading", { name: "No deployed workflows" })).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "New workflow" }))
     expect(onCreate).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole("button", { name: "Browse templates" }))
+    expect(onBrowseTemplates).toHaveBeenCalledTimes(1)
   })
 
   it("hides the button when no action is provided", () => {
