@@ -8,6 +8,7 @@ import { HelpPage } from "@/features/help/HelpPage"
 import { HomePage } from "@/features/home/HomePage"
 import { InboxPage } from "@/features/inbox/InboxPage"
 import { IntegrationsPage } from "@/features/integrations/IntegrationsPage"
+import { OAuthCallbackPage } from "@/features/integrations/ui/OAuthCallbackPage"
 import { MemoryPage } from "@/features/memory/MemoryPage"
 import { NotFoundPage } from "@/features/not-found/NotFoundPage"
 import { SettingsPage } from "@/features/settings/SettingsPage"
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "teams/:teamId?", Component: TeamsPage },
       { path: "data", Component: DataPage },
       { path: "memory", Component: MemoryPage },
+      { path: "integrations/oauth/callback", Component: OAuthCallbackPage },
       { path: "integrations", Component: IntegrationsPage },
       { path: "api-keys", Component: ApiKeysPage },
       { path: "help", Component: HelpPage },
