@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react"
 
-import type { Team, TeamEdge, TeamNode } from "./types"
+import type { Team, TeamCapability, TeamEdge, TeamNode } from "./types"
 
 const listeners = new Set<() => void>()
 
@@ -30,13 +30,14 @@ function member(
   agentId: string,
   role: string,
   x: number,
-  y: number
+  y: number,
+  capabilities: TeamCapability[] = []
 ): TeamNode {
   return {
     id,
     type: "agent",
     position: { x, y },
-    data: { agentId, role },
+    data: { agentId, role, capabilities },
   }
 }
 
@@ -47,10 +48,24 @@ function createSeed(): Team[] {
       name: "Software engineering",
       description: "Lead SWE orchestrates senior and junior engineers, then a reviewer.",
       nodes: [
-        member("member-lead", "agent-lead-swe", "Lead SWE", 280, 40),
-        member("member-senior", "agent-senior-swe", "Senior SWE", 80, 200),
-        member("member-junior", "agent-junior-swe", "Junior SWE", 480, 200),
-        member("member-reviewer", "agent-reviewer", "Reviewer", 280, 360),
+        member("member-lead", "agent-lead-swe", "Lead SWE", 280, 40, [
+          "Workflows",
+          "Approvals",
+          "Tools",
+        ]),
+        member("member-senior", "agent-senior-swe", "Senior SWE", 80, 200, [
+          "Workflows",
+          "Knowledge",
+          "Tools",
+        ]),
+        member("member-junior", "agent-junior-swe", "Junior SWE", 480, 200, [
+          "Inbox",
+          "Tools",
+        ]),
+        member("member-reviewer", "agent-reviewer", "Reviewer", 280, 360, [
+          "Approvals",
+          "Knowledge",
+        ]),
       ],
       edges: [
         {
@@ -144,7 +159,8 @@ export function saveTeam(
 export function addTeamMember(
   teamId: string,
   agentId: string,
-  role = "Member"
+  role = "Specialist",
+  capabilities: TeamCapability[] = []
 ): TeamNode | undefined {
   const team = getTeam(teamId)
   if (!team) {
@@ -157,7 +173,7 @@ export function addTeamMember(
       x: 80 + (team.nodes.length % 3) * 220,
       y: 80 + Math.floor(team.nodes.length / 3) * 140,
     },
-    data: { agentId, role },
+    data: { agentId, role, capabilities: [...capabilities] },
   }
   saveTeam(teamId, { nodes: [...team.nodes, node] })
   return node
@@ -187,7 +203,7 @@ export function connectTeamMembers(
 export function updateTeamMember(
   teamId: string,
   nodeId: string,
-  patch: Partial<{ agentId: string; role: string }>
+  patch: Partial<{ agentId: string; role: string; capabilities: TeamCapability[] }>
 ): Team | undefined {
   const team = getTeam(teamId)
   if (!team) {
@@ -195,7 +211,18 @@ export function updateTeamMember(
   }
   return saveTeam(teamId, {
     nodes: team.nodes.map((node) =>
-      node.id === nodeId ? { ...node, data: { ...node.data, ...patch } } : node
+      node.id === nodeId
+        ? {
+            ...node,
+            data: {
+              ...node.data,
+              ...patch,
+              capabilities: patch.capabilities
+                ? [...patch.capabilities]
+                : node.data.capabilities,
+            },
+          }
+        : node
     ),
   })
 }
