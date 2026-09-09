@@ -266,6 +266,48 @@ describe("workflow node catalog", () => {
     expect(delay?.fields.find((field) => field.key === "until")?.placeholder).toMatch(/T/)
   })
 
+  it("polishes Code / Transform / Set / Merge / Loop field controls", () => {
+    const code = getNodeType("code")
+    expect(code?.fields.map((field) => field.key)).toEqual(["language", "code"])
+    const language = code?.fields.find((field) => field.key === "language")
+    expect(language?.control).toBe("select")
+    expect(language?.options?.map((option) => option.value)).toEqual([
+      "javascript",
+      "python",
+    ])
+    expect(code?.fields.find((field) => field.key === "code")).toMatchObject({
+      control: "code",
+      language: "javascript",
+    })
+
+    const set = getNodeType("set")
+    expect(set?.fields.map((field) => field.key)).toEqual(["mapping"])
+    expect(set?.fields.find((field) => field.key === "mapping")?.control).toBe("textarea")
+
+    const transform = getNodeType("transform")
+    expect(transform?.fields.map((field) => field.key)).toEqual(["expression"])
+    expect(transform?.fields.find((field) => field.key === "expression")?.control).toBe(
+      "textarea"
+    )
+
+    const merge = getNodeType("merge")
+    expect(merge?.fields.map((field) => field.key)).toEqual(["mode"])
+    const mode = merge?.fields.find((field) => field.key === "mode")
+    expect(mode?.control).toBe("select")
+    expect(mode?.options?.map((option) => option.value)).toEqual([
+      "append",
+      "combine",
+      "chooseBranch",
+    ])
+
+    const loop = getNodeType("loop")
+    expect(loop?.fields.map((field) => field.key)).toEqual(["items", "concurrency"])
+    expect(loop?.fields.find((field) => field.key === "items")?.control).toBe("textarea")
+    const concurrency = loop?.fields.find((field) => field.key === "concurrency")
+    expect(concurrency?.control ?? "input").toBe("input")
+    expect(concurrency?.help).toMatch(/parallel|blank/i)
+  })
+
   it("covers CRM, payments, and the missing database insert action", () => {
     const hubspot = listConnectorApps().find((app) => app.id === "hubspot")
     const stripe = listConnectorApps().find((app) => app.id === "stripe")
