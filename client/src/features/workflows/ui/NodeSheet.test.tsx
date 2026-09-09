@@ -396,6 +396,26 @@ describe("NodeSheet", () => {
     expect(screen.getByRole("textbox", { name: "Headers" }).tagName).toBe("TEXTAREA")
   })
 
+  it("renders GitHub Repository as a resource-select combobox", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const node = createVantegNode("github", { x: 0, y: 0 })
+
+    renderSheet(node, onChange)
+
+    const repo = await screen.findByRole("combobox", { name: "Repository" })
+    expect(repo).toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "Repository" })).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Action")).toBeInTheDocument()
+
+    await user.click(repo)
+    expect(await screen.findByRole("option", { name: "acme/api" })).toBeInTheDocument()
+    await user.click(screen.getByRole("option", { name: "acme/api" }))
+    expect(onChange).toHaveBeenCalled()
+    const patch = onChange.mock.calls.at(-1)?.[1]
+    expect(patch?.config?.repo).toBe("acme/api")
+  })
+
   it("renders Slack Channel as a resource-select combobox", async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()

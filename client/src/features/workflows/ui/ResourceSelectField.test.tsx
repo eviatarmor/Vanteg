@@ -70,6 +70,30 @@ describe("ResourceSelectField", () => {
     expect(input).toHaveValue("#custom-room")
   })
 
+  it("loads GitHub repos from github.repo", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(
+      <ResourceSelectField
+        id="repo"
+        label="Repository"
+        value=""
+        placeholder="owner/repo"
+        resourceType="github.repo"
+        onChange={onChange}
+      />
+    )
+
+    const trigger = screen.getByRole("combobox", { name: "Repository" })
+    await waitFor(() => expect(trigger).not.toBeDisabled())
+    await user.click(trigger)
+
+    expect(await screen.findByRole("option", { name: "acme/app" })).toBeInTheDocument()
+    await user.click(screen.getByRole("option", { name: "acme/app" }))
+    expect(onChange).toHaveBeenCalledWith("acme/app")
+  })
+
   it("shows empty copy for unknown resource types", async () => {
     const user = userEvent.setup()
 
