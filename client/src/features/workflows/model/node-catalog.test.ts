@@ -360,6 +360,67 @@ describe("workflow node catalog", () => {
     expect(manual?.description).toMatch(/by hand/i)
   })
 
+  it("polishes Notification / File / Respond-to-webhook field controls", () => {
+    const notification = getNodeType("notification")
+    expect(notification?.fields.map((field) => field.key)).toEqual([
+      "channel",
+      "title",
+      "message",
+      "severity",
+    ])
+    expect(notification?.fields.find((field) => field.key === "channel")?.control ?? "input").toBe(
+      "input"
+    )
+    expect(notification?.fields.find((field) => field.key === "title")?.control ?? "input").toBe(
+      "input"
+    )
+    expect(notification?.fields.find((field) => field.key === "message")?.control).toBe("textarea")
+    const severity = notification?.fields.find((field) => field.key === "severity")
+    expect(severity?.control).toBe("select")
+    expect(severity?.options?.map((option) => option.value)).toEqual([
+      "info",
+      "success",
+      "warning",
+      "error",
+    ])
+
+    const file = getNodeType("file")
+    expect(file?.fields.map((field) => field.key)).toEqual(["path", "operation", "content"])
+    expect(file?.fields.find((field) => field.key === "path")?.control ?? "input").toBe("input")
+    const operation = file?.fields.find((field) => field.key === "operation")
+    expect(operation?.control).toBe("select")
+    expect(operation?.options?.map((option) => option.value)).toEqual([
+      "read",
+      "write",
+      "list",
+      "delete",
+    ])
+    expect(file?.fields.find((field) => field.key === "content")?.control).toBe("textarea")
+
+    const respond = getNodeType("respond-webhook")
+    expect(respond?.fields.map((field) => field.key)).toEqual(["status", "body", "headers"])
+    const status = respond?.fields.find((field) => field.key === "status")
+    expect(status?.control).toBe("select")
+    expect(status?.options?.map((option) => option.value)).toEqual([
+      "200",
+      "201",
+      "204",
+      "400",
+      "401",
+      "403",
+      "404",
+      "500",
+    ])
+    expect(respond?.fields.find((field) => field.key === "body")).toMatchObject({
+      control: "code",
+      language: "json",
+    })
+    expect(respond?.fields.find((field) => field.key === "headers")).toMatchObject({
+      control: "code",
+      language: "json",
+    })
+  })
+
   it("covers CRM, payments, and the missing database insert action", () => {
     const hubspot = listConnectorApps().find((app) => app.id === "hubspot")
     const stripe = listConnectorApps().find((app) => app.id === "stripe")
