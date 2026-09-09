@@ -34,3 +34,6 @@ export {
   oauthApps,
   terraformOAuthApps,
 } from "./registry.ts"
+
+export type { ResourceOption } from "./resources.ts"
+export { listResourceTypes, listResources } from "./resources.ts"
