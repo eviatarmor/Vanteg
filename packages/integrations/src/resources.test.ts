@@ -22,6 +22,8 @@ describe("listResources", () => {
       { type: "notion.page", sample: "Tasks" },
       { type: "calendar.calendar", sample: "primary" },
       { type: "forms.form", sample: "contact-form" },
+      { type: "teams.team", sample: "acme-ops" },
+      { type: "teams.channel", sample: "General" },
     ]
     for (const { type, sample } of cases) {
       const rows = listResources(type)
@@ -44,6 +46,8 @@ describe("listResources", () => {
       "notion.page",
       "sheets.sheet",
       "slack.channel",
+      "teams.channel",
+      "teams.team",
     ])
   })
 })
