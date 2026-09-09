@@ -56,6 +56,7 @@ describe("nav catalog", () => {
       "Workflows",
       "Agents",
       "Teams",
+      "Templates",
       "Data",
       "Memory",
     ])
@@ -98,6 +99,8 @@ describe("getPageTitle", () => {
     expect(getPageTitle("/agents/abc")).toBe("Agents")
     expect(getPageTitle("/teams")).toBe("Teams")
     expect(getPageTitle("/teams/abc")).toBe("Teams")
+    expect(getPageTitle("/templates")).toBe("Templates")
+    expect(getPageTitle("/templates/legal")).toBe("Templates")
     expect(getPageTitle("/integrations")).toBe("Integrations")
     expect(getPageTitle("/api-keys")).toBe("API Keys")
     expect(getPageTitle("/help")).toBe("Help")
