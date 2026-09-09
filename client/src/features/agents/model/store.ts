@@ -39,6 +39,7 @@ function createSeed(): Agent[] {
       memoryBaseIds: ["base-support", "base-workspace"],
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
+      capabilityIds: ["web_search", "file_retrieval", "memory_write"],
       updatedAt: Date.parse("2026-04-05T08:00:00Z"),
     },
     {
@@ -51,6 +52,7 @@ function createSeed(): Agent[] {
       memoryBaseIds: ["base-workspace"],
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
+      capabilityIds: ["web_search", "file_retrieval", "browser"],
       updatedAt: Date.parse("2026-04-05T09:00:00Z"),
     },
     {
@@ -63,6 +65,7 @@ function createSeed(): Agent[] {
       memoryBaseIds: ["base-workspace"],
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
+      capabilityIds: ["file_retrieval"],
       updatedAt: Date.parse("2026-04-05T10:00:00Z"),
     },
     {
@@ -75,6 +78,7 @@ function createSeed(): Agent[] {
       memoryBaseIds: ["base-workspace"],
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
+      capabilityIds: ["file_retrieval"],
       updatedAt: Date.parse("2026-04-05T10:05:00Z"),
     },
     {
@@ -87,6 +91,7 @@ function createSeed(): Agent[] {
       memoryBaseIds: ["base-workspace"],
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
+      capabilityIds: ["file_retrieval"],
       updatedAt: Date.parse("2026-04-05T10:10:00Z"),
     },
     {
@@ -99,6 +104,7 @@ function createSeed(): Agent[] {
       memoryBaseIds: ["base-workspace"],
       knowledgeBaseIds: ["kb-product"],
       workflowIds: [],
+      capabilityIds: ["file_retrieval"],
       updatedAt: Date.parse("2026-04-05T10:15:00Z"),
     },
   ]
@@ -141,6 +147,7 @@ export function createAgent(name?: string): Agent {
     memoryBaseIds: ["base-workspace"],
     knowledgeBaseIds: [],
     workflowIds: [],
+    capabilityIds: ["file_retrieval", "memory_write"],
     updatedAt: Date.now(),
   }
   agents = [agent, ...agents]
@@ -161,6 +168,7 @@ export function saveAgent(
       | "memoryBaseIds"
       | "knowledgeBaseIds"
       | "workflowIds"
+      | "capabilityIds"
     >
   >
 ): Agent | undefined {
@@ -182,7 +190,7 @@ export function saveAgent(
 
 export function toggleAgentAssignment(
   id: string,
-  field: "memoryBaseIds" | "knowledgeBaseIds" | "workflowIds",
+  field: "memoryBaseIds" | "knowledgeBaseIds" | "workflowIds" | "capabilityIds",
   value: string,
   enabled: boolean
 ): Agent | undefined {
@@ -190,11 +198,21 @@ export function toggleAgentAssignment(
   if (!current) {
     return undefined
   }
-  const existing = new Set(current[field])
+  const existing = new Set<string>(current[field])
   if (enabled) {
     existing.add(value)
   } else {
     existing.delete(value)
   }
-  return saveAgent(id, { [field]: [...existing] })
+  return saveAgent(id, { [field]: [...existing] as Agent[typeof field] })
+}
+
+export function deleteAgent(id: string): boolean {
+  const exists = agents.some((agent) => agent.id === id)
+  if (!exists) {
+    return false
+  }
+  agents = agents.filter((agent) => agent.id !== id)
+  emit()
+  return true
 }
