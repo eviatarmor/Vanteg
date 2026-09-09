@@ -1,3 +1,4 @@
+import type { AgentCapabilityId } from "./capabilities"
 import type { AgentIconId } from "./icons"
 
 export const agentProviders = [
@@ -61,5 +62,6 @@ export interface Agent {
   memoryBaseIds: string[]
   knowledgeBaseIds: string[]
   workflowIds: string[]
+  capabilityIds: AgentCapabilityId[]
   updatedAt: number
 }
