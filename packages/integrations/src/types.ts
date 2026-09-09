@@ -59,7 +59,7 @@ export type ConnectorCategory =
 
 export type MethodKind = "trigger" | "action"
 
-export type FieldControl = "input" | "textarea" | "code" | "select"
+export type FieldControl = "input" | "textarea" | "code" | "select" | "boolean"
 
 export interface MethodField {
   key: string
