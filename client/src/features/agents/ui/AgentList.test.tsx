@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import type { Agent } from "../model/types"
 import { AgentList } from "./AgentList"
@@ -15,6 +16,7 @@ const agent: Agent = {
   memoryBaseIds: [],
   knowledgeBaseIds: [],
   workflowIds: [],
+  capabilityIds: ["file_retrieval"],
   updatedAt: 1,
 }
 
@@ -33,5 +35,20 @@ describe("AgentList", () => {
     expect(screen.getByText(agent.name)).toHaveClass("truncate")
     expect(screen.getByText(agent.description)).toHaveClass("truncate")
     expect(link.querySelector("svg")).toBeInTheDocument()
+  })
+
+  it("shows an empty list state with create action", async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+    render(
+      <MemoryRouter>
+        <AgentList agents={[]} onCreate={onCreate} />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByTestId("agents-empty-list")).toBeInTheDocument()
+    expect(screen.getByText("No agents yet")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "New agent" }))
+    expect(onCreate).toHaveBeenCalled()
   })
 })

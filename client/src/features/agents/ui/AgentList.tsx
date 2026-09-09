@@ -1,5 +1,7 @@
+import { Bot, Plus } from "lucide-react"
 import { NavLink } from "react-router"
 
+import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 
 import type { Agent } from "../model/types"
@@ -8,13 +10,34 @@ import { AgentIcon } from "./AgentIcon"
 export function AgentList({
   agents,
   selectedId,
+  onCreate,
 }: {
   agents: Agent[]
   selectedId?: string
+  onCreate?: () => void
 }) {
   if (agents.length === 0) {
     return (
-      <p className="px-3 py-6 text-sm text-muted-foreground">No agents yet.</p>
+      <div
+        className="flex flex-col items-center gap-3 px-3 py-8 text-center"
+        data-testid="agents-empty-list"
+      >
+        <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+          <Bot className="size-5 text-muted-foreground" aria-hidden />
+        </div>
+        <div>
+          <p className="text-sm font-medium">No agents yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Create an agent to assign memory, knowledge, and tools.
+          </p>
+        </div>
+        {onCreate ? (
+          <Button type="button" size="sm" variant="outline" onClick={onCreate}>
+            <Plus />
+            New agent
+          </Button>
+        ) : null}
+      </div>
     )
   }
 
