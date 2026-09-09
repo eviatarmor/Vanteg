@@ -260,7 +260,7 @@ describe("workflow node catalog", () => {
 
     const delay = getNodeType("delay")
     expect(delay?.fields.map((field) => field.key)).toEqual(["duration", "unit", "until"])
-    expect(delay?.fields.find((field) => field.key === "duration")?.control ?? "input").toBe("input")
+    expect(delay?.fields.find((field) => field.key === "duration")?.control).toBe("number")
     const unit = delay?.fields.find((field) => field.key === "unit")
     expect(unit?.control).toBe("select")
     expect(unit?.options?.map((option) => option.value)).toEqual(["seconds", "minutes", "hours"])
@@ -446,7 +446,7 @@ describe("workflow node catalog", () => {
         expect.arrayContaining(["grok-4.6", "gpt-5.5", "claude-sonnet-5"])
       )
       const temperature = node?.fields.find((field) => field.key === "temperature")
-      expect(temperature?.control ?? "input").toBe("input")
+      expect(temperature?.control).toBe("number")
       expect(temperature?.help).toMatch(/temperature/i)
       expect(temperature?.placeholder).toBe("0.7")
     }
@@ -491,5 +491,25 @@ describe("workflow node catalog", () => {
     const table = database?.fields.find((field) => field.key === "table")
     expect(table?.control ?? "input").toBe("input")
     expect(table?.placeholder).toBe("jobs")
+  })
+
+  it("marks payment/CRM amounts as number and calendar/delay times as datetime", () => {
+    const deal = getNodeType("hubspot-create-deal")
+    expect(deal?.fields.find((field) => field.key === "amount")?.control).toBe("number")
+
+    const charge = getNodeType("stripe-create-charge")
+    expect(charge?.fields.find((field) => field.key === "amount")?.control).toBe("number")
+
+    const invoice = getNodeType("stripe-create-invoice")
+    expect(invoice?.fields.find((field) => field.key === "amount")?.control).toBe("number")
+
+    const event = getNodeType("google-calendar-create-event")
+    expect(event?.fields.find((field) => field.key === "start")?.control).toBe("datetime")
+
+    const delay = getNodeType("delay")
+    expect(delay?.fields.find((field) => field.key === "until")?.control).toBe("datetime")
+
+    const calUntil = event?.fields.find((field) => field.key === "until")
+    expect(calUntil?.control).toBe("datetime")
   })
 })

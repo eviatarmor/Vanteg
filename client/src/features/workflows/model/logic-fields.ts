@@ -61,6 +61,7 @@ export function logicDurationField(placeholder = "5"): NodeField {
     key: "duration",
     label: "Duration",
     placeholder,
+    control: "number",
     help: "How long to wait before continuing. Leave empty and set Until for a timestamp.",
   }
 }
@@ -80,6 +81,7 @@ export function logicUntilField(placeholder = "2026-09-08T09:00"): NodeField {
     key: "until",
     label: "Until",
     placeholder,
+    control: "datetime",
     help: "Wait until this time instead of Duration.",
   }
 }

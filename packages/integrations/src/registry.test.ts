@@ -320,7 +320,7 @@ describe("integrations registry", () => {
 
       const createDeal = app!.methods.find((method) => method.id === `${id}-create-deal`)
       const amount = createDeal?.fields.find((field) => field.key === "amount")
-      expect(amount?.control ?? "input", id).toBe("input")
+      expect(amount?.control, id).toBe("number")
       expect(amount?.help, id).toMatch(/numeric|number|digits/i)
 
       const updateStage = app!.methods.find((method) => method.id === `${id}-update-deal-stage`)
@@ -340,8 +340,10 @@ describe("integrations registry", () => {
       const description = create?.fields.find((field) => field.key === "description")
 
       expect(calendar?.control ?? "input", id).toBe("input")
+      expect(start?.control, id).toBe("datetime")
       expect(start?.help, id).toMatch(/start/i)
       expect(until?.key, id).toBe("until")
+      expect(until?.control, id).toBe("datetime")
       expect(until?.help, id).toMatch(/end/i)
       expect(description?.control, id).toBe("textarea")
 
@@ -410,5 +412,37 @@ describe("integrations registry", () => {
     expect(listConnectorCategories()).toEqual(
       expect.arrayContaining(["Google", "Microsoft", "Communication", "CRM", "AI"])
     )
+  })
+
+  it("uses number and datetime FieldControls on payment, CRM, and calendar methods", () => {
+    const hubspot = getApp("hubspot")
+    const amount = hubspot?.methods
+      .find((method) => method.id === "hubspot-create-deal")
+      ?.fields.find((field) => field.key === "amount")
+    expect(amount?.control).toBe("number")
+
+    const stripe = getApp("stripe")
+    expect(
+      stripe?.methods
+        .find((method) => method.id === "stripe-create-charge")
+        ?.fields.find((field) => field.key === "amount")?.control
+    ).toBe("number")
+    expect(
+      stripe?.methods
+        .find((method) => method.id === "stripe-create-invoice")
+        ?.fields.find((field) => field.key === "amount")?.control
+    ).toBe("number")
+
+    const calendar = getApp("google-calendar")
+    expect(
+      calendar?.methods
+        .find((method) => method.id === "google-calendar-create-event")
+        ?.fields.find((field) => field.key === "start")?.control
+    ).toBe("datetime")
+    expect(
+      calendar?.methods
+        .find((method) => method.id === "google-calendar-create-event")
+        ?.fields.find((field) => field.key === "until")?.control
+    ).toBe("datetime")
   })
 })

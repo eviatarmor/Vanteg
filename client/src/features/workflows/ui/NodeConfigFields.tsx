@@ -117,6 +117,36 @@ export function NodeConfigFields({
                   })
                 }
               />
+            ) : field.control === "number" ? (
+              <Input
+                id={`node-${field.key}`}
+                type="number"
+                value={node.data.config[field.key] ?? ""}
+                placeholder={field.placeholder}
+                onChange={(event) =>
+                  onChange(node.id, {
+                    config: {
+                      ...node.data.config,
+                      [field.key]: event.target.value,
+                    },
+                  })
+                }
+              />
+            ) : field.control === "datetime" ? (
+              <Input
+                id={`node-${field.key}`}
+                type="datetime-local"
+                value={node.data.config[field.key] ?? ""}
+                placeholder={field.placeholder}
+                onChange={(event) =>
+                  onChange(node.id, {
+                    config: {
+                      ...node.data.config,
+                      [field.key]: event.target.value,
+                    },
+                  })
+                }
+              />
             ) : field.control === "select" && field.options ? (
               <Select
                 value={node.data.config[field.key] || field.options[0]?.value}
