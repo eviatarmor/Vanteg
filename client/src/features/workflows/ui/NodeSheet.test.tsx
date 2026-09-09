@@ -126,6 +126,28 @@ describe("NodeSheet", () => {
     )
   })
 
+  it("renders SecretInput for the webhook secret without type=password", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const node = createVantegNode("webhook", { x: 0, y: 0 })
+
+    renderSheet(node, onChange)
+
+    const secret = screen.getByLabelText("Secret")
+    expect(secret).not.toHaveAttribute("type", "password")
+    expect(secret.tagName).toBe("INPUT")
+    expect(screen.getByLabelText("Path")).toBeInTheDocument()
+    expect(screen.getByLabelText("Method")).toHaveTextContent("POST")
+
+    await user.type(secret, "ab")
+    expect(onChange).toHaveBeenCalledWith(
+      node.id,
+      expect.objectContaining({
+        config: expect.objectContaining({ secret: expect.any(String) }),
+      })
+    )
+  })
+
   it("renders Microsoft Teams message as a textarea", () => {
     const node = createVantegNode("microsoft-teams", { x: 0, y: 0 })
 
@@ -316,5 +338,38 @@ describe("NodeSheet", () => {
 
     expect(screen.getByTestId("credential-picker-missing")).toBeInTheDocument()
     expect(screen.getByLabelText("Bearer token / API key")).toBeInTheDocument()
+  })
+
+  it("renders Schedule cron textarea and timezone select", () => {
+    const node = createVantegNode("schedule", { x: 0, y: 0 })
+    renderSheet(node)
+
+    expect(screen.getByLabelText("Cron expression").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Timezone")).toHaveTextContent("UTC")
+    expect(node.data.config.timezone).toBe("UTC")
+  })
+
+  it("renders Poll URL and RSS interval selects", () => {
+    const poll = createVantegNode("http-poll", { x: 0, y: 0 })
+    const { unmount } = renderSheet(poll)
+    expect(screen.getByLabelText("URL")).toBeInTheDocument()
+    expect(screen.getByLabelText("Interval")).toHaveTextContent("Every 5 minutes")
+    expect(poll.data.config.interval).toBe("5m")
+    unmount()
+
+    const rss = createVantegNode("rss", { x: 0, y: 0 })
+    renderSheet(rss)
+    expect(screen.getByLabelText("Feed URL")).toBeInTheDocument()
+    expect(screen.getByLabelText("Interval")).toHaveTextContent("Every 15 minutes")
+    expect(rss.data.config.interval).toBe("15m")
+  })
+
+  it("keeps Manual setup minimal with a clear empty state", () => {
+    const node = createVantegNode("manual", { x: 0, y: 0 })
+    renderSheet(node)
+
+    expect(screen.getByRole("dialog", { name: "Manual" })).toBeInTheDocument()
+    expect(screen.getByText(/no extra settings/i)).toBeInTheDocument()
+    expect(screen.queryByText("Configuration")).not.toBeInTheDocument()
   })
 })
