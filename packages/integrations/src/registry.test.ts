@@ -120,14 +120,21 @@ describe("integrations registry", () => {
       expect(app, id).toBeDefined()
       const refund = app!.methods.find((method) => method.id === `${id}-refund-issued`)
       const invoice = app!.methods.find((method) => method.id === `${id}-invoice-paid`)
-      expect(refund?.fields.map((field) => field.key), id).toEqual(
-        expect.arrayContaining(["currency", "chargeId"])
+      expect(refund?.fields.map((field) => field.key), id).toEqual(["currency", "chargeId"])
+      expect(invoice?.fields.map((field) => field.key), id).toEqual([
+        "currency",
+        "customerId",
+        "invoiceId",
+      ])
+      const refundCurrency = refund?.fields.find((field) => field.key === "currency")
+      expect(refundCurrency?.control, id).toBe("select")
+      expect(refundCurrency?.placeholder, id).toBe("__any__")
+      expect(refund?.fields.find((field) => field.key === "chargeId")?.help, id).toMatch(
+        /optional/i
       )
-      expect(invoice?.fields.map((field) => field.key), id).toEqual(
-        expect.arrayContaining(["currency", "customerId", "invoiceId"])
+      expect(invoice?.fields.find((field) => field.key === "customerId")?.help, id).toMatch(
+        /optional/i
       )
-      expect(refund!.fields.length, id).toBeGreaterThan(0)
-      expect(invoice!.fields.length, id).toBeGreaterThan(0)
     }
   })
 
@@ -135,32 +142,72 @@ describe("integrations registry", () => {
     const stripeCharge = getApp("stripe")?.methods.find((method) => method.id === "stripe-new-charge")
     const currency = stripeCharge?.fields.find((field) => field.key === "currency")
     expect(currency?.control).toBe("select")
-    expect(currency?.options?.map((option) => option.value)).toEqual(
-      expect.arrayContaining(["usd", "eur", "gbp"])
-    )
+    expect(currency?.options?.map((option) => option.value)).toEqual([
+      "__any__",
+      "usd",
+      "eur",
+      "gbp",
+      "aud",
+      "cad",
+    ])
+
+    const createCharge = getApp("stripe")?.methods.find((method) => method.id === "stripe-create-charge")
+    const chargeCurrency = createCharge?.fields.find((field) => field.key === "currency")
+    expect(chargeCurrency?.control).not.toBe("select")
+    expect(chargeCurrency?.placeholder).toBe("usd")
 
     const zendeskStatus = getApp("zendesk")?.methods.find(
       (method) => method.id === "zendesk-ticket-status-changed"
     )
     const status = zendeskStatus?.fields.find((field) => field.key === "status")
     expect(status?.control).toBe("select")
-    expect(status?.options?.map((option) => option.value)).toEqual(
-      expect.arrayContaining(["open", "solved", "closed"])
+    expect(status?.placeholder).toBe("__any__")
+    expect(status?.options?.map((option) => option.value)).toEqual([
+      "__any__",
+      "new",
+      "open",
+      "pending",
+      "hold",
+      "solved",
+      "closed",
+    ])
+    expect(status?.help).toMatch(/generic family statuses/i)
+
+    const zendeskUpdate = getApp("zendesk")?.methods.find(
+      (method) => method.id === "zendesk-update-ticket-status"
     )
+    expect(zendeskUpdate?.fields.find((field) => field.key === "status")?.options?.map((option) => option.value)).toEqual([
+      "new",
+      "open",
+      "pending",
+      "hold",
+      "solved",
+      "closed",
+    ])
 
     const hubspotStage = getApp("hubspot")?.methods.find(
       (method) => method.id === "hubspot-deal-stage-changed"
     )
     const stage = hubspotStage?.fields.find((field) => field.key === "stage")
     expect(stage?.control).toBe("select")
-    expect(stage?.options?.map((option) => option.value)).toEqual(
-      expect.arrayContaining(["closed_won", "closed_lost"])
-    )
+    expect(stage?.placeholder).toBe("__any__")
+    expect(stage?.options?.map((option) => option.value)).toEqual([
+      "__any__",
+      "qualification",
+      "proposal",
+      "negotiation",
+      "closed_won",
+      "closed_lost",
+    ])
 
     const githubAction = getApp("github")?.methods.find((method) => method.id === "github")
     const action = githubAction?.fields.find((field) => field.key === "action")
     expect(action?.control).toBe("select")
-    expect(action?.options?.length).toBeGreaterThan(0)
+    expect(action?.options?.map((option) => option.value)).toEqual([
+      "create_issue",
+      "create_comment",
+      "create_pull_request",
+    ])
   })
 
   it("groups connectors into named categories", () => {

@@ -1,6 +1,8 @@
 import { field, integrationApp, method, selectField } from "./define.ts"
 import type { AppAuth, ConnectorCategory, IntegrationApp, Method, MethodField, TemplateName } from "./types.ts"
 
+const FILTER_ANY = "__any__"
+
 const CURRENCY_OPTIONS = [
   { value: "usd", label: "USD" },
   { value: "eur", label: "EUR" },
@@ -18,6 +20,7 @@ const DEAL_STAGE_OPTIONS = [
 ] as const
 
 const TICKET_STATUS_OPTIONS = [
+  { value: "new", label: "New" },
   { value: "open", label: "Open" },
   { value: "pending", label: "Pending" },
   { value: "hold", label: "On hold" },
@@ -25,16 +28,54 @@ const TICKET_STATUS_OPTIONS = [
   { value: "closed", label: "Closed" },
 ] as const
 
-function currencyField(placeholder = "usd"): MethodField {
-  return selectField("currency", "Currency", placeholder, CURRENCY_OPTIONS)
+const TICKET_STATUS_HELP =
+  "Generic family statuses (Zendesk-shaped). Intercom, Front, and Help Scout show the same labels."
+
+function withAnyOption(
+  options: readonly { value: string; label: string }[],
+  anyLabel: string
+): { value: string; label: string }[] {
+  return [{ value: FILTER_ANY, label: anyLabel }, ...options]
 }
 
-function dealStageField(placeholder = "closed_won"): MethodField {
-  return selectField("stage", "Stage", placeholder, DEAL_STAGE_OPTIONS)
+function currencyFilterField(): MethodField {
+  return selectField(
+    "currency",
+    "Currency",
+    FILTER_ANY,
+    withAnyOption(CURRENCY_OPTIONS, "Any currency"),
+    { help: "Optional. Only fire for this currency." }
+  )
 }
 
-function ticketStatusField(placeholder: string): MethodField {
-  return selectField("status", "Status", placeholder, TICKET_STATUS_OPTIONS)
+function dealStageFilterField(): MethodField {
+  return selectField(
+    "stage",
+    "Stage",
+    FILTER_ANY,
+    withAnyOption(DEAL_STAGE_OPTIONS, "Any stage"),
+    { help: "Optional. Only fire for this stage." }
+  )
+}
+
+function dealStageActionField(): MethodField {
+  return selectField("stage", "Stage", "closed_won", DEAL_STAGE_OPTIONS)
+}
+
+function ticketStatusFilterField(): MethodField {
+  return selectField(
+    "status",
+    "Status",
+    FILTER_ANY,
+    withAnyOption(TICKET_STATUS_OPTIONS, "Any status"),
+    { help: `Optional. ${TICKET_STATUS_HELP}` }
+  )
+}
+
+function ticketStatusActionField(placeholder: string): MethodField {
+  return selectField("status", "Status", placeholder, TICKET_STATUS_OPTIONS, {
+    help: TICKET_STATUS_HELP,
+  })
 }
 
 function crmFamily(prefix: string, name: string): Method[] {
@@ -47,7 +88,7 @@ function crmFamily(prefix: string, name: string): Method[] {
     ]),
     method(`${prefix}-deal-stage-changed`, "trigger", "Deal stage changed", `Start when a ${name} deal moves stage.`, [
       field("pipeline", "Pipeline", "Sales"),
-      dealStageField(),
+      dealStageFilterField(),
     ]),
     method(`${prefix}-contact-updated`, "trigger", "Contact property updated", `Start when a ${name} contact changes.`, [
       field("property", "Property", "email"),
@@ -69,7 +110,7 @@ function crmFamily(prefix: string, name: string): Method[] {
     ]),
     method(`${prefix}-update-deal-stage`, "action", "Update deal stage", `Move a ${name} deal to a stage.`, [
       field("id", "Deal ID", "456"),
-      dealStageField(),
+      dealStageActionField(),
     ]),
     method(`${prefix}-find-contact`, "action", "Find contact by email", `Find a ${name} contact by email.`, [
       field("email", "Email", "ada@acme.com"),
@@ -80,10 +121,10 @@ function crmFamily(prefix: string, name: string): Method[] {
 function paymentFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-charge`, "trigger", "New charge", `Start when a ${name} charge succeeds.`, [
-      currencyField(),
+      currencyFilterField(),
     ]),
     method(`${prefix}-payment-failed`, "trigger", "Payment failed", `Start when a ${name} payment fails.`, [
-      currencyField(),
+      currencyFilterField(),
     ]),
     method(`${prefix}-new-subscription`, "trigger", "New subscription", `Start when a ${name} subscription starts.`, [
       field("plan", "Plan", "pro"),
@@ -92,13 +133,13 @@ function paymentFamily(prefix: string, name: string): Method[] {
       field("plan", "Plan", "pro"),
     ]),
     method(`${prefix}-refund-issued`, "trigger", "Refund issued", `Start when a ${name} refund is issued.`, [
-      currencyField(),
+      currencyFilterField(),
       field("chargeId", "Charge ID", "ch_123", {
         help: "Optional. Only fire for refunds on this charge.",
       }),
     ]),
     method(`${prefix}-invoice-paid`, "trigger", "Invoice paid", `Start when a ${name} invoice is paid.`, [
-      currencyField(),
+      currencyFilterField(),
       field("customerId", "Customer ID", "cus_123", {
         help: "Optional. Only fire for invoices for this customer.",
       }),
@@ -108,7 +149,7 @@ function paymentFamily(prefix: string, name: string): Method[] {
     ]),
     method(`${prefix}-create-charge`, "action", "Create charge", `Create a ${name} charge.`, [
       field("amount", "Amount", "2000"),
-      currencyField(),
+      field("currency", "Currency", "usd"),
     ]),
     method(`${prefix}-issue-refund`, "action", "Issue refund", `Refund a ${name} charge.`, [
       field("chargeId", "Charge ID", "ch_123"),
@@ -183,7 +224,7 @@ function ticketFamily(prefix: string, name: string): Method[] {
       field("inbox", "Inbox", "support"),
     ]),
     method(`${prefix}-ticket-status-changed`, "trigger", "Ticket status changed", `Start when a ${name} ticket changes status.`, [
-      ticketStatusField("open"),
+      ticketStatusFilterField(),
     ]),
     method(`${prefix}-new-reply`, "trigger", "New reply on ticket", `Start when someone replies on a ${name} ticket.`, [
       field("inbox", "Inbox", "support"),
@@ -197,7 +238,7 @@ function ticketFamily(prefix: string, name: string): Method[] {
     ]),
     method(`${prefix}-update-ticket-status`, "action", "Update ticket status", `Update a ${name} ticket status.`, [
       field("ticketId", "Ticket ID", "42"),
-      ticketStatusField("solved"),
+      ticketStatusActionField("solved"),
     ]),
     method(`${prefix}-add-reply`, "action", "Add reply", `Reply on a ${name} ticket.`, [
       field("ticketId", "Ticket ID", "42"),
