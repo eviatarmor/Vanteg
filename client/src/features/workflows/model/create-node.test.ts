@@ -14,4 +14,9 @@ describe("createVantegNode", () => {
     expect(node.data.config).toEqual({ method: "POST" })
     expect(node.data.outVars.map((item) => item.key)).toContain("body")
   })
+
+  it("defaults boolean fields from placeholder", () => {
+    const slack = createVantegNode("slack", { x: 0, y: 0 })
+    expect(slack.data.config.unfurlLinks).toBe("true")
+  })
 })
