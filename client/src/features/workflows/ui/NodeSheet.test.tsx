@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -413,5 +413,38 @@ describe("NodeSheet", () => {
     expect(onChange).toHaveBeenCalled()
     const patch = onChange.mock.calls.at(-1)?.[1]
     expect(patch?.config?.channel).toBe("#ops")
+  })
+
+  it("renders number and datetime FieldControls", () => {
+    const onChange = vi.fn()
+    const charge = createVantegNode("stripe-create-charge", { x: 0, y: 0 })
+    const { unmount } = renderSheet(charge, onChange)
+
+    const amount = screen.getByLabelText("Amount")
+    expect(amount).toHaveAttribute("type", "number")
+    fireEvent.change(amount, { target: { value: "2500" } })
+    expect(onChange).toHaveBeenCalledWith(
+      charge.id,
+      expect.objectContaining({ config: expect.objectContaining({ amount: "2500" }) })
+    )
+    unmount()
+
+    const delay = createVantegNode("delay", { x: 40, y: 0 })
+    renderSheet(delay, onChange)
+    const until = screen.getByLabelText("Until")
+    expect(until).toHaveAttribute("type", "datetime-local")
+    fireEvent.change(until, { target: { value: "2026-09-08T09:00" } })
+    expect(onChange).toHaveBeenCalledWith(
+      delay.id,
+      expect.objectContaining({
+        config: expect.objectContaining({ until: "2026-09-08T09:00" }),
+      })
+    )
+  })
+
+  it("renders calendar Start as datetime-local", () => {
+    const node = createVantegNode("google-calendar-create-event", { x: 0, y: 0 })
+    renderSheet(node)
+    expect(screen.getByLabelText("Start")).toHaveAttribute("type", "datetime-local")
   })
 })
