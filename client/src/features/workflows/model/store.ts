@@ -19,6 +19,7 @@ let snapshot: WorkflowsSnapshot = {
 let loadPromise: Promise<void> | null = null
 /** Test hook: fail the next ensureLoaded call once. */
 let failNextLoad = false
+let loadHold: { promise: Promise<void>; resolve: () => void } | null = null
 const listeners = new Set<() => void>()
 
 function emit() {
@@ -112,7 +113,8 @@ export async function ensureLoaded(): Promise<void> {
   loadPromise = (async () => {
     try {
       // Mock hydration delay (0ms) — swap for a real listWorkflows adapter later.
-      await Promise.resolve()
+      const hold = loadHold
+      await (hold?.promise ?? Promise.resolve())
       if (failNextLoad) {
         failNextLoad = false
         throw new Error("Failed to load workflows")
@@ -145,6 +147,21 @@ export function setWorkflowsLoadFailureOnce() {
   loadPromise = null
 }
 
+/** Test-only: next ensureLoaded waits until `releaseWorkflowsLoad`. */
+export function holdNextWorkflowsLoad() {
+  let resolve!: () => void
+  const promise = new Promise<void>((r) => {
+    resolve = r
+  })
+  loadHold = { promise, resolve }
+}
+
+/** Test-only: release a held `ensureLoaded`. */
+export function releaseWorkflowsLoad() {
+  loadHold?.resolve()
+  loadHold = null
+}
+
 export function useWorkflows(): Workflow[] {
   const workflows = useSyncExternalStore(
     subscribeWorkflows,
@@ -174,6 +191,8 @@ export function useWorkflowsError(): string | null {
 }
 
 export function resetWorkflows(): void {
+  loadHold?.resolve()
+  loadHold = null
   snapshot = { workflows: [], status: "idle", error: null }
   loadPromise = null
   failNextLoad = false

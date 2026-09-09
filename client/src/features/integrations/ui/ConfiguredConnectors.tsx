@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Plug } from "lucide-react"
 
 import { Badge } from "@workspace/ui/components/badge"
@@ -11,6 +12,18 @@ import { BrandIcon } from "./BrandIcon"
 
 export function ConfiguredConnectors({ onAdd }: { onAdd: () => void }) {
   const snapshot = useIntegrationsStore()
+  const [pendingId, setPendingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleDisconnect(connectionId: string) {
+    setPendingId(connectionId)
+    setError(null)
+    const result = await disconnectConnector(connectionId)
+    setPendingId(null)
+    if (!result.ok) {
+      setError(result.error.message)
+    }
+  }
 
   if (snapshot.connections.length === 0) {
     return (
@@ -27,6 +40,11 @@ export function ConfiguredConnectors({ onAdd }: { onAdd: () => void }) {
 
   return (
     <div className="grid gap-2">
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
       {snapshot.connections.map((connection) => {
         const connector = getConnector(connection.connectorId)
         if (!connector) {
@@ -48,9 +66,10 @@ export function ConfiguredConnectors({ onAdd }: { onAdd: () => void }) {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => disconnectConnector(connection.id)}
+              disabled={pendingId === connection.id}
+              onClick={() => void handleDisconnect(connection.id)}
             >
-              Disconnect
+              {pendingId === connection.id ? "Disconnecting…" : "Disconnect"}
             </Button>
           </div>
         )

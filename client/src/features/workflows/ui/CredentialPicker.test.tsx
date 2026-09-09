@@ -103,4 +103,17 @@ describe("CredentialPicker", () => {
       "Using credential: Stripe key"
     )
   })
+
+  it("lets the user clear a missing credential when the list is empty", async () => {
+    const user = userEvent.setup()
+    const { onChange } = renderPicker({ value: "cred_gone" })
+
+    expect(screen.getByTestId("credential-picker-missing")).toHaveTextContent(
+      /missing or was deleted/i
+    )
+    expect(screen.queryByTestId("credential-picker-empty")).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Clear" }))
+    expect(onChange).toHaveBeenCalledWith("")
+  })
 })

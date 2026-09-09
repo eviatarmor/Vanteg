@@ -170,4 +170,39 @@ describe("NodeSheet", () => {
       "Using credential: Keep me"
     )
   })
+
+  it("clears the inline token from the patch when a credential is selected", async () => {
+    const user = userEvent.setup()
+    const created = await createCustomCredential({
+      name: "API bearer",
+      kind: "bearer",
+      fields: { token: "tok_abc" },
+    })
+    expect(created.ok).toBe(true)
+    if (!created.ok) {
+      return
+    }
+
+    const node = createVantegNode("http", { x: 0, y: 0 })
+    node.data.config.token = "pasted-secret"
+
+    const { onChange } = renderSheet(node)
+    await user.click(screen.getByRole("combobox", { name: "Credential" }))
+    await user.click(screen.getByRole("option", { name: /API bearer/i }))
+
+    const last = onChange.mock.calls.at(-1)
+    expect(last?.[1]?.config?.credentialId).toBe(created.data.id)
+    expect(last?.[1]?.config?.token).toBeUndefined()
+  })
+
+  it("shows the inline secret again when the saved credential is gone", async () => {
+    const node = createVantegNode("http", { x: 0, y: 0 })
+    node.data.config.credentialId = "cred_deleted"
+    node.data.config.token = "still-here"
+
+    renderSheet(node)
+
+    expect(screen.getByTestId("credential-picker-missing")).toBeInTheDocument()
+    expect(screen.getByLabelText("Bearer token / API key")).toBeInTheDocument()
+  })
 })

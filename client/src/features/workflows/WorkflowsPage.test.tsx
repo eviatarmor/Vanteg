@@ -1,9 +1,15 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { listWorkflows, resetWorkflows } from "./model/store"
+import {
+  holdNextWorkflowsLoad,
+  listWorkflows,
+  releaseWorkflowsLoad,
+  resetWorkflows,
+  setWorkflowsLoadFailureOnce,
+} from "./model/store"
 import { WorkflowsPage } from "./WorkflowsPage"
 
 function renderWorkflows(path = "/workflows") {
@@ -60,14 +66,31 @@ describe("WorkflowsPage", () => {
   })
 
   it("shows a loading spinner while hydrating", async () => {
+    holdNextWorkflowsLoad()
     renderWorkflows()
-    // May already be ready in the same tick; assert either spinner or empty eventually settles.
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("heading", { name: "No production workflows" }) ||
-          screen.queryByLabelText("Loading workflows")
-      ).toBeTruthy()
-    })
-    expect(await screen.findByRole("heading", { name: "No production workflows" })).toBeInTheDocument()
+
+    expect(screen.getByLabelText("Loading workflows")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "No production workflows" })
+    ).not.toBeInTheDocument()
+
+    releaseWorkflowsLoad()
+    expect(
+      await screen.findByRole("heading", { name: "No production workflows" })
+    ).toBeInTheDocument()
+  })
+
+  it("shows an error panel and retries hydration", async () => {
+    const user = userEvent.setup()
+    setWorkflowsLoadFailureOnce()
+    renderWorkflows()
+
+    expect(await screen.findByText("Couldn’t load workflows")).toBeInTheDocument()
+    expect(screen.getByText("Failed to load workflows")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Retry" }))
+    expect(
+      await screen.findByRole("heading", { name: "No production workflows" })
+    ).toBeInTheDocument()
   })
 })

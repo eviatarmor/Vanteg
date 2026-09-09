@@ -10,8 +10,9 @@ import {
 import { Textarea } from "@workspace/ui/components/textarea"
 
 import { SecretInput } from "@/components/secret-input"
+import { useIntegrationsStore } from "@/features/integrations/model/store"
 
-import { isInlineAuthSuperseded } from "../model/auth-fields"
+import { isInlineAuthSuperseded, patchConfigForCredential } from "../model/auth-fields"
 import type { VantegNode, VantegNodePatch, WorkflowNodeType } from "../model/types"
 import { CodeField } from "./CodeField"
 import { CredentialPicker } from "./CredentialPicker"
@@ -25,6 +26,9 @@ export function NodeConfigFields({
   catalog: WorkflowNodeType
   onChange: (nodeId: string, patch: VantegNodePatch) => void
 }) {
+  const { customCredentials } = useIntegrationsStore()
+  const credentialIds = customCredentials.map((item) => item.id)
+
   if (catalog.fields.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -39,7 +43,7 @@ export function NodeConfigFields({
         Configuration
       </p>
       {catalog.fields.map((field) => {
-        if (isInlineAuthSuperseded(field, node.data.config)) {
+        if (isInlineAuthSuperseded(field, node.data.config, credentialIds)) {
           return null
         }
 
@@ -53,10 +57,11 @@ export function NodeConfigFields({
               value={node.data.config[field.key] ?? ""}
               onChange={(credentialId) =>
                 onChange(node.id, {
-                  config: {
-                    ...node.data.config,
-                    [field.key]: credentialId,
-                  },
+                  config: patchConfigForCredential(
+                    node.data.config,
+                    credentialId,
+                    catalog.fields
+                  ),
                 })
               }
             />

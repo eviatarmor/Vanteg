@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
+import { err } from "@workspace/integrations"
+
+import { getIntegrationsAdapter, setIntegrationsAdapter } from "./adapter"
 import {
   addDataRow,
   completeOAuthCallback,
   connectConnector,
   createCustomCredential,
   deleteCustomCredential,
+  disconnectConnector,
   getIntegrationsSnapshot,
   insertDataRows,
   resetIntegrationsStore,
@@ -152,6 +156,76 @@ describe("integrations store", () => {
     if (!result.ok) {
       expect(result.error.code).toBe("validation")
     }
+  })
+
+  it("replays completeOAuthCallback without duplicating the connection", async () => {
+    const started = await startManagedOAuthConnect("slack")
+    expect(started.ok).toBe(true)
+    if (!started.ok) {
+      return
+    }
+    const params = new URL(started.data.authorizeUrl, "http://localhost")
+    const input = {
+      code: params.searchParams.get("code") ?? undefined,
+      state: params.searchParams.get("state") ?? undefined,
+      provider: params.searchParams.get("provider") ?? undefined,
+    }
+    const first = await completeOAuthCallback(input)
+    const second = await completeOAuthCallback(input)
+    expect(first.ok).toBe(true)
+    expect(second.ok).toBe(true)
+    expect(getIntegrationsSnapshot().connections).toHaveLength(1)
+    expect(getIntegrationsSnapshot().credentials).toHaveLength(1)
+  })
+
+  it("reconnects Stripe without creating a second adapter connection", async () => {
+    await connectConnector("stripe", { apiKey: "sk_live_one" })
+    const id = getIntegrationsSnapshot().credentials[0]?.id
+    expect(id).toBeDefined()
+
+    await connectConnector("stripe", { apiKey: "sk_live_two" }, id)
+
+    expect(getIntegrationsSnapshot().connections).toHaveLength(1)
+    expect(getIntegrationsSnapshot().credentials).toHaveLength(1)
+    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_live_two")
+
+    const listed = await getIntegrationsAdapter().listConnections()
+    expect(listed.ok && listed.data).toHaveLength(1)
+  })
+
+  it("keeps the connector row when adapter delete fails", async () => {
+    await connectConnector("stripe", { apiKey: "sk_test" })
+    const connectionId = getIntegrationsSnapshot().connections[0]?.id
+    expect(connectionId).toBeDefined()
+
+    const inner = getIntegrationsAdapter()
+    setIntegrationsAdapter({
+      ...inner,
+      deleteConnection: async () =>
+        err({ code: "internal", message: "Adapter down" }),
+    })
+
+    const result = await disconnectConnector(connectionId!)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.message).toBe("Adapter down")
+    }
+    expect(getIntegrationsSnapshot().connections).toHaveLength(1)
+    expect(getIntegrationsSnapshot().credentials).toHaveLength(1)
+  })
+
+  it("removes the connector row after adapter delete succeeds", async () => {
+    await connectConnector("stripe", { apiKey: "sk_test" })
+    const connectionId = getIntegrationsSnapshot().connections[0]?.id
+    expect(connectionId).toBeDefined()
+
+    const result = await disconnectConnector(connectionId!)
+    expect(result.ok).toBe(true)
+    expect(getIntegrationsSnapshot().connections).toHaveLength(0)
+    expect(getIntegrationsSnapshot().credentials).toHaveLength(0)
+
+    const listed = await getIntegrationsAdapter().listConnections()
+    expect(listed.ok && listed.data).toHaveLength(0)
   })
 
 })

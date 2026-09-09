@@ -97,6 +97,7 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   const credentials = new Map<string, Credential>()
   const customCredentials = new Map<string, CustomCredential>()
   const oauthStates = new Map<string, { provider: string; appId?: string; name?: string }>()
+  const oauthCompletions = new Map<string, Promise<Result<Connection>>>()
   const idempotency = new Map<string, Result<Record<string, unknown>>>()
 
   function putConnection(connection: Connection, credential: Credential): Connection {
@@ -143,47 +144,61 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   }
 
   async function completeOAuth(input: CompleteOAuthInput): Promise<Result<Connection>> {
-    if (!input.code?.trim()) {
-      return err({
-        code: "validation",
-        message: "Missing OAuth authorization code",
-        fields: { code: "Required" },
-        provider: input.provider,
-      })
+    const cached = oauthCompletions.get(input.state)
+    if (cached) {
+      return cached
     }
-    const pending = oauthStates.get(input.state)
-    if (!pending || pending.provider !== input.provider) {
-      return err({
-        code: "unauthorized",
-        message: "Invalid or expired OAuth state",
-        provider: input.provider,
-      })
-    }
-    oauthStates.delete(input.state)
 
-    const appId = pending.appId ?? appsForProvider(input.provider)[0] ?? input.provider
-    const app = getApp(appId)
-    const displayName = pending.name ?? app?.name ?? input.provider
-    const createdAt = nowIso()
-    const credential: Credential = {
-      id: newId(),
-      appId,
-      name: displayName,
-      kind: "oauth2",
-      managed: true,
-      status: "connected",
-      fields: { accessToken: "oauth-access-token" },
+    const run = (async (): Promise<Result<Connection>> => {
+      if (!input.code?.trim()) {
+        return err({
+          code: "validation",
+          message: "Missing OAuth authorization code",
+          fields: { code: "Required" },
+          provider: input.provider,
+        })
+      }
+      const pending = oauthStates.get(input.state)
+      if (!pending || pending.provider !== input.provider) {
+        return err({
+          code: "unauthorized",
+          message: "Invalid or expired OAuth state",
+          provider: input.provider,
+        })
+      }
+      oauthStates.delete(input.state)
+
+      const appId = pending.appId ?? appsForProvider(input.provider)[0] ?? input.provider
+      const app = getApp(appId)
+      const displayName = pending.name ?? app?.name ?? input.provider
+      const createdAt = nowIso()
+      const credential: Credential = {
+        id: newId(),
+        appId,
+        name: displayName,
+        kind: "oauth2",
+        managed: true,
+        status: "connected",
+        fields: { accessToken: "oauth-access-token" },
+      }
+      const connection: Connection = {
+        id: newId(),
+        appId,
+        name: displayName,
+        credentialId: credential.id,
+        status: "connected",
+        createdAt,
+        updatedAt: createdAt,
+      }
+      return ok(putConnection(connection, credential))
+    })()
+
+    oauthCompletions.set(input.state, run)
+    const result = await run
+    if (!result.ok) {
+      oauthCompletions.delete(input.state)
     }
-    const connection: Connection = {
-      id: newId(),
-      appId,
-      name: displayName,
-      credentialId: credential.id,
-      status: "connected",
-      createdAt,
-      updatedAt: createdAt,
-    }
-    return ok(putConnection(connection, credential))
+    return result
   }
 
   async function completeOAuthCallback(
@@ -215,6 +230,10 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
         fields: { code: "Required" },
         provider: input.provider,
       })
+    }
+    const replayed = oauthCompletions.get(input.state)
+    if (replayed) {
+      return replayed
     }
     const pending = oauthStates.get(input.state)
     if (!pending) {
@@ -331,6 +350,38 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   }
 
   async function connectApp(input: ConnectAppInput): Promise<Result<Connection>> {
+    if (input.connectionId) {
+      const existing = connections.get(input.connectionId)
+      if (!existing) {
+        return err({
+          code: "not_found",
+          message: `Connection not found: ${input.connectionId}`,
+        })
+      }
+      if (existing.appId !== input.appId) {
+        return err({
+          code: "validation",
+          message: "Connection app mismatch",
+          provider: input.appId,
+        })
+      }
+      const credential = credentials.get(existing.credentialId)
+      if (credential) {
+        credentials.set(credential.id, {
+          ...credential,
+          name: input.name ?? credential.name,
+          fields: input.fields ? { ...credential.fields, ...input.fields } : credential.fields,
+        })
+      }
+      const updated: Connection = {
+        ...existing,
+        name: input.name ?? existing.name,
+        updatedAt: nowIso(),
+      }
+      connections.set(updated.id, updated)
+      return ok(updated)
+    }
+
     const app = getApp(input.appId)
     if (!app) {
       return err({

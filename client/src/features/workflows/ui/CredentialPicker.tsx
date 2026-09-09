@@ -2,6 +2,7 @@ import { Link } from "react-router"
 
 import { customAuthKindLabel } from "@workspace/integrations"
 import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import { Label } from "@workspace/ui/components/label"
 import {
   Select,
@@ -33,11 +34,12 @@ export function CredentialPicker({
   const { customCredentials } = useIntegrationsStore()
   const selectedId = normalizeCredentialId(value)
   const selected = customCredentials.find((item) => item.id === selectedId)
+  const missing = Boolean(selectedId) && !selected
 
   return (
     <div className="grid gap-2">
       <Label htmlFor={id}>{label}</Label>
-      {customCredentials.length === 0 ? (
+      {customCredentials.length === 0 && !missing ? (
         <div
           className="rounded-lg border border-dashed border-border bg-muted/40 px-3 py-3 text-sm text-muted-foreground"
           data-testid="credential-picker-empty"
@@ -51,9 +53,9 @@ export function CredentialPicker({
           </Link>{" "}
           and select it here instead of pasting secrets into the step.
         </div>
-      ) : (
+      ) : customCredentials.length > 0 ? (
         <Select
-          value={selectedId || CREDENTIAL_NONE}
+          value={selected ? selectedId : CREDENTIAL_NONE}
           onValueChange={(next) => {
             if (!next) {
               return
@@ -78,8 +80,20 @@ export function CredentialPicker({
             ))}
           </SelectContent>
         </Select>
-      )}
-      {selected ? (
+      ) : null}
+      {missing ? (
+        <div
+          className="flex items-start justify-between gap-3 rounded-lg border border-dashed border-border bg-muted/40 px-3 py-3"
+          data-testid="credential-picker-missing"
+        >
+          <p className="text-sm text-muted-foreground">
+            This credential is missing or was deleted.
+          </p>
+          <Button type="button" size="sm" variant="outline" onClick={() => onChange("")}>
+            Clear
+          </Button>
+        </div>
+      ) : selected ? (
         <p className="text-xs text-muted-foreground" data-testid="credential-picker-using">
           Using credential: <span className="font-medium text-foreground">{selected.name}</span>
         </p>

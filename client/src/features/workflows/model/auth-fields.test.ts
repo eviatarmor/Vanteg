@@ -5,6 +5,7 @@ import {
   getNodeTypeForEditor,
   isInlineAuthSuperseded,
   nodeNeedsCustomCredential,
+  patchConfigForCredential,
 } from "./auth-fields"
 
 describe("auth-fields", () => {
@@ -16,11 +17,26 @@ describe("auth-fields", () => {
     expect(fields[1]?.inlineAuth).toBe(true)
   })
 
-  it("hides inline auth when a credential is selected", () => {
+  it("hides inline auth only when the selected credential still exists", () => {
     const token = customCredentialAuthFields()[1]!
-    expect(isInlineAuthSuperseded(token, {})).toBe(false)
-    expect(isInlineAuthSuperseded(token, { credentialId: "" })).toBe(false)
-    expect(isInlineAuthSuperseded(token, { credentialId: "cred_1" })).toBe(true)
+    expect(isInlineAuthSuperseded(token, {}, ["cred_1"])).toBe(false)
+    expect(isInlineAuthSuperseded(token, { credentialId: "" }, ["cred_1"])).toBe(false)
+    expect(isInlineAuthSuperseded(token, { credentialId: "cred_1" }, ["cred_1"])).toBe(true)
+    expect(isInlineAuthSuperseded(token, { credentialId: "cred_1" }, [])).toBe(false)
+    expect(isInlineAuthSuperseded(token, { credentialId: "cred_gone" }, ["cred_1"])).toBe(false)
+  })
+
+  it("drops inline secrets when a credential id is set", () => {
+    const fields = customCredentialAuthFields()
+    const next = patchConfigForCredential(
+      { url: "https://api.example", token: "pasted-secret", credentialId: "" },
+      "cred_1",
+      fields
+    )
+    expect(next).toEqual({ url: "https://api.example", credentialId: "cred_1" })
+    expect(
+      patchConfigForCredential({ url: "https://api.example", credentialId: "cred_1" }, "", fields)
+    ).toEqual({ url: "https://api.example", credentialId: "" })
   })
 
   it("augments HTTP auth nodes with credential fields for the editor", () => {

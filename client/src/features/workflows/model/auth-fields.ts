@@ -40,9 +40,33 @@ export function customCredentialAuthFields(options?: {
 
 export function isInlineAuthSuperseded(
   field: NodeField,
-  config: Record<string, string>
+  config: Record<string, string>,
+  existingCredentialIds: Iterable<string>
 ): boolean {
-  return Boolean(field.inlineAuth && config.credentialId)
+  if (!field.inlineAuth || !config.credentialId) {
+    return false
+  }
+  const known =
+    existingCredentialIds instanceof Set
+      ? existingCredentialIds
+      : new Set(existingCredentialIds)
+  return known.has(config.credentialId)
+}
+
+export function patchConfigForCredential(
+  config: Record<string, string>,
+  credentialId: string,
+  fields: readonly NodeField[]
+): Record<string, string> {
+  const next: Record<string, string> = { ...config, credentialId }
+  if (credentialId) {
+    for (const field of fields) {
+      if (field.inlineAuth) {
+        delete next[field.key]
+      }
+    }
+  }
+  return next
 }
 
 function authFieldsFor(catalogId: string): NodeField[] {

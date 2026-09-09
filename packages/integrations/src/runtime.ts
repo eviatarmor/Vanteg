@@ -75,6 +75,8 @@ export interface ConnectAppInput {
   appId: string
   fields?: Record<string, string>
   name?: string
+  /** When set, update this connection in place instead of inserting a new one. */
+  connectionId?: string
 }
 
 export interface IntegrationsAdapter {

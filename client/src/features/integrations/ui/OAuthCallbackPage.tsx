@@ -29,10 +29,10 @@ export function OAuthCallbackPage() {
         errorDescription: searchParams.get("error_description") ?? undefined,
         provider: searchParams.get("provider") ?? undefined,
       })
-      if (cancelled) {
-        return
-      }
       if (!result.ok) {
+        if (cancelled) {
+          return
+        }
         setStatus("error")
         setTitle("Connection failed")
         setMessage(result.error.message)

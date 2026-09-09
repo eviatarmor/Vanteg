@@ -219,5 +219,64 @@ describe("createMockIntegrationsAdapter", () => {
     }
   })
 
+  it("completeOAuthCallback returns the same connection when the state is replayed", async () => {
+    const started = await adapter.startOAuth({
+      provider: "google",
+      appId: "gmail",
+      name: "Gmail",
+    })
+    expect(started.ok).toBe(true)
+    if (!started.ok) {
+      return
+    }
+
+    const first = await adapter.completeOAuthCallback({
+      code: "mock-code",
+      state: started.data.state,
+      provider: "google",
+    })
+    const second = await adapter.completeOAuthCallback({
+      code: "mock-code",
+      state: started.data.state,
+      provider: "google",
+    })
+    expect(first.ok).toBe(true)
+    expect(second.ok).toBe(true)
+    if (!first.ok || !second.ok) {
+      return
+    }
+    expect(second.data.id).toBe(first.data.id)
+    expect(second.data.credentialId).toBe(first.data.credentialId)
+
+    const listed = await adapter.listConnections()
+    expect(listed.ok && listed.data).toHaveLength(1)
+  })
+
+  it("connectApp with connectionId updates the existing row instead of inserting", async () => {
+    const first = await adapter.connectApp({
+      appId: "stripe",
+      fields: { apiKey: "sk_old" },
+    })
+    expect(first.ok).toBe(true)
+    if (!first.ok) {
+      return
+    }
+
+    const second = await adapter.connectApp({
+      appId: "stripe",
+      fields: { apiKey: "sk_new" },
+      connectionId: first.data.id,
+    })
+    expect(second.ok).toBe(true)
+    if (!second.ok) {
+      return
+    }
+    expect(second.data.id).toBe(first.data.id)
+    expect(second.data.credentialId).toBe(first.data.credentialId)
+
+    const listed = await adapter.listConnections()
+    expect(listed.ok && listed.data).toHaveLength(1)
+  })
+
 
 })

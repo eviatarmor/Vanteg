@@ -99,4 +99,33 @@ describe("OAuthCallbackPage", () => {
     })
     expect(screen.getByText("Invalid or expired OAuth state")).toBeInTheDocument()
   })
+
+  it("still ends Connected under StrictMode with a single store connection", async () => {
+    const started = await startManagedOAuthConnect("google-sheets")
+    expect(started.ok).toBe(true)
+    if (!started.ok) {
+      return
+    }
+
+    const router = createMemoryRouter(
+      [
+        { path: "/integrations", element: <div>Integrations home</div> },
+        { path: "/integrations/oauth/callback", Component: OAuthCallbackPage },
+      ],
+      { initialEntries: [started.data.authorizeUrl] }
+    )
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+      { reactStrictMode: true }
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Connected" })).toBeInTheDocument()
+    })
+    expect(screen.getByText(/Google Sheets is ready to use/i)).toBeInTheDocument()
+    expect(getIntegrationsSnapshot().connections).toHaveLength(1)
+  })
 })

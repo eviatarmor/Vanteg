@@ -40,6 +40,7 @@ function emptySnapshot(): IntegrationsSnapshot {
 }
 
 let snapshot: IntegrationsSnapshot = emptySnapshot()
+const oauthCallbackInFlight = new Map<string, Promise<Result<ConnectorConnection>>>()
 
 export function subscribeIntegrations(listener: () => void) {
   listeners.add(listener)
@@ -63,6 +64,7 @@ export function useIntegrationsStore(): IntegrationsSnapshot {
 export function resetIntegrationsStore() {
   resetIntegrationsAdapter()
   snapshot = emptySnapshot()
+  oauthCallbackInFlight.clear()
   emit()
 }
 
@@ -150,10 +152,15 @@ export async function connectConnector(
     ? { accessToken: existing?.fields.accessToken ?? "oauth-access-token" }
     : mergeSecretFields(existing?.fields, values)
 
+  const existingConnection = existing
+    ? snapshot.connections.find((item) => item.credentialId === existing.id)
+    : undefined
+
   const remote = await getIntegrationsAdapter().connectApp({
     appId: connectorId,
     fields: managed ? undefined : fields,
     name: existing?.name ?? connector.name,
+    connectionId: existingConnection?.id,
   })
   if (!remote.ok) {
     return remote
@@ -226,13 +233,20 @@ function applyConnectedRemote(
   existingCredentialId?: string
 ): ConnectorConnection {
   const connector = getConnector(remote.appId)
-  const existing = snapshot.credentials.find((item) => item.id === existingCredentialId)
+  const existingCred =
+    snapshot.credentials.find((item) => item.id === existingCredentialId) ??
+    snapshot.credentials.find((item) => item.id === remote.credentialId)
+  const existingConn =
+    snapshot.connections.find((item) => item.id === remote.id) ??
+    snapshot.connections.find(
+      (item) => item.credentialId === (existingCred?.id ?? remote.credentialId)
+    )
   const kind = connector?.auth.kind ?? "oauth2"
 
   const credential: SavedCredential = {
-    id: existing?.id ?? remote.credentialId,
+    id: existingCred?.id ?? remote.credentialId,
     connectorId: remote.appId,
-    name: existing?.name ?? remote.name,
+    name: existingCred?.name ?? remote.name,
     kind,
     managed,
     status: "connected",
@@ -242,46 +256,28 @@ function applyConnectedRemote(
   }
 
   const connection: ConnectorConnection = {
-    id: existing
-      ? snapshot.connections.find((item) => item.credentialId === credential.id)?.id ??
-        remote.id
-      : remote.id,
+    id: existingConn?.id ?? remote.id,
     connectorId: remote.appId,
     credentialId: credential.id,
     name: connector?.name ?? remote.name,
-    sheets: connector ? seedSheets(connector) : { in: [], data: [], out: [] },
+    sheets: existingConn?.sheets ?? (connector ? seedSheets(connector) : { in: [], data: [], out: [] }),
   }
 
   snapshot = {
     ...snapshot,
-    credentials: existing
+    credentials: existingCred
       ? snapshot.credentials.map((item) => (item.id === credential.id ? credential : item))
       : [...snapshot.credentials, credential],
-    connections: existing
+    connections: existingConn
       ? snapshot.connections.map((item) =>
-          item.credentialId === credential.id
-            ? { ...item, credentialId: credential.id, name: connection.name }
-            : item
+          item.id === existingConn.id ? connection : item
         )
       : [...snapshot.connections, connection],
-    selectedConnectionId: existing
-      ? snapshot.connections.find((item) => item.credentialId === credential.id)?.id ??
-        snapshot.selectedConnectionId
-      : connection.id,
-  }
-
-  if (existing && snapshot.connections.every((item) => item.credentialId !== credential.id)) {
-    snapshot = {
-      ...snapshot,
-      connections: [...snapshot.connections, connection],
-      selectedConnectionId: connection.id,
-    }
+    selectedConnectionId: connection.id,
   }
 
   emit()
-  return (
-    snapshot.connections.find((item) => item.credentialId === credential.id) ?? connection
-  )
+  return connection
 }
 
 export async function startManagedOAuthConnect(
@@ -314,16 +310,33 @@ export async function completeOAuthCallback(input: {
   errorDescription?: string
   provider?: string
 }): Promise<Result<ConnectorConnection>> {
-  const remote = await getIntegrationsAdapter().completeOAuthCallback(input)
-  if (!remote.ok) {
-    return remote
+  const key = input.state?.trim()
+  if (key) {
+    const existing = oauthCallbackInFlight.get(key)
+    if (existing) {
+      return existing
+    }
   }
-  const connection = applyConnectedRemote(
-    remote.data,
-    true,
-    { accessToken: "oauth-access-token" }
-  )
-  return ok(connection)
+
+  const run = (async (): Promise<Result<ConnectorConnection>> => {
+    const remote = await getIntegrationsAdapter().completeOAuthCallback(input)
+    if (!remote.ok) {
+      return remote
+    }
+    const connection = applyConnectedRemote(remote.data, true, {
+      accessToken: "oauth-access-token",
+    })
+    return ok(connection)
+  })()
+
+  if (key) {
+    oauthCallbackInFlight.set(key, run)
+  }
+  const result = await run
+  if (key && !result.ok) {
+    oauthCallbackInFlight.delete(key)
+  }
+  return result
 }
 
 export function selectConnection(connectionId: string | null) {
@@ -331,17 +344,29 @@ export function selectConnection(connectionId: string | null) {
   emit()
 }
 
-export function disconnectConnector(connectionId: string) {
+export async function disconnectConnector(
+  connectionId: string
+): Promise<Result<{ id: string }>> {
   const connection = snapshot.connections.find((item) => item.id === connectionId)
+  if (!connection) {
+    return err({
+      code: "not_found",
+      message: `Connection not found: ${connectionId}`,
+    })
+  }
+  const result = await getIntegrationsAdapter().deleteConnection(connectionId)
+  if (!result.ok) {
+    return result
+  }
   snapshot = {
     ...snapshot,
     connections: snapshot.connections.filter((item) => item.id !== connectionId),
-    credentials: snapshot.credentials.filter((item) => item.id !== connection?.credentialId),
+    credentials: snapshot.credentials.filter((item) => item.id !== connection.credentialId),
     selectedConnectionId:
       snapshot.selectedConnectionId === connectionId ? null : snapshot.selectedConnectionId,
   }
   emit()
-  void getIntegrationsAdapter().deleteConnection(connectionId)
+  return result
 }
 
 export function deleteCredential(credentialId: string) {

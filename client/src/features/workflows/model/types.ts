@@ -23,7 +23,7 @@ export interface NodeField {
   secret?: boolean
   /**
    * Inline auth secret superseded by a selected custom credential.
-   * Hidden in the editor when `config.credentialId` is set.
+   * Hidden in the editor when `config.credentialId` matches a saved credential.
    */
   inlineAuth?: boolean
 }
