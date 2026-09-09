@@ -4,11 +4,13 @@ import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
-  createCustomCredential,
   holdNextCustomCredentialsLoad,
   releaseCustomCredentialsLoad,
-  resetIntegrationsStore,
   setCustomCredentialsLoadFailureOnce,
+} from "@/features/integrations/model/custom-credentials-load"
+import {
+  createCustomCredential,
+  resetIntegrationsStore,
 } from "@/features/integrations/model/store"
 
 import { CredentialMultiPicker } from "./CredentialMultiPicker"
