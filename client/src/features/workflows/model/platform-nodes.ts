@@ -8,6 +8,13 @@ import {
   databaseTableField,
 } from "./ai-db-fields"
 import {
+  emailBodyField,
+  emailCcField,
+  emailSubjectField,
+  emailToField,
+  formIdField,
+} from "./email-form-fields"
+import {
   httpBodyField,
   httpHeadersField,
   httpMethodField,
@@ -75,7 +82,7 @@ export const platformNodes: WorkflowNodeType[] = [
     description: "Start when a form is submitted.",
     kind: "trigger",
     category: "Triggers",
-    fields: [{ key: "formId", label: "Form ID", placeholder: "contact-form" }],
+    fields: [formIdField()],
   },
   {
     id: "app-event",
@@ -140,8 +147,10 @@ export const platformNodes: WorkflowNodeType[] = [
     kind: "action",
     category: "Actions",
     fields: [
-      { key: "to", label: "To", placeholder: "team@example.com" },
-      { key: "subject", label: "Subject", placeholder: "Update" },
+      emailToField("team@example.com"),
+      emailCcField(),
+      emailSubjectField("Update"),
+      emailBodyField("Thanks, we got it."),
     ],
   },
   {
@@ -205,12 +214,16 @@ export const platformNodes: WorkflowNodeType[] = [
     { key: "from", label: "From contains", placeholder: "@acme.com" },
   ]),
   method("email-reply", "action", "Reply to email", "Reply to an inbound email.", [
-    { key: "to", label: "To", placeholder: "ada@acme.com" },
-    { key: "body", label: "Body", placeholder: "Thanks, we got it.", control: "textarea" },
+    emailToField("ada@acme.com"),
+    emailCcField(),
+    emailSubjectField("Re: Update"),
+    emailBodyField("Thanks, we got it."),
   ]),
   method("email-forward", "action", "Forward email", "Forward an inbound email.", [
-    { key: "to", label: "To", placeholder: "ops@acme.com" },
-    { key: "body", label: "Note", placeholder: "Routing to ops.", control: "textarea" },
+    emailToField("ops@acme.com"),
+    emailCcField(),
+    emailSubjectField("Fwd: Update"),
+    emailBodyField("Routing to ops.", "Note"),
   ]),
   method("database-new-row", "trigger", "New row", "Start when a database row is inserted.", [
     { key: "table", label: "Table", placeholder: "jobs" },
