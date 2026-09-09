@@ -1,5 +1,21 @@
 import { field, integrationApp, method } from "./define.ts"
-import type { AppAuth, ConnectorCategory, IntegrationApp, Method, TemplateName } from "./types.ts"
+import type { AppAuth, ConnectorCategory, IntegrationApp, Method, MethodField, TemplateName } from "./types.ts"
+
+function calendarField(placeholder = "primary"): MethodField {
+  return field("calendar", "Calendar", placeholder, {
+    control: "resource",
+    resourceType: "calendar.calendar",
+    help: "Pick a calendar from the connected account, or enter a custom calendar id.",
+  })
+}
+
+function formField(placeholder = "contact-form"): MethodField {
+  return field("formId", "Form ID", placeholder, {
+    control: "resource",
+    resourceType: "forms.form",
+    help: "Pick a form from the connected account, or enter a custom form id.",
+  })
+}
 
 function crmFamily(prefix: string, name: string): Method[] {
   return [
@@ -80,20 +96,20 @@ function paymentFamily(prefix: string, name: string): Method[] {
 function calendarFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-event`, "trigger", "New event created", `Start when a ${name} event is created.`, [
-      field("calendar", "Calendar", "primary"),
+      calendarField(),
     ]),
     method(`${prefix}-event-starting-soon`, "trigger", "Event starting soon", `Start a set time before a ${name} event.`, [
-      field("calendar", "Calendar", "primary"),
+      calendarField(),
       field("lead", "Lead time", "15m"),
     ]),
     method(`${prefix}-event-updated`, "trigger", "Event updated", `Start when a ${name} event changes.`, [
-      field("calendar", "Calendar", "primary"),
+      calendarField(),
     ]),
     method(`${prefix}-event-cancelled`, "trigger", "Event cancelled", `Start when a ${name} event is cancelled.`, [
-      field("calendar", "Calendar", "primary"),
+      calendarField(),
     ]),
     method(`${prefix}-create-event`, "action", "Create event", `Create a ${name} event.`, [
-      field("calendar", "Calendar", "primary"),
+      calendarField(),
       field("title", "Title", "Kickoff"),
       field("start", "Start", "2026-09-08T09:00"),
     ]),
@@ -114,16 +130,16 @@ function calendarFamily(prefix: string, name: string): Method[] {
 function formFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-submission`, "trigger", "New submission", `Start when a ${name} form is submitted.`, [
-      field("formId", "Form ID", "contact-form"),
+      formField(),
     ]),
     method(`${prefix}-form-updated`, "trigger", "Form updated", `Start when a ${name} form definition changes.`, [
-      field("formId", "Form ID", "contact-form"),
+      formField(),
     ]),
     method(`${prefix}-list-responses`, "action", "List responses", `List ${name} responses.`, [
-      field("formId", "Form ID", "contact-form"),
+      formField(),
     ]),
     method(`${prefix}-get-form`, "action", "Get form", `Read a ${name} form and its questions.`, [
-      field("formId", "Form ID", "contact-form"),
+      formField(),
     ]),
   ]
 }
