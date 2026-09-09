@@ -29,7 +29,7 @@ describe("WorkflowEditorPage", () => {
 
     expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Deploy" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument()
     expect(screen.queryByRole("complementary", { name: "Assistant" })).not.toBeInTheDocument()
     expect(screen.queryByRole("complementary", { name: "Workflow assistant" })).not.toBeInTheDocument()
   })
