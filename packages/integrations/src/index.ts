@@ -34,3 +34,21 @@ export {
   oauthApps,
   terraformOAuthApps,
 } from "./registry.ts"
+
+export type { IntegrationError, IntegrationErrorCode, Result } from "./errors.ts"
+export { err, isIntegrationError, ok } from "./errors.ts"
+
+export type {
+  CompleteOAuthInput,
+  ConnectAppInput,
+  Connection,
+  ConnectionStatus,
+  CreateConnectionInput,
+  Credential,
+  ExecuteMethodInput,
+  IntegrationsAdapter,
+  StartOAuthInput,
+  VerifyWebhookInput,
+} from "./runtime.ts"
+
+export { createMockIntegrationsAdapter } from "./mock-adapter.ts"
