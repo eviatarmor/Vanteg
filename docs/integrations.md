@@ -4,7 +4,7 @@ There are two catalogs.
 
 The **Integrations page** has **152 connectable apps**. Each app is assigned a capability template, and that template’s **operations** are the actions you can run. Those apps do **not** have per-app trigger lists.
 
-The **workflow editor** has **12 first-class connector apps** with named **triggers** and **actions**. Everything else in the 152-app catalog is meant to be reached from the generic **App event** trigger (`app` + `event`).
+The **workflow editor** has **13 first-class connector apps** with named **triggers** and **actions**. Everything else in the 152-app catalog is meant to be reached from the generic **App event** trigger (`app` + `event`).
 
 Sources:
 
@@ -50,6 +50,12 @@ Sources:
 **Triggers:** New message · New reaction · Member joined
 
 **Actions:** Send message · Update message · Add reaction
+
+### Microsoft Teams
+
+**Triggers:** Message received · Channel created · Member added
+
+**Actions:** Post message · Reply in thread · Update message · List channels · Create channel
 
 ### HTTP
 
