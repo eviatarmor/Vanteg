@@ -9,7 +9,7 @@ import {
 } from "@/features/integrations/model/store"
 
 import { createVantegNode } from "../model/create-node"
-import { getNodeType } from "../model/node-catalog"
+import { getNodeTypeForEditor } from "../model/auth-fields"
 import type { VantegEdge, VantegNode } from "../model/types"
 import { NodeSheet } from "./NodeSheet"
 
@@ -119,7 +119,7 @@ describe("NodeSheet", () => {
     }
 
     const node = createVantegNode("http", { x: 0, y: 0 })
-    expect(getNodeType("http")?.fields.some((field) => field.key === "credentialId")).toBe(
+    expect(getNodeTypeForEditor("http")?.fields.some((field) => field.key === "credentialId")).toBe(
       true
     )
 
