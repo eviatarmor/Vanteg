@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
@@ -8,7 +8,7 @@ import { TooltipProvider } from "@workspace/ui/components/tooltip"
 import { resetAgents } from "@/features/agents/model/store"
 
 import { TeamsPage } from "./TeamsPage"
-import { resetTeams } from "./model/store"
+import { createTeam, resetTeams } from "./model/store"
 
 function renderTeams(path = "/teams") {
   const router = createMemoryRouter(
@@ -58,7 +58,7 @@ describe("TeamsPage", () => {
     expect(screen.getByRole("button", { name: "Lock canvas" })).toBeInTheDocument()
   })
 
-  it("adds an agent from the canvas menu", async () => {
+  it("adds an agent from the canvas menu with role and field chips", async () => {
     const user = userEvent.setup()
     renderTeams("/teams/team-swe")
 
@@ -67,8 +67,67 @@ describe("TeamsPage", () => {
     fireEvent.contextMenu(pane!)
 
     await user.click(screen.getByRole("menuitem", { name: "Add member" }))
-    await user.click(screen.getByRole("button", { name: /Research analyst/ }))
+
+    expect(screen.getByRole("dialog", { name: "Add member" })).toBeInTheDocument()
+    expect(screen.getByRole("radio", { name: "Lead" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Inbox" })).toHaveAttribute("aria-pressed", "false")
+
+    await user.click(screen.getByRole("radio", { name: "Researcher" }))
+    await user.click(screen.getByRole("button", { name: "Knowledge" }))
+    await user.click(screen.getByRole("option", { name: /Research analyst/ }))
+    await user.click(screen.getByRole("button", { name: "Add member" }))
 
     expect(screen.getByText("Research analyst")).toBeInTheDocument()
+    expect(screen.getAllByText("Researcher").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Knowledge").length).toBeGreaterThan(0)
+  })
+
+  it("shows an empty-team CTA to add the first member", async () => {
+    const user = userEvent.setup()
+    const team = createTeam("Blank ops")
+    renderTeams(`/teams/${team.id}`)
+
+    expect(screen.getByText("No members yet")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Add member" }))
+    expect(screen.getByRole("dialog", { name: "Add member" })).toBeInTheDocument()
+  })
+
+  it("opens the member sheet with structured role options", async () => {
+    const user = userEvent.setup()
+    renderTeams("/teams/team-swe")
+
+    const leadLabel = screen.getAllByText("Lead SWE agent")[0]
+    fireEvent.doubleClick(leadLabel.closest(".react-flow__node") ?? leadLabel)
+
+    const sheet = await screen.findByRole("dialog")
+    expect(within(sheet).getByText(/Set the role and which fields/i)).toBeInTheDocument()
+    expect(within(sheet).getByRole("radio", { name: "Custom" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    )
+    expect(within(sheet).getByRole("button", { name: "Save member" })).toBeInTheDocument()
+
+    await user.click(within(sheet).getByRole("radio", { name: "Lead" }))
+    await user.click(within(sheet).getByRole("button", { name: "Save member" }))
+
+    expect(screen.getAllByText("Lead").length).toBeGreaterThan(0)
+  })
+
+  it("validates an empty custom role in the member sheet", async () => {
+    const user = userEvent.setup()
+    renderTeams("/teams/team-swe")
+
+    const leadLabel = screen.getAllByText("Lead SWE agent")[0]
+    fireEvent.doubleClick(leadLabel.closest(".react-flow__node") ?? leadLabel)
+
+    const sheet = await screen.findByRole("dialog")
+    const customInput = within(sheet).getByPlaceholderText("e.g. Lead SWE")
+    await user.clear(customInput)
+    await user.click(within(sheet).getByRole("button", { name: "Save member" }))
+
+    expect(within(sheet).getByRole("alert")).toHaveTextContent(
+      "Enter a custom role or pick a preset."
+    )
+    expect(screen.getAllByText("Lead SWE").length).toBeGreaterThan(0)
   })
 })

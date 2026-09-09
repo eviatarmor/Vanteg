@@ -1,6 +1,7 @@
 import { memo } from "react"
 import { Handle, Position, type NodeProps } from "@xyflow/react"
 
+import { Badge } from "@workspace/ui/components/badge"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { getAgent } from "@/features/agents/model/store"
@@ -13,6 +14,7 @@ export const TeamAgentNode = memo(function TeamAgentNode({
   selected,
 }: NodeProps<TeamNode>) {
   const agent = getAgent(data.agentId)
+  const capabilities = data.capabilities ?? []
 
   return (
     <div
@@ -37,6 +39,15 @@ export const TeamAgentNode = memo(function TeamAgentNode({
           <p className="truncate text-sm font-medium">{agent?.name ?? "Missing agent"}</p>
         </div>
       </div>
+      {capabilities.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {capabilities.map((capability) => (
+            <Badge key={capability} variant="secondary" className="h-4 px-1.5 text-[10px]">
+              {capability}
+            </Badge>
+          ))}
+        </div>
+      ) : null}
       <Handle
         type="source"
         position={Position.Bottom}
