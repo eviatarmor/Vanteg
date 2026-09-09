@@ -41,11 +41,16 @@ export function ScrollFade({
   const { ref, canScrollDown } = useScrollOverflow<HTMLDivElement>()
 
   return (
-    <div className={cn("relative min-h-0 min-w-0", className)}>
+    <div
+      className={cn(
+        "relative flex min-h-0 min-w-0 flex-col overflow-hidden",
+        className
+      )}
+    >
       <div
         {...props}
         ref={ref}
-        className={cn("size-full overflow-auto", viewportClassName)}
+        className={cn("min-h-0 flex-1 overflow-auto", viewportClassName)}
       >
         {children}
       </div>

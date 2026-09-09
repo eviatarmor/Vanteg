@@ -69,9 +69,8 @@ export function NodePickerDialog({
   const sections = listPickerSections()
   const apps = listConnectorApps()
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null)
-  const [methodFilter, setMethodFilter] = useState<(typeof methodFilters)[number]["id"]>(
-    "all"
-  )
+  const [methodFilter, setMethodFilter] =
+    useState<(typeof methodFilters)[number]["id"]>("all")
   const selectedApp = apps.find((app) => app.id === selectedAppId) ?? null
 
   useEffect(() => {
@@ -98,8 +97,8 @@ export function NodePickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-2xl">
+        <DialogHeader className="shrink-0">
           {selectedApp ? (
             <div className="flex items-start gap-2">
               <Button
@@ -126,17 +125,26 @@ export function NodePickerDialog({
             </>
           )}
         </DialogHeader>
-        <div className="overflow-hidden">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           <div
             className={
               selectedApp
-                ? "flex w-[200%] -translate-x-1/2 transition-transform duration-300 ease-out"
-                : "flex w-[200%] translate-x-0 transition-transform duration-300 ease-out"
+                ? "flex min-h-0 w-[200%] -translate-x-1/2 transition-transform duration-300 ease-out"
+                : "flex min-h-0 w-[200%] translate-x-0 transition-transform duration-300 ease-out"
             }
           >
-            <div className="w-1/2 pr-1" inert={selectedApp ? true : undefined}>
-              <Tabs defaultValue={sections[0]?.id} className="gap-3">
-                <TabsList variant="line" className="h-9 w-full justify-start gap-4">
+            <div
+              className="flex min-h-0 w-1/2 flex-col pr-1"
+              inert={selectedApp ? true : undefined}
+            >
+              <Tabs
+                defaultValue={sections[0]?.id}
+                className="min-h-0 flex-1 gap-3"
+              >
+                <TabsList
+                  variant="line"
+                  className="h-9 w-full justify-start gap-4"
+                >
                   {sections.map((section) => (
                     <TabsTrigger
                       key={section.id}
@@ -148,10 +156,14 @@ export function NodePickerDialog({
                   ))}
                 </TabsList>
                 {sections.map((section) => (
-                  <TabsContent key={section.id} value={section.id}>
+                  <TabsContent
+                    key={section.id}
+                    value={section.id}
+                    className="flex min-h-0 flex-col"
+                  >
                     {section.id === "connectors" ? (
                       <ScrollFade
-                        className="max-h-[24rem]"
+                        className="max-h-[24rem] min-h-0 flex-1"
                         viewportClassName="grid gap-2 sm:grid-cols-2"
                       >
                         {apps.map((app) => (
@@ -174,7 +186,9 @@ export function NodePickerDialog({
                                   className="size-4"
                                 />
                               )}
-                              <span className="min-w-0 flex-1 truncate">{app.name}</span>
+                              <span className="min-w-0 flex-1 truncate">
+                                {app.name}
+                              </span>
                               <ChevronRight className="size-4 text-muted-foreground" />
                             </p>
                             <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
@@ -185,11 +199,15 @@ export function NodePickerDialog({
                       </ScrollFade>
                     ) : (
                       <ScrollFade
-                        className="max-h-[24rem]"
+                        className="max-h-[24rem] min-h-0 flex-1"
                         viewportClassName="grid gap-2 sm:grid-cols-2"
                       >
                         {section.nodes.map((node) => (
-                          <NodeCard key={node.id} node={node} onChoose={choose} />
+                          <NodeCard
+                            key={node.id}
+                            node={node}
+                            onChoose={choose}
+                          />
                         ))}
                       </ScrollFade>
                     )}
@@ -198,7 +216,7 @@ export function NodePickerDialog({
               </Tabs>
             </div>
             <div
-              className="flex w-1/2 flex-col gap-3 pl-1"
+              className="flex min-h-0 w-1/2 flex-col gap-3 pl-1"
               inert={selectedApp ? undefined : true}
             >
               {selectedApp ? (
@@ -206,11 +224,16 @@ export function NodePickerDialog({
                   <Tabs
                     value={methodFilter}
                     onValueChange={(value) =>
-                      setMethodFilter(value as (typeof methodFilters)[number]["id"])
+                      setMethodFilter(
+                        value as (typeof methodFilters)[number]["id"]
+                      )
                     }
                     className="gap-3"
                   >
-                    <TabsList variant="line" className="h-9 w-full justify-start gap-4">
+                    <TabsList
+                      variant="line"
+                      className="h-9 w-full justify-start gap-4"
+                    >
                       {methodFilters.map((filter) => (
                         <TabsTrigger
                           key={filter.id}
@@ -223,7 +246,7 @@ export function NodePickerDialog({
                     </TabsList>
                   </Tabs>
                   <ScrollFade
-                    className="max-h-[24rem]"
+                    className="max-h-[24rem] min-h-0 flex-1"
                     viewportClassName="grid gap-2 sm:grid-cols-2"
                   >
                     {methods.length === 0 ? (

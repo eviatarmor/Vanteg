@@ -15,7 +15,26 @@ describe("ResizableSidebar", () => {
 
     expect(screen.getByText("Sidebar tree")).toBeInTheDocument()
     expect(screen.getByText("Main pane")).toBeInTheDocument()
-    expect(screen.getByRole("separator", { name: "Resize panel" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("separator", { name: "Resize panel" })
+    ).toBeInTheDocument()
+  })
+
+  it("paints inner panes with the same card surface as the assistant", () => {
+    const { container } = render(
+      <div className="flex h-96 w-[800px]">
+        <ResizableSidebar id="test-split" sidebar={<p>Sidebar tree</p>}>
+          <p>Main pane</p>
+        </ResizableSidebar>
+      </div>
+    )
+
+    const pane = container.querySelector(
+      "[data-sidebar-split='test-split'] > div"
+    )
+    expect(pane).toHaveClass("bg-card")
+    expect(pane?.className).toContain("[--scroll-fade-from:var(--card)]")
+    expect(pane).not.toHaveClass("bg-muted/20")
   })
 
   it("places a right sidebar after the same resize handle", () => {
@@ -32,9 +51,9 @@ describe("ResizableSidebar", () => {
     )
 
     const handle = screen.getByRole("separator", { name: "Resize panel" })
-    expect(handle.compareDocumentPosition(screen.getByText("Assistant pane"))).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING
-    )
+    expect(
+      handle.compareDocumentPosition(screen.getByText("Assistant pane"))
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(handle.compareDocumentPosition(screen.getByText("Main pane"))).toBe(
       Node.DOCUMENT_POSITION_PRECEDING
     )
@@ -54,12 +73,20 @@ describe("ResizableSidebar", () => {
       </div>
     )
 
-    const expanded = container.querySelector('[data-slot="resizable-sidebar-pane"]')
+    const expanded = container.querySelector(
+      '[data-slot="resizable-sidebar-pane"]'
+    )
     expect(expanded).toHaveAttribute("data-state", "expanded")
-    expect(expanded).toHaveClass("transition-[width]", "duration-200", "ease-linear")
+    expect(expanded).toHaveClass(
+      "transition-[width]",
+      "duration-200",
+      "ease-linear"
+    )
     expect(expanded).not.toHaveAttribute("aria-hidden")
     expect(screen.getByText("Assistant pane")).toBeInTheDocument()
-    expect(screen.getByRole("separator", { name: "Resize panel" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("separator", { name: "Resize panel" })
+    ).toBeInTheDocument()
 
     rerender(
       <div className="flex h-96 w-[800px]">
@@ -74,10 +101,14 @@ describe("ResizableSidebar", () => {
       </div>
     )
 
-    const collapsedPane = container.querySelector('[data-slot="resizable-sidebar-pane"]')
+    const collapsedPane = container.querySelector(
+      '[data-slot="resizable-sidebar-pane"]'
+    )
     expect(collapsedPane).toHaveAttribute("data-state", "collapsed")
     expect(collapsedPane).toHaveAttribute("aria-hidden", "true")
     expect(collapsedPane).toHaveStyle({ width: "0px" })
-    expect(screen.queryByRole("separator", { name: "Resize panel" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("separator", { name: "Resize panel" })
+    ).not.toBeInTheDocument()
   })
 })

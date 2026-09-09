@@ -13,6 +13,8 @@ const DEFAULT_WIDTH = 256
 const MAX_RATIO = 0.45
 
 const PANE_MOTION = "duration-200 ease-linear"
+const PANE_SURFACE =
+  "flex min-h-0 flex-col overflow-hidden bg-card [--scroll-fade-from:var(--card)]"
 
 export function ResizableSidebar({
   id,
@@ -76,7 +78,10 @@ export function ResizableSidebar({
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (isCollapsed || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) {
+    if (
+      isCollapsed ||
+      (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
+    ) {
       return
     }
     event.preventDefault()
@@ -99,7 +104,8 @@ export function ResizableSidebar({
       <div
         style={{ width }}
         className={cn(
-          "absolute inset-y-0 flex min-h-0 flex-col overflow-hidden bg-muted/20 [--scroll-fade-from:var(--background)]",
+          "absolute inset-y-0",
+          PANE_SURFACE,
           side === "right" ? "right-0" : "left-0",
           sidebarClassName
         )}
@@ -110,10 +116,7 @@ export function ResizableSidebar({
   ) : (
     <div
       style={{ width }}
-      className={cn(
-        "flex min-h-0 min-w-0 shrink-0 flex-col overflow-hidden bg-muted/20 [--scroll-fade-from:var(--background)]",
-        sidebarClassName
-      )}
+      className={cn("min-w-0 shrink-0", PANE_SURFACE, sidebarClassName)}
     >
       {sidebar}
     </div>
@@ -146,7 +149,9 @@ export function ResizableSidebar({
   )
 
   const main = (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      {children}
+    </div>
   )
 
   return (
