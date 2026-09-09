@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { toast } from "sonner"
 
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -35,6 +36,8 @@ export function ConnectConnectorDialog({
   onConnected?: () => void
 }) {
   const [values, setValues] = useState<Record<string, string>>({})
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [pending, setPending] = useState(false)
 
   if (!connector) {
     return null
@@ -44,22 +47,40 @@ export function ConnectConnectorDialog({
   const managed = isManagedOAuth(connector)
   const actionLabel = connectActionLabel(connector)
 
-  function submit() {
-    if (!connector) {
+  async function submit() {
+    if (!connector || pending) {
       return
     }
-    connectConnector(connector.id, values)
-    setValues({})
-    onOpenChange(false)
-    onConnected?.()
+    setPending(true)
+    setFieldErrors({})
+    try {
+      const result = await connectConnector(connector.id, values)
+      if (!result.ok) {
+        if (result.error.fields) {
+          setFieldErrors(result.error.fields)
+        }
+        toast.error(result.error.message)
+        return
+      }
+      setValues({})
+      setFieldErrors({})
+      onOpenChange(false)
+      onConnected?.()
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        if (pending) {
+          return
+        }
         if (!next) {
           setValues({})
+          setFieldErrors({})
         }
         onOpenChange(next)
       }}
@@ -89,20 +110,30 @@ export function ConnectConnectorDialog({
                   value={values[field.id] ?? ""}
                   placeholder={field.placeholder}
                   autoComplete={field.secret ? "off" : "off"}
+                  aria-invalid={Boolean(fieldErrors[field.id])}
+                  disabled={pending}
                   onChange={(event) =>
                     setValues((current) => ({ ...current, [field.id]: event.target.value }))
                   }
                 />
+                {fieldErrors[field.id] ? (
+                  <p className="text-xs text-destructive">{fieldErrors[field.id]}</p>
+                ) : null}
               </div>
             ))}
           </div>
         )}
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending}
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button type="button" onClick={submit}>
-            {actionLabel}
+          <Button type="button" disabled={pending} onClick={() => void submit()}>
+            {pending ? "Connecting…" : actionLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

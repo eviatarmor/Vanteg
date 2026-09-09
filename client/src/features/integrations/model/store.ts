@@ -1,5 +1,9 @@
 import { useSyncExternalStore } from "react"
 
+import type { Result } from "@workspace/integrations"
+import { err, ok } from "@workspace/integrations"
+
+import { getIntegrationsAdapter, resetIntegrationsAdapter } from "./adapter"
 import { getConnector } from "./catalog"
 import { isManagedOAuth } from "./credential-fields"
 import type {
@@ -51,6 +55,7 @@ export function useIntegrationsStore(): IntegrationsSnapshot {
 }
 
 export function resetIntegrationsStore() {
+  resetIntegrationsAdapter()
   snapshot = emptySnapshot()
   emit()
 }
@@ -120,14 +125,17 @@ function mergeSecretFields(
   return merged
 }
 
-export function connectConnector(
+export async function connectConnector(
   connectorId: string,
   values: Record<string, string> = {},
   existingCredentialId?: string
-): ConnectorConnection {
+): Promise<Result<ConnectorConnection>> {
   const connector = getConnector(connectorId)
   if (!connector) {
-    throw new Error(`Unknown connector: ${connectorId}`)
+    return err({
+      code: "not_found",
+      message: `Unknown connector: ${connectorId}`,
+    })
   }
 
   const managed = isManagedOAuth(connector)
@@ -136,18 +144,32 @@ export function connectConnector(
     ? { accessToken: existing?.fields.accessToken ?? "oauth-access-token" }
     : mergeSecretFields(existing?.fields, values)
 
+  const remote = await getIntegrationsAdapter().connectApp({
+    appId: connectorId,
+    fields: managed ? undefined : fields,
+    name: existing?.name ?? connector.name,
+  })
+  if (!remote.ok) {
+    return remote
+  }
+
   const credential: SavedCredential = {
-    id: existing?.id ?? crypto.randomUUID(),
+    id: existing?.id ?? remote.data.credentialId,
     connectorId,
     name: existing?.name ?? connector.name,
     kind: connector.auth.kind,
     managed,
     status: "connected",
-    fields,
+    fields: managed
+      ? { accessToken: fields.accessToken ?? "oauth-access-token" }
+      : fields,
   }
 
   const connection: ConnectorConnection = {
-    id: crypto.randomUUID(),
+    id: existing
+      ? snapshot.connections.find((item) => item.credentialId === credential.id)?.id ??
+        remote.data.id
+      : remote.data.id,
     connectorId,
     credentialId: credential.id,
     name: connector.name,
@@ -161,7 +183,7 @@ export function connectConnector(
     connections: existing
       ? snapshot.connections.map((item) =>
           item.credentialId === credential.id
-            ? { ...item, credentialId: credential.id }
+            ? { ...item, credentialId: credential.id, name: connection.name }
             : item
         )
       : [...snapshot.connections, connection],
@@ -180,7 +202,7 @@ export function connectConnector(
   }
 
   emit()
-  return (
+  return ok(
     snapshot.connections.find((item) => item.credentialId === credential.id) ?? connection
   )
 }
@@ -200,6 +222,7 @@ export function disconnectConnector(connectionId: string) {
       snapshot.selectedConnectionId === connectionId ? null : snapshot.selectedConnectionId,
   }
   emit()
+  void getIntegrationsAdapter().deleteConnection(connectionId)
 }
 
 export function deleteCredential(credentialId: string) {

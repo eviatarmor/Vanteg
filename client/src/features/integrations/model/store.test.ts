@@ -13,8 +13,13 @@ describe("integrations store", () => {
     resetIntegrationsStore()
   })
 
-  it("connects Google Sheets without a client secret and opens In / Data / Out sheets", () => {
-    const connection = connectConnector("google-sheets")
+  it("connects Google Sheets without a client secret and opens In / Data / Out sheets", async () => {
+    const result = await connectConnector("google-sheets")
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    const connection = result.data
     const snapshot = getIntegrationsSnapshot()
 
     expect(connection.connectorId).toBe("google-sheets")
@@ -30,16 +35,30 @@ describe("integrations store", () => {
     expect(snapshot.connections[0]?.sheets.out).toEqual([])
   })
 
-  it("saves a Stripe API key as a credential", () => {
-    connectConnector("stripe", { apiKey: "sk_test_vanteg" })
+  it("saves a Stripe API key as a credential", async () => {
+    await connectConnector("stripe", { apiKey: "sk_test_vanteg" })
 
     const credential = getIntegrationsSnapshot().credentials[0]
     expect(credential?.kind).toBe("api-key")
     expect(credential?.fields.apiKey).toBe("sk_test_vanteg")
   })
 
-  it("inserts data rows and records output variables", () => {
-    const connection = connectConnector("google-sheets")
+  it("returns validation errors for empty Stripe keys", async () => {
+    const result = await connectConnector("stripe", { apiKey: "" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.code).toBe("validation")
+      expect(result.error.fields?.apiKey).toBe("Required")
+    }
+  })
+
+  it("inserts data rows and records output variables", async () => {
+    const result = await connectConnector("google-sheets")
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    const connection = result.data
     addDataRow(connection.id, {
       name: "Ada Lovelace",
       email: "ada@vanteg.dev",
@@ -58,12 +77,12 @@ describe("integrations store", () => {
     expect(sheets?.data.find((row) => row.id === rowId)?.inserted).toBe(true)
   })
 
-  it("keeps a previous Stripe key when reconnecting with a blank field", () => {
-    connectConnector("stripe", { apiKey: "sk_live_one" })
+  it("keeps a previous Stripe key when reconnecting with a blank field", async () => {
+    await connectConnector("stripe", { apiKey: "sk_live_one" })
     const id = getIntegrationsSnapshot().credentials[0]?.id
     expect(id).toBeDefined()
 
-    connectConnector("stripe", { apiKey: "" }, id)
+    await connectConnector("stripe", { apiKey: "" }, id)
 
     expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_live_one")
   })
