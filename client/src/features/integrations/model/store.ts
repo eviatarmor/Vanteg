@@ -1,6 +1,11 @@
 import { useSyncExternalStore } from "react"
 
-import type { Result } from "@workspace/integrations"
+import type {
+  CreateCustomCredentialInput,
+  CustomCredential,
+  Result,
+  UpdateCustomCredentialInput,
+} from "@workspace/integrations"
 import { err, ok } from "@workspace/integrations"
 
 import { getIntegrationsAdapter, resetIntegrationsAdapter } from "./adapter"
@@ -29,6 +34,7 @@ function emptySnapshot(): IntegrationsSnapshot {
   return {
     credentials: [],
     connections: [],
+    customCredentials: [],
     selectedConnectionId: null,
   }
 }
@@ -177,6 +183,7 @@ export async function connectConnector(
   }
 
   snapshot = {
+    ...snapshot,
     credentials: existing
       ? snapshot.credentials.map((item) => (item.id === credential.id ? credential : item))
       : [...snapshot.credentials, credential],
@@ -363,4 +370,51 @@ export function insertDataRows(connectionId: string, rowIds?: string[]) {
       out: [...item.sheets.out, ...outRows],
     },
   }))
+}
+
+export async function createCustomCredential(
+  input: CreateCustomCredentialInput
+): Promise<Result<CustomCredential>> {
+  const result = await getIntegrationsAdapter().createCustomCredential(input)
+  if (!result.ok) {
+    return result
+  }
+  snapshot = {
+    ...snapshot,
+    customCredentials: [...snapshot.customCredentials, result.data].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    ),
+  }
+  emit()
+  return result
+}
+
+export async function updateCustomCredential(
+  input: UpdateCustomCredentialInput
+): Promise<Result<CustomCredential>> {
+  const result = await getIntegrationsAdapter().updateCustomCredential(input)
+  if (!result.ok) {
+    return result
+  }
+  snapshot = {
+    ...snapshot,
+    customCredentials: snapshot.customCredentials
+      .map((item) => (item.id === result.data.id ? result.data : item))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  }
+  emit()
+  return result
+}
+
+export async function deleteCustomCredential(id: string): Promise<Result<{ id: string }>> {
+  const result = await getIntegrationsAdapter().deleteCustomCredential(id)
+  if (!result.ok) {
+    return result
+  }
+  snapshot = {
+    ...snapshot,
+    customCredentials: snapshot.customCredentials.filter((item) => item.id !== id),
+  }
+  emit()
+  return result
 }
