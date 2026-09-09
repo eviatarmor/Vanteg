@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { getAgent, resetAgents } from "@/features/agents/model/store"
+import {
+  getConversation,
+  resetConversations,
+} from "@/features/assistant/model/store"
 import { getTeam, resetTeams } from "@/features/teams/model/store"
 import { getWorkflow, resetWorkflows } from "@/features/workflows/model/store"
 
@@ -10,22 +13,21 @@ import { useTemplate } from "./use-template"
 
 describe("useTemplate", () => {
   beforeEach(() => {
-    resetAgents()
+    resetConversations()
     resetWorkflows()
     resetTeams()
     clearRecentTemplateIds()
   })
 
-  it("creates an agent stub and routes to /agents/:id", () => {
+  it("creates an assistant conversation and routes to /assistant/:id", () => {
     const template = getSubTemplate("legal-quote-assistant")!
     const result = useTemplate(template)
 
     expect(result.kind).toBe("assistant")
-    expect(result.path).toBe(`/agents/${result.id}`)
-    const agent = getAgent(result.id)
-    expect(agent?.name).toBe(template.title)
-    expect(agent?.description).toBe(template.description)
-    expect(agent?.instructions).toContain("engagement")
+    expect(result.path).toBe(`/assistant/${result.id}`)
+    const conversation = getConversation(result.id)
+    expect(conversation?.title).toBe(template.title)
+    expect(conversation?.titleLocked).toBe(true)
     expect(readRecentTemplateIds()).toContain(template.id)
   })
 

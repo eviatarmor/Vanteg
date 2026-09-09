@@ -1,4 +1,7 @@
-import { createAgent, saveAgent } from "@/features/agents/model/store"
+import {
+  createConversation,
+  saveConversation,
+} from "@/features/assistant/model/store"
 import { createTeam, saveTeam } from "@/features/teams/model/store"
 import { createVantegNode } from "@/features/workflows/model/create-node"
 import { createDraft, saveWorkflow } from "@/features/workflows/model/store"
@@ -37,12 +40,13 @@ export function useTemplate(template: SubTemplate): UseTemplateResult {
   rememberTemplateId(template.id)
 
   if (template.type === "assistant") {
-    const agent = createAgent(template.title)
-    saveAgent(agent.id, {
-      description: template.description,
-      instructions: template.instructions ?? template.longDescription,
-    })
-    return { kind: "assistant", id: agent.id, path: `/agents/${agent.id}` }
+    const conversation = createConversation(template.title)
+    saveConversation(conversation.id, { titleLocked: true })
+    return {
+      kind: "assistant",
+      id: conversation.id,
+      path: `/assistant/${conversation.id}`,
+    }
   }
 
   if (template.type === "workflow") {

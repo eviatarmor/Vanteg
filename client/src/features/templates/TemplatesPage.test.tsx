@@ -6,7 +6,10 @@ import { toast } from "sonner"
 
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
-import { getAgent, resetAgents } from "@/features/agents/model/store"
+import {
+  getConversation,
+  resetConversations,
+} from "@/features/assistant/model/store"
 import { getTeam, resetTeams } from "@/features/teams/model/store"
 import { getWorkflow, resetWorkflows } from "@/features/workflows/model/store"
 
@@ -26,7 +29,7 @@ function renderTemplates(path = "/templates") {
     [
       { path: "/templates", Component: TemplatesPage },
       { path: "/templates/:industryId", Component: TemplatesPage },
-      { path: "/agents/:agentId?", element: <div>Agent destination</div> },
+      { path: "/assistant/:threadId?", element: <div>Assistant destination</div> },
       { path: "/workflows/:workflowId", element: <div>Workflow destination</div> },
       { path: "/teams/:teamId?", element: <div>Team destination</div> },
     ],
@@ -44,7 +47,7 @@ function renderTemplates(path = "/templates") {
 
 describe("TemplatesPage", () => {
   beforeEach(() => {
-    resetAgents()
+    resetConversations()
     resetWorkflows()
     resetTeams()
     clearRecentTemplateIds()
@@ -67,6 +70,9 @@ describe("TemplatesPage", () => {
     ).toBeInTheDocument()
     expect(screen.getByTestId("template-detail")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Use template" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Quote & engagement letter" })
+    ).toHaveAttribute("aria-pressed", "true")
   })
 
   it("filters by industry route and type, and shows empty search state", async () => {
@@ -104,11 +110,11 @@ describe("TemplatesPage", () => {
     await user.click(within(detail).getByRole("button", { name: "Use template" }))
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toMatch(/^\/agents\//)
+      expect(router.state.location.pathname).toMatch(/^\/assistant\//)
     })
 
-    const agentId = router.state.location.pathname.replace("/agents/", "")
-    expect(getAgent(agentId)?.name).toBe("Quote & engagement letter")
+    const conversationId = router.state.location.pathname.replace("/assistant/", "")
+    expect(getConversation(conversationId)?.title).toBe("Quote & engagement letter")
     expect(toast.success).toHaveBeenCalled()
   })
 

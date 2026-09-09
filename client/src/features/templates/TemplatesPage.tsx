@@ -227,7 +227,7 @@ export function TemplatesPage() {
                   <TemplateCard
                     key={template.id}
                     template={template}
-                    selected={template.id === selectedId}
+                    selected={template.id === selected?.id}
                     onSelect={(item) => setSelectedId(item.id)}
                   />
                 ))}
