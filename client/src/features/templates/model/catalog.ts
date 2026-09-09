@@ -1,8 +1,9 @@
-import catalogData from "./catalog-data.json"
+import catalogDataA from "./catalog-data-a.json"
+import catalogDataB from "./catalog-data-b.json"
 
 import type { Industry, IndustryId, SubTemplate, TemplateType } from "./types"
 
-const industries = catalogData as Industry[]
+const industries = [...catalogDataA, ...catalogDataB] as Industry[]
 
 export function listIndustries(): Industry[] {
   return industries
