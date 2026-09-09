@@ -20,6 +20,16 @@ export function field(
   return { key, label, placeholder, ...extra }
 }
 
+export function selectField(
+  key: string,
+  label: string,
+  placeholder: string,
+  options: readonly { value: string; label: string }[],
+  extra: Partial<MethodField> = {}
+): MethodField {
+  return field(key, label, placeholder, { control: "select", options, ...extra })
+}
+
 export function integrationApp(
   input: Omit<IntegrationApp, "toggles" | "featured" | "methods"> & {
     methods?: readonly Method[]
