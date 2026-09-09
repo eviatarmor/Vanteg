@@ -321,6 +321,59 @@ describe("integrations registry", () => {
     }
   })
 
+  it("polishes Sheets/Docs/Drive/Notion/Airtable field controls", () => {
+    const sheets = getApp("google-sheets")
+    const createRow = sheets?.methods.find((method) => method.id === "spreadsheet-create-row")
+    const updateRow = sheets?.methods.find((method) => method.id === "spreadsheet")
+    const sheet = createRow?.fields.find((field) => field.key === "sheet")
+    expect(sheet?.control ?? "input").toBe("input")
+    expect(sheet?.label).toBe("Sheet ID")
+    expect(sheet?.help).toMatch(/resource select later/i)
+    expect(createRow?.fields.find((field) => field.key === "values")?.control).toBe("textarea")
+    expect(updateRow?.fields.find((field) => field.key === "values")?.control).toBe("textarea")
+
+    const drive = getApp("google-drive")
+    const folder = drive?.methods
+      .flatMap((method) => method.fields)
+      .find((field) => field.key === "folder")
+    expect(folder?.control ?? "input").toBe("input")
+    expect(folder?.help).toMatch(/resource select later/i)
+
+    const docs = getApp("google-docs")
+    expect(docs?.methods.find((method) => method.id === "google-docs-create")?.fields.find((field) => field.key === "content")?.control).toBe(
+      "textarea"
+    )
+
+    const notion = getApp("notion")
+    const createPage = notion?.methods.find((method) => method.id === "notion")
+    const page = createPage?.fields.find((field) => field.key === "page")
+    expect(page?.control ?? "input").toBe("input")
+    expect(page?.help).toMatch(/resource select later/i)
+    expect(createPage?.fields.find((field) => field.key === "properties")).toMatchObject({
+      control: "code",
+      language: "json",
+    })
+    expect(notion?.methods.find((method) => method.id === "notion-update-page")?.fields.find((field) => field.key === "content")?.control).toBe(
+      "textarea"
+    )
+    const createItem = notion?.methods.find((method) => method.id === "notion-create-database-item")
+    expect(createItem?.fields.find((field) => field.key === "database")?.label).toBe("Database ID")
+    expect(createItem?.fields.find((field) => field.key === "properties")?.control).toBe("code")
+
+    const airtable = getApp("airtable")
+    const create = airtable?.methods.find((method) => method.id === "airtable")
+    const find = airtable?.methods.find((method) => method.id === "airtable-find-records")
+    expect(create?.fields.find((field) => field.key === "base")?.label).toBe("Base ID")
+    expect(create?.fields.find((field) => field.key === "base")?.help).toMatch(/resource select later/i)
+    expect(create?.fields.find((field) => field.key === "table")?.label).toBe("Table ID")
+    expect(create?.fields.find((field) => field.key === "table")?.help).toMatch(/resource select later/i)
+    expect(create?.fields.find((field) => field.key === "fields")).toMatchObject({
+      control: "code",
+      language: "json",
+    })
+    expect(find?.fields.find((field) => field.key === "formula")?.control).toBe("textarea")
+  })
+
   it("groups connectors into named categories", () => {
     expect(listConnectorCategories()).toEqual(
       expect.arrayContaining(["Google", "Microsoft", "Communication", "CRM", "AI"])
