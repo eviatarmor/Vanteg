@@ -39,7 +39,13 @@
           "Sites.ReadWrite.All",
           "Chat.ReadWrite",
           "Tasks.ReadWrite",
-          "User.Read"
+          "User.Read",
+          "ChannelMessage.Send",
+          "ChannelMessage.Read.All",
+          "Channel.ReadBasic.All",
+          "Channel.Create",
+          "Team.ReadBasic.All",
+          "TeamMember.Read.All"
         ]
       },
       "slack": {

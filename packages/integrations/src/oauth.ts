@@ -40,6 +40,12 @@ const providerDefs = [
       "Chat.ReadWrite",
       "Tasks.ReadWrite",
       "User.Read",
+      "ChannelMessage.Send",
+      "ChannelMessage.Read.All",
+      "Channel.ReadBasic.All",
+      "Channel.Create",
+      "Team.ReadBasic.All",
+      "TeamMember.Read.All",
     ]
   ),
   app(
