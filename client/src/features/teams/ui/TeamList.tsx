@@ -12,7 +12,14 @@ export function TeamList({
   selectedId?: string
 }) {
   if (teams.length === 0) {
-    return <p className="px-3 py-6 text-sm text-muted-foreground">No teams yet.</p>
+    return (
+      <div className="px-3 py-6 text-center">
+        <p className="text-sm text-muted-foreground">No teams yet.</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Use New team to create your first graph.
+        </p>
+      </div>
+    )
   }
 
   return (
