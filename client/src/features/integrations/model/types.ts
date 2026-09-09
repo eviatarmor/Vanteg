@@ -3,6 +3,8 @@ export type {
   Connector,
   ConnectorAuth,
   ConnectorCategory,
+  CustomAuthKind,
+  CustomCredential,
   FieldVariant,
   SelectOption,
   SheetField,
@@ -49,5 +51,6 @@ export interface SavedCredential {
 export interface IntegrationsSnapshot {
   credentials: SavedCredential[]
   connections: ConnectorConnection[]
+  customCredentials: CustomCredential[]
   selectedConnectionId: string | null
 }

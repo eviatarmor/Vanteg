@@ -2,13 +2,6 @@ import { Badge } from "@workspace/ui/components/badge"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select"
-import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -26,10 +19,10 @@ import { Textarea } from "@workspace/ui/components/textarea"
 
 import { ExplorerTree } from "@/features/data/ui/ExplorerTree"
 
-import { getNodeType } from "../model/node-catalog"
+import { getNodeTypeForEditor } from "../model/auth-fields"
 import { getNodePorts, portColorValue } from "../model/node-ports"
 import type { VantegEdge, VantegNode, VantegNodePatch } from "../model/types"
-import { CodeField } from "./CodeField"
+import { NodeConfigFields } from "./NodeConfigFields"
 import { NodeIcon } from "./node-icons"
 import { explorerGroupIds, inExplorerNodes, outExplorerNodes } from "./node-io-tree"
 
@@ -76,7 +69,7 @@ export function NodeSheet({
   onClose: () => void
   onChange: (nodeId: string, patch: VantegNodePatch) => void
 }) {
-  const catalog = node ? getNodeType(node.data.catalogId) : undefined
+  const catalog = node ? getNodeTypeForEditor(node.data.catalogId) : undefined
   const ports = node ? getNodePorts(node.data.catalogId) : []
 
   return (
@@ -180,106 +173,13 @@ export function NodeSheet({
                       Shown on the canvas. Does not change the step type.
                     </p>
                   </section>
-                  {(catalog?.fields.length ?? 0) > 0 ? (
-                    <section className="grid gap-4">
-                      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                        Configuration
-                      </p>
-                      {catalog?.fields.map((field) => (
-                        <div key={field.key} className="grid gap-2">
-                          <Label htmlFor={`node-${field.key}`}>{field.label}</Label>
-                          {field.control === "code" ? (
-                            <CodeField
-                              id={`node-${field.key}`}
-                              value={node.data.config[field.key] ?? ""}
-                              language={field.language ?? "javascript"}
-                              onChange={(value) =>
-                                onChange(node.id, {
-                                  config: {
-                                    ...node.data.config,
-                                    [field.key]: value,
-                                  },
-                                })
-                              }
-                            />
-                          ) : field.control === "textarea" ? (
-                            <Textarea
-                              id={`node-${field.key}`}
-                              value={node.data.config[field.key] ?? ""}
-                              placeholder={field.placeholder}
-                              onChange={(event) =>
-                                onChange(node.id, {
-                                  config: {
-                                    ...node.data.config,
-                                    [field.key]: event.target.value,
-                                  },
-                                })
-                              }
-                            />
-                          ) : field.control === "select" && field.options ? (
-                            <Select
-                              value={
-                                node.data.config[field.key] ||
-                                field.options[0]?.value
-                              }
-                              onValueChange={(value) => {
-                                if (!value) {
-                                  return
-                                }
-                                onChange(node.id, {
-                                  config: {
-                                    ...node.data.config,
-                                    [field.key]: value,
-                                  },
-                                })
-                              }}
-                            >
-                              <SelectTrigger
-                                id={`node-${field.key}`}
-                                className="w-full"
-                                aria-label={field.label}
-                              >
-                                <SelectValue placeholder={field.placeholder} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {field.options.map((option) => (
-                                  <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input
-                              id={`node-${field.key}`}
-                              value={node.data.config[field.key] ?? ""}
-                              placeholder={field.placeholder}
-                              onChange={(event) =>
-                                onChange(node.id, {
-                                  config: {
-                                    ...node.data.config,
-                                    [field.key]: event.target.value,
-                                  },
-                                })
-                              }
-                            />
-                          )}
-                          {field.help ? (
-                            <p className="text-xs text-muted-foreground">
-                              {field.help}
-                            </p>
-                          ) : null}
-                        </div>
-                      ))}
-                    </section>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      This step has no extra settings. Rename it or add notes below.
-                    </p>
-                  )}
+                  {catalog ? (
+                    <NodeConfigFields
+                      node={node}
+                      catalog={catalog}
+                      onChange={onChange}
+                    />
+                  ) : null}
                   <section className="grid gap-2">
                     <Label htmlFor="node-notes">Notes</Label>
                     <Textarea

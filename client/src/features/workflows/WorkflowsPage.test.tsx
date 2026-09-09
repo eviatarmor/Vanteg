@@ -3,7 +3,13 @@ import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { listWorkflows, resetWorkflows } from "./model/store"
+import {
+  holdNextWorkflowsLoad,
+  listWorkflows,
+  releaseWorkflowsLoad,
+  resetWorkflows,
+  setWorkflowsLoadFailureOnce,
+} from "./model/store"
 import { WorkflowsPage } from "./WorkflowsPage"
 
 function renderWorkflows(path = "/workflows") {
@@ -28,12 +34,12 @@ describe("WorkflowsPage", () => {
     resetWorkflows()
   })
 
-  it("shows an empty card instead of a placeholder sentence", () => {
+  it("shows an empty card instead of a placeholder sentence", async () => {
     renderWorkflows()
 
+    expect(await screen.findByRole("heading", { name: "No production workflows" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Workflows" })).toBeInTheDocument()
     expect(screen.getByText("Build, draft, and run automations.")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "No production workflows" })).toBeInTheDocument()
     expect(
       screen.queryByText("Deployed workflows will appear here.")
     ).not.toBeInTheDocument()
@@ -43,6 +49,7 @@ describe("WorkflowsPage", () => {
   it("creates a named draft immediately and opens the editor", async () => {
     const user = userEvent.setup()
     renderWorkflows()
+    await screen.findByRole("heading", { name: "No production workflows" })
 
     await user.click(screen.getAllByRole("button", { name: "New workflow" })[0]!)
 
@@ -55,6 +62,35 @@ describe("WorkflowsPage", () => {
   it("opens drafts from the tab query", async () => {
     renderWorkflows("/workflows?tab=drafts")
 
-    expect(screen.getByRole("heading", { name: "No draft workflows" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "No draft workflows" })).toBeInTheDocument()
+  })
+
+  it("shows a loading spinner while hydrating", async () => {
+    holdNextWorkflowsLoad()
+    renderWorkflows()
+
+    expect(screen.getByLabelText("Loading workflows")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "No production workflows" })
+    ).not.toBeInTheDocument()
+
+    releaseWorkflowsLoad()
+    expect(
+      await screen.findByRole("heading", { name: "No production workflows" })
+    ).toBeInTheDocument()
+  })
+
+  it("shows an error panel and retries hydration", async () => {
+    const user = userEvent.setup()
+    setWorkflowsLoadFailureOnce()
+    renderWorkflows()
+
+    expect(await screen.findByText("Couldn’t load workflows")).toBeInTheDocument()
+    expect(screen.getByText("Failed to load workflows")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Retry" }))
+    expect(
+      await screen.findByRole("heading", { name: "No production workflows" })
+    ).toBeInTheDocument()
   })
 })

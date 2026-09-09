@@ -46,6 +46,31 @@ function createSeed(): InboxItem[] {
 }
 
 let items: InboxItem[] = createSeed()
+let decideImpl: (
+  id: string,
+  action: InboxAction
+) => Promise<InboxItem | undefined> = defaultDecide
+/** Delay for the default async decide path (0 in prod mock; tests can override). */
+let decideDelayMs = 0
+
+async function defaultDecide(
+  id: string,
+  action: InboxAction
+): Promise<InboxItem | undefined> {
+  if (decideDelayMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, decideDelayMs))
+  } else {
+    await Promise.resolve()
+  }
+  const current = items.find((item) => item.id === id)
+  if (!current || current.status !== "pending") {
+    return undefined
+  }
+  const next = { ...current, status: action, unread: false }
+  items = items.map((item) => (item.id === id ? next : item))
+  emit()
+  return next
+}
 
 export function subscribeInbox(listener: () => void): () => void {
   listeners.add(listener)
@@ -75,18 +100,27 @@ export function usePendingInbox(): InboxItem[] {
   return snapshot.filter((item) => item.status === "pending")
 }
 
-export function decideInbox(id: string, action: InboxAction): InboxItem | undefined {
-  const current = items.find((item) => item.id === id)
-  if (!current || current.status !== "pending") {
-    return undefined
-  }
-  const next = { ...current, status: action, unread: false }
-  items = items.map((item) => (item.id === id ? next : item))
-  emit()
-  return next
+export async function decideInbox(
+  id: string,
+  action: InboxAction
+): Promise<InboxItem | undefined> {
+  return decideImpl(id, action)
+}
+
+/** Test helper: replace the decide implementation (e.g. to force failure). */
+export function setDecideInboxImpl(
+  impl: (id: string, action: InboxAction) => Promise<InboxItem | undefined>
+) {
+  decideImpl = impl
+}
+
+export function setDecideInboxDelay(ms: number) {
+  decideDelayMs = ms
 }
 
 export function resetInbox(): void {
   items = createSeed()
+  decideImpl = defaultDecide
+  decideDelayMs = 0
   emit()
 }

@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { InboxPage } from "./InboxPage"
-import { getPendingInboxCount, resetInbox } from "./model/store"
+import { getPendingInboxCount, resetInbox, setDecideInboxImpl } from "./model/store"
 
 describe("InboxPage", () => {
   beforeEach(() => {
@@ -28,19 +28,41 @@ describe("InboxPage", () => {
     expect(getPendingInboxCount()).toBe(3)
     await user.click(screen.getAllByRole("button", { name: "Approve" })[0]!)
 
-    expect(screen.queryByText("Send a Slack reply in #customers")).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText("Send a Slack reply in #customers")).not.toBeInTheDocument()
+    })
     expect(getPendingInboxCount()).toBe(2)
+  })
+
+  it("keeps the card when decide fails", async () => {
+    setDecideInboxImpl(async () => {
+      throw new Error("Network down")
+    })
+    const user = userEvent.setup()
+    render(<InboxPage />)
+
+    await user.click(screen.getAllByRole("button", { name: "Approve" })[0]!)
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Approve" })[0]).not.toBeDisabled()
+    })
+    expect(screen.getByText("Send a Slack reply in #customers")).toBeInTheDocument()
+    expect(getPendingInboxCount()).toBe(3)
   })
 
   it("shows an empty state when everything is decided", async () => {
     const user = userEvent.setup()
     render(<InboxPage />)
 
-    while (screen.queryAllByRole("button", { name: "Deny" }).length > 0) {
-      await user.click(screen.getAllByRole("button", { name: "Deny" })[0]!)
+    for (let remaining = 3; remaining > 0; remaining -= 1) {
+      const deny = await screen.findAllByRole("button", { name: "Deny" })
+      await user.click(deny[0]!)
+      await waitFor(() => {
+        expect(getPendingInboxCount()).toBe(remaining - 1)
+      })
     }
 
-    expect(screen.getByRole("heading", { name: "Inbox is empty" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Inbox is empty" })).toBeInTheDocument()
     expect(getPendingInboxCount()).toBe(0)
   })
 })

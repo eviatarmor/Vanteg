@@ -1,4 +1,4 @@
-import { getNodeType } from "./node-catalog"
+import { getNodeTypeForEditor } from "./auth-fields"
 import { defaultNodeIo } from "./node-io"
 import type { VantegNode, NodeField } from "./types"
 
@@ -18,7 +18,7 @@ export function createVantegNode(
   catalogId: string,
   position: { x: number; y: number }
 ): VantegNode {
-  const catalog = getNodeType(catalogId)
+  const catalog = getNodeTypeForEditor(catalogId)
   const io = defaultNodeIo(catalogId)
 
   return {

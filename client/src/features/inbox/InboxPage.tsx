@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Inbox } from "lucide-react"
 import { toast } from "sonner"
 
@@ -25,12 +26,25 @@ const decisionCopy: Record<InboxAction, (item: InboxItem) => string> = {
 }
 
 function InboxCard({ item }: { item: InboxItem }) {
-  function decide(action: InboxAction) {
-    const next = decideInbox(item.id, action)
-    if (!next) {
+  const [pending, setPending] = useState(false)
+
+  async function decide(action: InboxAction) {
+    if (pending) {
       return
     }
-    toast.success(decisionCopy[action](item))
+    setPending(true)
+    try {
+      const next = await decideInbox(item.id, action)
+      if (!next) {
+        toast.error("Couldn’t apply decision")
+        return
+      }
+      toast.success(decisionCopy[action](item))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn’t apply decision")
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
@@ -44,14 +58,20 @@ function InboxCard({ item }: { item: InboxItem }) {
         <p className="mt-0.5 text-sm text-muted-foreground">{item.body}</p>
       </div>
       <ButtonGroup aria-label={`Decide ${item.title}`}>
-        <Button type="button" size="sm" onClick={() => decide("approved")}>
-          Approve
+        <Button
+          type="button"
+          size="sm"
+          disabled={pending}
+          onClick={() => void decide("approved")}
+        >
+          {pending ? "Working…" : "Approve"}
         </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          onClick={() => decide("denied")}
+          disabled={pending}
+          onClick={() => void decide("denied")}
         >
           Deny
         </Button>
@@ -59,7 +79,8 @@ function InboxCard({ item }: { item: InboxItem }) {
           type="button"
           size="sm"
           variant="outline"
-          onClick={() => decide("always")}
+          disabled={pending}
+          onClick={() => void decide("always")}
         >
           Always approve
         </Button>

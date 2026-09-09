@@ -1,5 +1,14 @@
 import { useSyncExternalStore } from "react"
 
+import type {
+  CreateCustomCredentialInput,
+  CustomCredential,
+  Result,
+  UpdateCustomCredentialInput,
+} from "@workspace/integrations"
+import { err, ok } from "@workspace/integrations"
+
+import { getIntegrationsAdapter, resetIntegrationsAdapter } from "./adapter"
 import { getConnector } from "./catalog"
 import { isManagedOAuth } from "./credential-fields"
 import type {
@@ -25,11 +34,13 @@ function emptySnapshot(): IntegrationsSnapshot {
   return {
     credentials: [],
     connections: [],
+    customCredentials: [],
     selectedConnectionId: null,
   }
 }
 
 let snapshot: IntegrationsSnapshot = emptySnapshot()
+const oauthCallbackInFlight = new Map<string, Promise<Result<ConnectorConnection>>>()
 
 export function subscribeIntegrations(listener: () => void) {
   listeners.add(listener)
@@ -51,7 +62,9 @@ export function useIntegrationsStore(): IntegrationsSnapshot {
 }
 
 export function resetIntegrationsStore() {
+  resetIntegrationsAdapter()
   snapshot = emptySnapshot()
+  oauthCallbackInFlight.clear()
   emit()
 }
 
@@ -120,14 +133,17 @@ function mergeSecretFields(
   return merged
 }
 
-export function connectConnector(
+export async function connectConnector(
   connectorId: string,
   values: Record<string, string> = {},
   existingCredentialId?: string
-): ConnectorConnection {
+): Promise<Result<ConnectorConnection>> {
   const connector = getConnector(connectorId)
   if (!connector) {
-    throw new Error(`Unknown connector: ${connectorId}`)
+    return err({
+      code: "not_found",
+      message: `Unknown connector: ${connectorId}`,
+    })
   }
 
   const managed = isManagedOAuth(connector)
@@ -136,18 +152,37 @@ export function connectConnector(
     ? { accessToken: existing?.fields.accessToken ?? "oauth-access-token" }
     : mergeSecretFields(existing?.fields, values)
 
+  const existingConnection = existing
+    ? snapshot.connections.find((item) => item.credentialId === existing.id)
+    : undefined
+
+  const remote = await getIntegrationsAdapter().connectApp({
+    appId: connectorId,
+    fields: managed ? undefined : fields,
+    name: existing?.name ?? connector.name,
+    connectionId: existingConnection?.id,
+  })
+  if (!remote.ok) {
+    return remote
+  }
+
   const credential: SavedCredential = {
-    id: existing?.id ?? crypto.randomUUID(),
+    id: existing?.id ?? remote.data.credentialId,
     connectorId,
     name: existing?.name ?? connector.name,
     kind: connector.auth.kind,
     managed,
     status: "connected",
-    fields,
+    fields: managed
+      ? { accessToken: fields.accessToken ?? "oauth-access-token" }
+      : fields,
   }
 
   const connection: ConnectorConnection = {
-    id: crypto.randomUUID(),
+    id: existing
+      ? snapshot.connections.find((item) => item.credentialId === credential.id)?.id ??
+        remote.data.id
+      : remote.data.id,
     connectorId,
     credentialId: credential.id,
     name: connector.name,
@@ -155,13 +190,14 @@ export function connectConnector(
   }
 
   snapshot = {
+    ...snapshot,
     credentials: existing
       ? snapshot.credentials.map((item) => (item.id === credential.id ? credential : item))
       : [...snapshot.credentials, credential],
     connections: existing
       ? snapshot.connections.map((item) =>
           item.credentialId === credential.id
-            ? { ...item, credentialId: credential.id }
+            ? { ...item, credentialId: credential.id, name: connection.name }
             : item
         )
       : [...snapshot.connections, connection],
@@ -180,9 +216,127 @@ export function connectConnector(
   }
 
   emit()
-  return (
+  return ok(
     snapshot.connections.find((item) => item.credentialId === credential.id) ?? connection
   )
+}
+
+function applyConnectedRemote(
+  remote: {
+    id: string
+    appId: string
+    credentialId: string
+    name: string
+  },
+  managed: boolean,
+  fields: Record<string, string>,
+  existingCredentialId?: string
+): ConnectorConnection {
+  const connector = getConnector(remote.appId)
+  const existingCred =
+    snapshot.credentials.find((item) => item.id === existingCredentialId) ??
+    snapshot.credentials.find((item) => item.id === remote.credentialId)
+  const existingConn =
+    snapshot.connections.find((item) => item.id === remote.id) ??
+    snapshot.connections.find(
+      (item) => item.credentialId === (existingCred?.id ?? remote.credentialId)
+    )
+  const kind = connector?.auth.kind ?? "oauth2"
+
+  const credential: SavedCredential = {
+    id: existingCred?.id ?? remote.credentialId,
+    connectorId: remote.appId,
+    name: existingCred?.name ?? remote.name,
+    kind,
+    managed,
+    status: "connected",
+    fields: managed
+      ? { accessToken: fields.accessToken ?? "oauth-access-token" }
+      : fields,
+  }
+
+  const connection: ConnectorConnection = {
+    id: existingConn?.id ?? remote.id,
+    connectorId: remote.appId,
+    credentialId: credential.id,
+    name: connector?.name ?? remote.name,
+    sheets: existingConn?.sheets ?? (connector ? seedSheets(connector) : { in: [], data: [], out: [] }),
+  }
+
+  snapshot = {
+    ...snapshot,
+    credentials: existingCred
+      ? snapshot.credentials.map((item) => (item.id === credential.id ? credential : item))
+      : [...snapshot.credentials, credential],
+    connections: existingConn
+      ? snapshot.connections.map((item) =>
+          item.id === existingConn.id ? connection : item
+        )
+      : [...snapshot.connections, connection],
+    selectedConnectionId: connection.id,
+  }
+
+  emit()
+  return connection
+}
+
+export async function startManagedOAuthConnect(
+  connectorId: string
+): Promise<Result<{ authorizeUrl: string; state: string }>> {
+  const connector = getConnector(connectorId)
+  if (!connector) {
+    return err({
+      code: "not_found",
+      message: `Unknown connector: ${connectorId}`,
+    })
+  }
+  if (!isManagedOAuth(connector) || !connector.auth.oauthAppId) {
+    return err({
+      code: "validation",
+      message: `${connector.name} does not use managed OAuth`,
+    })
+  }
+  return getIntegrationsAdapter().startOAuth({
+    provider: connector.auth.oauthAppId,
+    appId: connectorId,
+    name: connector.name,
+  })
+}
+
+export async function completeOAuthCallback(input: {
+  code?: string
+  state?: string
+  error?: string
+  errorDescription?: string
+  provider?: string
+}): Promise<Result<ConnectorConnection>> {
+  const key = input.state?.trim()
+  if (key) {
+    const existing = oauthCallbackInFlight.get(key)
+    if (existing) {
+      return existing
+    }
+  }
+
+  const run = (async (): Promise<Result<ConnectorConnection>> => {
+    const remote = await getIntegrationsAdapter().completeOAuthCallback(input)
+    if (!remote.ok) {
+      return remote
+    }
+    const connection = applyConnectedRemote(remote.data, true, {
+      accessToken: "oauth-access-token",
+    })
+    return ok(connection)
+  })()
+
+  if (key) {
+    oauthCallbackInFlight.set(key, run)
+  }
+  const result = await run
+  if (key && !result.ok) {
+    oauthCallbackInFlight.delete(key)
+  }
+  return result
 }
 
 export function selectConnection(connectionId: string | null) {
@@ -190,16 +344,29 @@ export function selectConnection(connectionId: string | null) {
   emit()
 }
 
-export function disconnectConnector(connectionId: string) {
+export async function disconnectConnector(
+  connectionId: string
+): Promise<Result<{ id: string }>> {
   const connection = snapshot.connections.find((item) => item.id === connectionId)
+  if (!connection) {
+    return err({
+      code: "not_found",
+      message: `Connection not found: ${connectionId}`,
+    })
+  }
+  const result = await getIntegrationsAdapter().deleteConnection(connectionId)
+  if (!result.ok) {
+    return result
+  }
   snapshot = {
     ...snapshot,
     connections: snapshot.connections.filter((item) => item.id !== connectionId),
-    credentials: snapshot.credentials.filter((item) => item.id !== connection?.credentialId),
+    credentials: snapshot.credentials.filter((item) => item.id !== connection.credentialId),
     selectedConnectionId:
       snapshot.selectedConnectionId === connectionId ? null : snapshot.selectedConnectionId,
   }
   emit()
+  return result
 }
 
 export function deleteCredential(credentialId: string) {
@@ -340,4 +507,51 @@ export function insertDataRows(connectionId: string, rowIds?: string[]) {
       out: [...item.sheets.out, ...outRows],
     },
   }))
+}
+
+export async function createCustomCredential(
+  input: CreateCustomCredentialInput
+): Promise<Result<CustomCredential>> {
+  const result = await getIntegrationsAdapter().createCustomCredential(input)
+  if (!result.ok) {
+    return result
+  }
+  snapshot = {
+    ...snapshot,
+    customCredentials: [...snapshot.customCredentials, result.data].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    ),
+  }
+  emit()
+  return result
+}
+
+export async function updateCustomCredential(
+  input: UpdateCustomCredentialInput
+): Promise<Result<CustomCredential>> {
+  const result = await getIntegrationsAdapter().updateCustomCredential(input)
+  if (!result.ok) {
+    return result
+  }
+  snapshot = {
+    ...snapshot,
+    customCredentials: snapshot.customCredentials
+      .map((item) => (item.id === result.data.id ? result.data : item))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  }
+  emit()
+  return result
+}
+
+export async function deleteCustomCredential(id: string): Promise<Result<{ id: string }>> {
+  const result = await getIntegrationsAdapter().deleteCustomCredential(id)
+  if (!result.ok) {
+    return result
+  }
+  snapshot = {
+    ...snapshot,
+    customCredentials: snapshot.customCredentials.filter((item) => item.id !== id),
+  }
+  emit()
+  return result
 }

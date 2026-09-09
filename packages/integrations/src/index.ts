@@ -34,3 +34,40 @@ export {
   oauthApps,
   terraformOAuthApps,
 } from "./registry.ts"
+
+export type { IntegrationError, IntegrationErrorCode, Result } from "./errors.ts"
+export { err, isIntegrationError, ok } from "./errors.ts"
+
+export type {
+  CompleteOAuthCallbackInput,
+  CompleteOAuthInput,
+  ConnectAppInput,
+  Connection,
+  ConnectionStatus,
+  CreateConnectionInput,
+  Credential,
+  ExecuteMethodInput,
+  IntegrationsAdapter,
+  StartOAuthInput,
+  VerifyWebhookInput,
+} from "./runtime.ts"
+
+export type {
+  CreateCustomCredentialInput,
+  CustomAuthKind,
+  CustomCredential,
+  CustomCredentialFieldDef,
+  UpdateCustomCredentialInput,
+} from "./custom-credentials.ts"
+export {
+  CUSTOM_AUTH_KINDS,
+  applyCustomCredentialDefaults,
+  customAuthKindLabel,
+  customCredentialFieldsFor,
+  mergeCustomCredentialFields,
+  primarySecretPreview,
+  secretFieldIdsFor,
+  validateCustomCredentialInput,
+} from "./custom-credentials.ts"
+
+export { createMockIntegrationsAdapter } from "./mock-adapter.ts"
