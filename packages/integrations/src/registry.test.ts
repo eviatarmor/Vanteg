@@ -93,6 +93,18 @@ describe("integrations registry", () => {
     )
   })
 
+  it("marks Slack channel MethodFields as resource-select", () => {
+    const slack = getApp("slack")
+    const channelFields = (slack?.methods ?? []).flatMap((method) =>
+      method.fields.filter((field) => field.key === "channel")
+    )
+    expect(channelFields.length).toBeGreaterThanOrEqual(8)
+    for (const field of channelFields) {
+      expect(field.control).toBe("resource")
+      expect(field.resourceType).toBe("slack.channel")
+    }
+  })
+
   it("groups Google Sheets, Drive, and Docs into one picker app", () => {
     const google = listPickerConnectorApps().find((app) => app.id === "google")
     expect(getApp("google-sheets")?.pickerGroup).toBe("google")
