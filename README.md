@@ -6,9 +6,15 @@ React monorepo for the Vanteg app shell.
 
 - `client/` — Vite + React + TypeScript SPA (React Router)
 - `packages/ui/` — shadcn primitives and Vanteg theme tokens (`@workspace/ui`)
+- `packages/integrations/` — connector catalog (`listApps` / featured / long-tail)
 - `infra/terraform/` — Vanteg-owned OAuth apps, SSM secrets, Microsoft Entra app, and Google APIs
 
 `client` depends on `@workspace/ui`. The UI package never imports from `client`.
+
+## Docs
+
+- [`docs/integrations.md`](docs/integrations.md) — featured vs long-tail connectors, Teams, field controls
+- [`docs/ui-conventions.md`](docs/ui-conventions.md) — `SecretInput` and related UI rules
 
 ## Features
 
