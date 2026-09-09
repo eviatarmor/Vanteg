@@ -2,13 +2,32 @@ import { getCurrentUser, getWorkspaceIdentity } from "@/features/shell/model/cat
 
 export const SETTINGS_STORAGE_KEY = "vanteg.settings.preferences"
 
+export type DensityPreference = "comfortable" | "compact"
+
 export type NotificationPreferences = {
   emailNotifications: boolean
   inboxNotifications: boolean
+  productNotifications: boolean
+}
+
+export type AppearancePreferences = {
+  density: DensityPreference
+  sidebarCompact: boolean
+}
+
+export type PrivacyConsentPreferences = {
+  cookieConsent: boolean
+  analyticsConsent: boolean
+}
+
+export type SecurityPreferences = {
+  twoFactorEnabled: boolean
 }
 
 export type WorkspacePreferences = {
   displayName: string
+  timezone: string
+  locale: string
 }
 
 export type ProfileDraft = {
@@ -16,12 +35,50 @@ export type ProfileDraft = {
   email: string
 }
 
-export type SettingsPreferences = NotificationPreferences & WorkspacePreferences
+export type SettingsPreferences = NotificationPreferences &
+  AppearancePreferences &
+  PrivacyConsentPreferences &
+  SecurityPreferences &
+  WorkspacePreferences
 
 const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
   emailNotifications: true,
   inboxNotifications: true,
+  productNotifications: true,
 }
+
+const DEFAULT_APPEARANCE: AppearancePreferences = {
+  density: "comfortable",
+  sidebarCompact: false,
+}
+
+const DEFAULT_PRIVACY: PrivacyConsentPreferences = {
+  cookieConsent: true,
+  analyticsConsent: false,
+}
+
+const DEFAULT_SECURITY: SecurityPreferences = {
+  twoFactorEnabled: false,
+}
+
+export const WORKSPACE_TIMEZONES = [
+  "UTC",
+  "America/Los_Angeles",
+  "America/New_York",
+  "Europe/London",
+  "Europe/Berlin",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+] as const
+
+export const WORKSPACE_LOCALES = [
+  { value: "en-US", label: "English (US)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "de-DE", label: "German" },
+  { value: "fr-FR", label: "French" },
+  { value: "ja-JP", label: "Japanese" },
+  { value: "en-AU", label: "English (AU)" },
+] as const
 
 function defaultWorkspaceName(): string {
   return getWorkspaceIdentity().productName
@@ -30,7 +87,12 @@ function defaultWorkspaceName(): string {
 export function defaultPreferences(): SettingsPreferences {
   return {
     ...DEFAULT_NOTIFICATIONS,
+    ...DEFAULT_APPEARANCE,
+    ...DEFAULT_PRIVACY,
+    ...DEFAULT_SECURITY,
     displayName: defaultWorkspaceName(),
+    timezone: "UTC",
+    locale: "en-US",
   }
 }
 
@@ -40,6 +102,14 @@ export function defaultProfile(): ProfileDraft {
     displayName: user.displayName,
     email: user.email,
   }
+}
+
+function asBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback
+}
+
+function asDensity(value: unknown): DensityPreference {
+  return value === "compact" ? "compact" : "comfortable"
 }
 
 export function loadPreferences(): SettingsPreferences {
@@ -53,19 +123,43 @@ export function loadPreferences(): SettingsPreferences {
       return defaultPreferences()
     }
     const parsed = JSON.parse(raw) as Partial<SettingsPreferences>
+    const defaults = defaultPreferences()
     return {
-      emailNotifications:
-        typeof parsed.emailNotifications === "boolean"
-          ? parsed.emailNotifications
-          : DEFAULT_NOTIFICATIONS.emailNotifications,
-      inboxNotifications:
-        typeof parsed.inboxNotifications === "boolean"
-          ? parsed.inboxNotifications
-          : DEFAULT_NOTIFICATIONS.inboxNotifications,
+      emailNotifications: asBoolean(
+        parsed.emailNotifications,
+        defaults.emailNotifications
+      ),
+      inboxNotifications: asBoolean(
+        parsed.inboxNotifications,
+        defaults.inboxNotifications
+      ),
+      productNotifications: asBoolean(
+        parsed.productNotifications,
+        defaults.productNotifications
+      ),
+      density: asDensity(parsed.density),
+      sidebarCompact: asBoolean(parsed.sidebarCompact, defaults.sidebarCompact),
+      cookieConsent: asBoolean(parsed.cookieConsent, defaults.cookieConsent),
+      analyticsConsent: asBoolean(
+        parsed.analyticsConsent,
+        defaults.analyticsConsent
+      ),
+      twoFactorEnabled: asBoolean(
+        parsed.twoFactorEnabled,
+        defaults.twoFactorEnabled
+      ),
       displayName:
         typeof parsed.displayName === "string" && parsed.displayName.trim()
           ? parsed.displayName.trim()
-          : defaultWorkspaceName(),
+          : defaults.displayName,
+      timezone:
+        typeof parsed.timezone === "string" && parsed.timezone.trim()
+          ? parsed.timezone.trim()
+          : defaults.timezone,
+      locale:
+        typeof parsed.locale === "string" && parsed.locale.trim()
+          ? parsed.locale.trim()
+          : defaults.locale,
     }
   } catch {
     return defaultPreferences()

@@ -22,17 +22,33 @@ describe("settings preferences", () => {
     })
   })
 
-  it("persists notification and workspace preferences in localStorage", () => {
+  it("persists expanded preferences in localStorage", () => {
     savePreferences({
       emailNotifications: false,
       inboxNotifications: true,
+      productNotifications: false,
+      density: "compact",
+      sidebarCompact: true,
+      cookieConsent: true,
+      analyticsConsent: true,
+      twoFactorEnabled: true,
       displayName: "Acme Ops",
+      timezone: "Australia/Sydney",
+      locale: "en-AU",
     })
 
     expect(loadPreferences()).toEqual({
       emailNotifications: false,
       inboxNotifications: true,
+      productNotifications: false,
+      density: "compact",
+      sidebarCompact: true,
+      cookieConsent: true,
+      analyticsConsent: true,
+      twoFactorEnabled: true,
       displayName: "Acme Ops",
+      timezone: "Australia/Sydney",
+      locale: "en-AU",
     })
   })
 
