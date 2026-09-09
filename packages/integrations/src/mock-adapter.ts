@@ -1,3 +1,11 @@
+import {
+  applyCustomCredentialDefaults,
+  mergeCustomCredentialFields,
+  validateCustomCredentialInput,
+  type CreateCustomCredentialInput,
+  type CustomCredential,
+  type UpdateCustomCredentialInput,
+} from "./custom-credentials.ts"
 import { err, ok, type Result } from "./errors.ts"
 import { getApp, getOAuthApp, listApps } from "./registry.ts"
 import type {
@@ -86,6 +94,7 @@ function appsForProvider(provider: string): string[] {
 export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   const connections = new Map<string, Connection>()
   const credentials = new Map<string, Credential>()
+  const customCredentials = new Map<string, CustomCredential>()
   const oauthStates = new Map<string, { provider: string }>()
   const idempotency = new Map<string, Result<Record<string, unknown>>>()
 
@@ -171,7 +180,6 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     if (!completed.ok) {
       return completed
     }
-    // completeOAuth picks first app for provider; rewrite to the requested appId
     const createdAt = completed.data.createdAt
     const credential = credentials.get(completed.data.credentialId)
     if (credential) {
@@ -334,6 +342,80 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     })
   }
 
+  async function listCustomCredentials(): Promise<Result<CustomCredential[]>> {
+    return ok([...customCredentials.values()].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  async function createCustomCredential(
+    input: CreateCustomCredentialInput
+  ): Promise<Result<CustomCredential>> {
+    const fieldErrors = validateCustomCredentialInput({
+      name: input.name,
+      kind: input.kind,
+      fields: input.fields,
+    })
+    if (fieldErrors) {
+      return err({
+        code: "validation",
+        message: "Missing required credential fields",
+        fields: fieldErrors,
+      })
+    }
+    const createdAt = nowIso()
+    const credential: CustomCredential = {
+      id: newId(),
+      name: input.name.trim(),
+      kind: input.kind,
+      fields: applyCustomCredentialDefaults(input.kind, { ...input.fields }),
+      createdAt,
+      updatedAt: createdAt,
+    }
+    customCredentials.set(credential.id, credential)
+    return ok(credential)
+  }
+
+  async function updateCustomCredential(
+    input: UpdateCustomCredentialInput
+  ): Promise<Result<CustomCredential>> {
+    const existing = customCredentials.get(input.id)
+    if (!existing) {
+      return err({ code: "not_found", message: `Custom credential not found: ${input.id}` })
+    }
+    const kind = input.kind ?? existing.kind
+    const name = input.name ?? existing.name
+    const fields = mergeCustomCredentialFields(existing.fields, input.fields ?? {}, kind)
+    const fieldErrors = validateCustomCredentialInput({
+      name,
+      kind,
+      fields,
+      allowBlankSecrets: false,
+    })
+    if (fieldErrors) {
+      return err({
+        code: "validation",
+        message: "Missing required credential fields",
+        fields: fieldErrors,
+      })
+    }
+    const updated: CustomCredential = {
+      ...existing,
+      name: name.trim(),
+      kind,
+      fields,
+      updatedAt: nowIso(),
+    }
+    customCredentials.set(updated.id, updated)
+    return ok(updated)
+  }
+
+  async function deleteCustomCredential(id: string): Promise<Result<{ id: string }>> {
+    if (!customCredentials.has(id)) {
+      return err({ code: "not_found", message: `Custom credential not found: ${id}` })
+    }
+    customCredentials.delete(id)
+    return ok({ id })
+  }
+
   return {
     listConnections,
     getConnection,
@@ -344,5 +426,9 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     executeMethod,
     verifyWebhook,
     connectApp,
+    listCustomCredentials,
+    createCustomCredential,
+    updateCustomCredential,
+    deleteCustomCredential,
   }
 }
