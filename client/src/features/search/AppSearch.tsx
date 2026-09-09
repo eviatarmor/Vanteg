@@ -5,7 +5,10 @@ import { Search, X } from "lucide-react"
 import { Input } from "@workspace/ui/components/input"
 import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 
-import { useWorkflows } from "@/features/workflows/model/store"
+import { setAssistantOpen } from "@/features/assistant/model/open-store"
+import { createAgent } from "@/features/agents/model/store"
+import { createTeam } from "@/features/teams/model/store"
+import { createDraft, useWorkflows } from "@/features/workflows/model/store"
 
 import { groupSearchHits, searchWorkspace, type SearchHit } from "./model/search"
 
@@ -28,6 +31,7 @@ export function AppSearch() {
   const hits = useMemo(() => searchWorkspace(query, workflows), [query, workflows])
   const grouped = useMemo(() => groupSearchHits(hits), [hits])
   const hint = shortcutHint()
+  const trimmedQuery = query.trim()
 
   useEffect(() => {
     setActiveIndex(0)
@@ -65,10 +69,35 @@ export function AppSearch() {
     setOpen(true)
   }
 
-  function go(hit: SearchHit) {
+  function closePalette() {
     setOpen(false)
     setQuery("")
     inputRef.current?.blur()
+  }
+
+  function runHit(hit: SearchHit) {
+    closePalette()
+
+    if (hit.command === "create-workflow") {
+      const workflow = createDraft()
+      navigate(`/workflows/${workflow.id}`)
+      return
+    }
+    if (hit.command === "create-agent") {
+      const agent = createAgent()
+      navigate(`/agents/${agent.id}`)
+      return
+    }
+    if (hit.command === "create-team") {
+      const team = createTeam()
+      navigate(`/teams/${team.id}`)
+      return
+    }
+    if (hit.command === "open-assistant") {
+      setAssistantOpen(true)
+      return
+    }
+
     const [pathname, search] = hit.path.split("?")
     navigate({
       pathname: pathname || "/",
@@ -92,7 +121,7 @@ export function AppSearch() {
       event.preventDefault()
       const hit = hits[activeIndex]
       if (hit) {
-        go(hit)
+        runHit(hit)
       }
       return
     }
@@ -117,7 +146,7 @@ export function AppSearch() {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Search workflows, inbox…"
+        placeholder="Search or run a command…"
         aria-label="Search"
         aria-autocomplete="list"
         aria-expanded={open}
@@ -148,13 +177,20 @@ export function AppSearch() {
           <ScrollFade
             id={listId}
             role="listbox"
-            aria-label="Search results"
+            aria-label="Command palette"
             className="max-h-80"
           >
             {hits.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                No results.
-              </p>
+              <div className="px-3 py-6 text-center">
+                <p className="text-sm font-medium text-foreground">
+                  {trimmedQuery ? "No results" : "Nothing here yet"}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {trimmedQuery
+                    ? `No matches for “${trimmedQuery}”. Try a page, action, or workflow name.`
+                    : "Create a workflow or jump to a page to get started."}
+                </p>
+              </div>
             ) : (
               grouped.map((entry) => {
                 const start = optionOffset
@@ -162,7 +198,11 @@ export function AppSearch() {
                 return (
                   <div key={entry.group} className="p-1">
                     <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                      {entry.group}
+                      {entry.group === "Workflows" && !trimmedQuery
+                        ? "Recent workflows"
+                        : entry.group === "Agents" && !trimmedQuery
+                          ? "Recent agents"
+                          : entry.group}
                     </p>
                     {entry.hits.map((hit, index) => {
                       const selected = start + index === activeIndex
@@ -180,7 +220,7 @@ export function AppSearch() {
                               : "flex w-full flex-col rounded-md px-2 py-1.5 text-left hover:bg-muted"
                           }
                           onMouseEnter={() => setActiveIndex(start + index)}
-                          onClick={() => go(hit)}
+                          onClick={() => runHit(hit)}
                         >
                           <span className="truncate text-sm font-medium">{hit.title}</span>
                           <span className="truncate text-xs text-muted-foreground">
