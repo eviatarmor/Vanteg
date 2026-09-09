@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -9,7 +10,9 @@ import {
   resetAuthSession,
   setSession,
 } from "@/features/auth/model/session"
+import { resetAssistantOpen } from "@/features/assistant/model/open-store"
 import { resetInbox } from "@/features/inbox/model/store"
+import { resetOnboarding } from "@/features/home/model/onboarding-store"
 
 import { AppShell } from "./AppShell"
 
@@ -36,6 +39,8 @@ describe("AppShell soft gate", () => {
   beforeEach(() => {
     resetInbox()
     resetAuthSession()
+    resetAssistantOpen()
+    resetOnboarding()
   })
 
   afterEach(() => {
@@ -60,5 +65,35 @@ describe("AppShell soft gate", () => {
     renderShell()
     expect(screen.getByText("Home body")).toBeInTheDocument()
     expect(screen.getByText("Alex")).toBeInTheDocument()
+  })
+})
+
+describe("AppShell accessibility", () => {
+  beforeEach(() => {
+    resetInbox()
+    resetAuthSession()
+    resetAssistantOpen()
+    resetOnboarding()
+    setSession({ email: "alex@vanteg.test", name: "Alex" })
+  })
+
+  afterEach(() => {
+    resetAuthSession()
+  })
+
+  it("exposes a skip link that targets the main landmark", async () => {
+    const user = userEvent.setup()
+    renderShell()
+
+    const skip = screen.getByRole("link", { name: "Skip to main content" })
+    expect(skip).toHaveAttribute("href", "#main-content")
+
+    const main = document.getElementById("main-content")
+    expect(main).not.toBeNull()
+    expect(main!.tagName).toBe("MAIN")
+    expect(screen.getByRole("main")).toBe(main)
+
+    await user.click(skip)
+    expect(document.activeElement).toBe(main)
   })
 })
