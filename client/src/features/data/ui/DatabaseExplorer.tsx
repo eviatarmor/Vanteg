@@ -2,14 +2,53 @@ import { Table2 } from "lucide-react"
 
 import { EmptyState } from "@/features/empty-state/EmptyState"
 import { ResizableSidebar } from "@/features/layout/ResizableSidebar"
+import { ExplorerSkeleton, ResourceError } from "@/features/load-state/ResourceStatus"
 
-import { findTable, listExpandedDatabaseIds, selectDatabaseNode, useDataStore } from "../model/store"
+import {
+  findTable,
+  listExpandedDatabaseIds,
+  retryDataLoad,
+  selectDatabaseNode,
+  useDataStore,
+} from "../model/store"
 import type { ExplorerNode } from "./ExplorerTree"
 import { ExplorerTree } from "./ExplorerTree"
 import { TableGrid } from "./TableGrid"
 
-export function DatabaseExplorer() {
+export function DatabaseExplorer({ onCreate }: { onCreate?: () => void }) {
   const snapshot = useDataStore()
+
+  if (snapshot.loadState === "loading") {
+    return <ExplorerSkeleton label="Loading databases" />
+  }
+
+  if (snapshot.loadState === "error") {
+    return (
+      <ResourceError
+        title="Could not load databases"
+        message={snapshot.loadError ?? "Something went wrong while loading data."}
+        onRetry={() => retryDataLoad()}
+      />
+    )
+  }
+
+  const hasTables = snapshot.databases.some((database) =>
+    database.schemas.some((schema) => schema.tables.length > 0)
+  )
+
+  if (!hasTables) {
+    return (
+      <EmptyState
+        icon={Table2}
+        title="No tables yet"
+        description="Create a table to browse rows in the data grid."
+        actionLabel="New table"
+        onCreate={onCreate}
+        className="min-h-0 flex-1"
+      />
+    )
+  }
+
   const selected = snapshot.selectedTableId
     ? findTable(snapshot.databases, snapshot.selectedTableId)
     : undefined

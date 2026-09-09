@@ -2,15 +2,43 @@ import { Brain } from "lucide-react"
 
 import { EmptyState } from "@/features/empty-state/EmptyState"
 import { ResizableSidebar } from "@/features/layout/ResizableSidebar"
-
-import { selectMemoryBase, useMemoryStore } from "../model/store"
+import { ExplorerSkeleton, ResourceError } from "@/features/load-state/ResourceStatus"
 import type { ExplorerNode } from "@/features/data/ui/ExplorerTree"
 import { ExplorerTree } from "@/features/data/ui/ExplorerTree"
 
+import { addMemoryRow, retryMemoryLoad, selectMemoryBase, useMemoryStore } from "../model/store"
 import { MemoryEntriesGrid } from "./MemoryEntriesGrid"
 
-export function MemoryBaseExplorer() {
+export function MemoryBaseExplorer({ onCreate }: { onCreate?: () => void }) {
   const snapshot = useMemoryStore()
+
+  if (snapshot.loadState === "loading") {
+    return <ExplorerSkeleton label="Loading memory bases" />
+  }
+
+  if (snapshot.loadState === "error") {
+    return (
+      <ResourceError
+        title="Could not load memory bases"
+        message={snapshot.loadError ?? "Something went wrong while loading memory."}
+        onRetry={() => retryMemoryLoad()}
+      />
+    )
+  }
+
+  if (snapshot.bases.length === 0) {
+    return (
+      <EmptyState
+        icon={Brain}
+        title="No memory bases yet"
+        description="Create a memory base so agents can share lasting facts."
+        actionLabel="New memory base"
+        onCreate={onCreate}
+        className="min-h-0 flex-1"
+      />
+    )
+  }
+
   const selected =
     snapshot.bases.find((base) => base.id === snapshot.selectedMemoryBaseId) ??
     snapshot.bases[0]
@@ -48,7 +76,20 @@ export function MemoryBaseExplorer() {
             <header className="flex h-10 shrink-0 items-center border-b px-4">
               <h2 className="truncate text-sm font-medium">{selected.name}</h2>
             </header>
-            <MemoryEntriesGrid key={selected.id} baseId={selected.id} memories={memories} />
+            {memories.length === 0 ? (
+              <EmptyState
+                icon={Brain}
+                title="No memories yet"
+                description="Add a shared fact agents can recall later."
+                actionLabel="Add memory"
+                onCreate={() => {
+                  addMemoryRow(selected.id)
+                }}
+                className="min-h-0 flex-1"
+              />
+            ) : (
+              <MemoryEntriesGrid key={selected.id} baseId={selected.id} memories={memories} />
+            )}
           </>
         ) : (
           <EmptyState
