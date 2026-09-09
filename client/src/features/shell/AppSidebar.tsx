@@ -26,6 +26,8 @@ import {
   SidebarSeparator,
 } from "@workspace/ui/components/sidebar"
 
+import { usePendingInbox } from "@/features/inbox/model/store"
+
 import {
   getCurrentUser,
   getFooterNav,
@@ -65,7 +67,7 @@ function NavItemRow({ item, pathname }: { item: NavItem; pathname: string }) {
         </NavLink>
       </SidebarMenuButton>
       {item.badgeCount != null && item.badgeCount > 0 ? (
-        <SidebarMenuBadge className="right-2.5 h-5 min-w-5 rounded-full bg-freeze-badge px-1.5 text-[11px] font-semibold text-white peer-data-active/menu-button:text-white group-data-[collapsible=icon]:top-0 group-data-[collapsible=icon]:right-0 group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:min-w-4 group-data-[collapsible=icon]:translate-x-1/4 group-data-[collapsible=icon]:-translate-y-1/4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:text-[9px]">
+        <SidebarMenuBadge className="right-2.5 h-5 min-w-5 rounded-full bg-vanteg-badge px-1.5 text-[11px] font-semibold text-white peer-data-active/menu-button:text-white group-data-[collapsible=icon]:top-0 group-data-[collapsible=icon]:right-0 group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:min-w-4 group-data-[collapsible=icon]:translate-x-1/4 group-data-[collapsible=icon]:-translate-y-1/4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:text-[9px]">
           {item.badgeCount}
         </SidebarMenuBadge>
       ) : null}
@@ -90,7 +92,7 @@ function UserMenu() {
               className="h-auto rounded-xl px-2 py-1 data-open:bg-sidebar-accent group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:p-0!"
             >
               <Avatar className="size-9 after:hidden group-data-[collapsible=icon]:size-8">
-                <AvatarFallback className="bg-freeze-avatar text-xs font-medium text-sidebar-foreground">
+                <AvatarFallback className="bg-vanteg-avatar text-xs font-medium text-sidebar-foreground">
                   {user.initials}
                 </AvatarFallback>
               </Avatar>
@@ -148,7 +150,15 @@ function UserMenu() {
 export function AppSidebar() {
   const location = useLocation()
   const identity = getWorkspaceIdentity()
-  const sections = getNavSections()
+  const pendingInbox = usePendingInbox().length
+  const sections = getNavSections().map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.id === "inbox"
+        ? { ...item, badgeCount: pendingInbox > 0 ? pendingInbox : undefined }
+        : item
+    ),
+  }))
   const footerNav = getFooterNav()
 
   return (

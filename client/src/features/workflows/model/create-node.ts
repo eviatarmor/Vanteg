@@ -1,6 +1,6 @@
 import { getNodeType } from "./node-catalog"
 import { defaultNodeIo } from "./node-io"
-import type { FreezeNode, NodeField } from "./types"
+import type { VantegNode, NodeField } from "./types"
 
 function defaultConfig(fields: readonly NodeField[] | undefined): Record<string, string> {
   const config: Record<string, string> = {}
@@ -14,16 +14,16 @@ function defaultConfig(fields: readonly NodeField[] | undefined): Record<string,
   return config
 }
 
-export function createFreezeNode(
+export function createVantegNode(
   catalogId: string,
   position: { x: number; y: number }
-): FreezeNode {
+): VantegNode {
   const catalog = getNodeType(catalogId)
   const io = defaultNodeIo(catalogId)
 
   return {
     id: crypto.randomUUID(),
-    type: "freeze",
+    type: "vanteg",
     position,
     data: {
       catalogId,

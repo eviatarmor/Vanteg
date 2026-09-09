@@ -14,6 +14,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@workspace/ui/components/collapsible"
+import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 import { cn } from "@workspace/ui/lib/utils"
 
 export type ExplorerIcon =
@@ -28,6 +29,7 @@ export interface ExplorerNode {
   id: string
   label: string
   icon: ExplorerIcon
+  hint?: string
   children?: ExplorerNode[]
 }
 
@@ -137,6 +139,11 @@ function TreeItem({
       )}
       <NodeIcon icon={node.icon} open={isExpanded} />
       <span className="min-w-0 flex-1 truncate">{node.label}</span>
+      {node.hint ? (
+        <span className="max-w-[45%] truncate font-mono text-xs text-muted-foreground">
+          {node.hint}
+        </span>
+      ) : null}
     </div>
   )
 
@@ -171,14 +178,16 @@ export function ExplorerTree({
   selectedId,
   onSelect,
   defaultExpanded,
+  readOnly = false,
   "aria-label": ariaLabel,
   header,
   className,
 }: {
   nodes: ExplorerNode[]
   selectedId?: string
-  onSelect: (id: string) => void
+  onSelect?: (id: string) => void
   defaultExpanded?: Iterable<string>
+  readOnly?: boolean
   "aria-label": string
   header?: ReactNode
   className?: string
@@ -200,10 +209,12 @@ export function ExplorerTree({
   return (
     <div className={cn("flex min-h-0 min-w-0 flex-col", className)}>
       {header}
-      <div
+      <ScrollFade
         role="tree"
         aria-label={ariaLabel}
-        className="min-h-0 min-w-0 flex-1 overflow-auto py-1"
+        aria-readonly={readOnly || undefined}
+        className="min-h-0 min-w-0 flex-1"
+        viewportClassName="py-1"
       >
         {nodes.map((node) => (
           <TreeItem
@@ -212,11 +223,11 @@ export function ExplorerTree({
             depth={0}
             selectedId={selectedId}
             expanded={expanded}
-            onSelect={onSelect}
+            onSelect={onSelect ?? (() => {})}
             onToggle={onToggle}
           />
         ))}
-      </div>
+      </ScrollFade>
     </div>
   )
 }

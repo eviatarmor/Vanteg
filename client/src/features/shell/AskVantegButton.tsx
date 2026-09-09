@@ -7,7 +7,7 @@ import { toggleAssistant, useAssistantOpen } from "@/features/assistant/model/op
 
 import { getWorkspaceIdentity } from "./model/catalog"
 
-export function AskFreezeButton() {
+export function AskVantegButton() {
   const { assistantActionLabel } = getWorkspaceIdentity()
   const open = useAssistantOpen()
 

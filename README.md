@@ -1,12 +1,12 @@
-# Freeze
+# Vanteg
 
-React monorepo for the Freeze app shell.
+React monorepo for the Vanteg app shell.
 
 ## Packages
 
 - `client/` — Vite + React + TypeScript SPA (React Router)
-- `packages/ui/` — shadcn primitives and Freeze theme tokens (`@workspace/ui`)
-- `infra/terraform/` — Freeze-owned OAuth apps, SSM secrets, Microsoft Entra app, and Google APIs
+- `packages/ui/` — shadcn primitives and Vanteg theme tokens (`@workspace/ui`)
+- `infra/terraform/` — Vanteg-owned OAuth apps, SSM secrets, Microsoft Entra app, and Google APIs
 
 `client` depends on `@workspace/ui`. The UI package never imports from `client`.
 

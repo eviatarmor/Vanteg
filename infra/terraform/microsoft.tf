@@ -8,9 +8,9 @@ resource "azuread_service_principal" "msgraph" {
   use_existing = true
 }
 
-resource "azuread_application" "freeze" {
+resource "azuread_application" "vanteg" {
   count            = var.manage_microsoft ? 1 : 0
-  display_name     = "Freeze"
+  display_name     = "Vanteg"
   sign_in_audience = "AzureADMultipleOrgs"
 
   web {
@@ -30,13 +30,13 @@ resource "azuread_application" "freeze" {
   }
 }
 
-resource "azuread_application_password" "freeze" {
+resource "azuread_application_password" "vanteg" {
   count          = var.manage_microsoft ? 1 : 0
-  application_id = azuread_application.freeze[0].id
-  display_name   = "freeze-terraform"
+  application_id = azuread_application.vanteg[0].id
+  display_name   = "vanteg-terraform"
 }
 
-resource "azuread_service_principal" "freeze" {
+resource "azuread_service_principal" "vanteg" {
   count     = var.manage_microsoft ? 1 : 0
-  client_id = azuread_application.freeze[0].client_id
+  client_id = azuread_application.vanteg[0].client_id
 }

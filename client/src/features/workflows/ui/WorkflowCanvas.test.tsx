@@ -2,16 +2,20 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { createDraft, resetWorkflows } from "../model/store"
+import { TooltipProvider } from "@workspace/ui/components/tooltip"
+
+import { createDraft, getWorkflow, resetWorkflows } from "../model/store"
 import { WorkflowCanvas } from "./WorkflowCanvas"
 
-function renderCanvas() {
-  const workflow = createDraft()
+function renderCanvas(workflow = createDraft()) {
   render(
-    <div style={{ width: 960, height: 640 }}>
-      <WorkflowCanvas workflow={workflow} />
-    </div>
+    <TooltipProvider>
+      <div style={{ width: 960, height: 640 }}>
+        <WorkflowCanvas workflow={workflow} />
+      </div>
+    </TooltipProvider>
   )
+  return workflow
 }
 
 function openPaneMenu() {
@@ -30,11 +34,14 @@ describe("WorkflowCanvas", () => {
   it("has no side palette and opens a right-click menu on the pane", () => {
     renderCanvas()
 
-    expect(
-      screen.getByText(
-        "Right-click the canvas to add a step. Double-click a node to edit it."
-      )
-    ).toBeInTheDocument()
+    expect(document.querySelector(".react-flow__controls")).toBeNull()
+    expect(screen.getByRole("button", { name: "Zoom in" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Zoom out" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Fit view" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Lock canvas" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Test" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Deploy" })).toBeInTheDocument()
 
     openPaneMenu()
 
@@ -101,5 +108,14 @@ describe("WorkflowCanvas", () => {
     expect(screen.getByRole("tab", { name: "Logic gates" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Connectors" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /RSS/ })).toBeInTheDocument()
+  })
+
+  it("deploys the workflow from the canvas toolbar", async () => {
+    const user = userEvent.setup()
+    const workflow = renderCanvas()
+
+    await user.click(screen.getByRole("button", { name: "Deploy" }))
+
+    expect(getWorkflow(workflow.id)?.status).toBe("prod")
   })
 })

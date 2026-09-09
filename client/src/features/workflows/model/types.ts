@@ -53,7 +53,7 @@ export type NodeVar = {
   value: string
 }
 
-export type FreezeNodeData = {
+export type VantegNodeData = {
   catalogId: string
   label: string
   notes: string
@@ -62,18 +62,18 @@ export type FreezeNodeData = {
   outVars: NodeVar[]
 }
 
-export type FreezeNodePatch = Partial<
-  Pick<FreezeNodeData, "label" | "notes" | "config" | "inVars" | "outVars">
+export type VantegNodePatch = Partial<
+  Pick<VantegNodeData, "label" | "notes" | "config" | "inVars" | "outVars">
 >
 
-export type FreezeNode = Node<FreezeNodeData, "freeze">
-export type FreezeEdge = Edge
+export type VantegNode = Node<VantegNodeData, "vanteg">
+export type VantegEdge = Edge
 
 export interface Workflow {
   id: string
   name: string
   status: WorkflowStatus
-  nodes: FreezeNode[]
-  edges: FreezeEdge[]
+  nodes: VantegNode[]
+  edges: VantegEdge[]
   updatedAt: number
 }

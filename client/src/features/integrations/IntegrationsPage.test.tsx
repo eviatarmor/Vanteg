@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
@@ -57,6 +57,45 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     expect(dialog.querySelector('[data-slot="scroll-area"]')).toBeNull()
   })
 
+  it("shows auth badges on catalog cards instead of categories", async () => {
+    const user = userEvent.setup()
+    renderIntegrations()
+
+    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
+
+    const sheets = screen.getByRole("button", { name: "Google Sheets" })
+    expect(within(sheets).getByText("OAUTH")).toBeInTheDocument()
+    expect(within(sheets).queryByText("Google")).not.toBeInTheDocument()
+
+    const postgres = screen.getByRole("button", { name: "PostgreSQL" })
+    expect(within(postgres).getByText("BASIC")).toBeInTheDocument()
+    expect(within(postgres).queryByText("Databases")).not.toBeInTheDocument()
+
+    const snowflake = screen.getByRole("button", { name: "Snowflake" })
+    expect(within(snowflake).getByText("JWT")).toBeInTheDocument()
+  })
+
+  it("frames catalog logos and spans extra columns on wide dialogs", async () => {
+    const user = userEvent.setup()
+    renderIntegrations()
+
+    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
+
+    const dialog = screen.getByRole("dialog", { name: "Add connector" })
+    expect(dialog.className).toMatch(/max-w-5xl|max-w-6xl/)
+
+    const sheets = screen.getByRole("button", { name: "Google Sheets" })
+    const logo = sheets.querySelector("img")
+    expect(logo?.parentElement).toHaveClass("border")
+    expect(logo?.parentElement).toHaveClass("bg-white")
+
+    const search = screen.getByRole("textbox", { name: "Search connectors" })
+    expect(search.parentElement).not.toHaveClass("border-b")
+
+    const grid = dialog.querySelector("[data-slot='connector-catalog-grid']")
+    expect(grid?.className).toMatch(/grid-cols-3|@min-/)
+  })
+
   it("connects Google Sheets and lists it without In / Data / Out", async () => {
     const user = userEvent.setup()
     renderIntegrations()
@@ -84,10 +123,10 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
 
     await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
     await user.click(screen.getByRole("button", { name: "Stripe" }))
-    await user.type(screen.getByLabelText("API Key"), "sk_test_freeze")
+    await user.type(screen.getByLabelText("API Key"), "sk_test_vanteg")
     await user.click(screen.getByRole("button", { name: "Connect" }))
 
-    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_test_freeze")
+    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_test_vanteg")
     expect(screen.getByText("Stripe")).toBeInTheDocument()
   })
 })

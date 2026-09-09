@@ -1,13 +1,6 @@
 import { Checkbox } from "@workspace/ui/components/checkbox"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select"
 import { Textarea } from "@workspace/ui/components/textarea"
 
 import { useMemoryStore } from "@/features/memory/model/store"
@@ -15,8 +8,9 @@ import { listWorkflows, useWorkflows } from "@/features/workflows/model/store"
 
 import { agentIcons } from "../model/icons"
 import { saveAgent, toggleAgentAssignment } from "../model/store"
-import { agentModels, type Agent } from "../model/types"
+import type { Agent } from "../model/types"
 import { AgentIcon } from "./AgentIcon"
+import { AgentModelSelect } from "./AgentModelSelect"
 
 export function AgentForm({ agent }: { agent: Agent }) {
   const memory = useMemoryStore()
@@ -89,26 +83,10 @@ export function AgentForm({ agent }: { agent: Agent }) {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="agent-model">Model</Label>
-          <Select
+          <AgentModelSelect
             value={agent.model}
-            onValueChange={(value) => {
-              if (!value) {
-                return
-              }
-              saveAgent(agent.id, { model: value as Agent["model"] })
-            }}
-          >
-            <SelectTrigger id="agent-model" className="w-full" aria-label="Model">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {agentModels.map((model) => (
-                <SelectItem key={model.value} value={model.value}>
-                  {model.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(model) => saveAgent(agent.id, { model })}
+          />
         </div>
       </section>
 

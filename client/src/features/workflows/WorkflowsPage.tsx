@@ -1,3 +1,4 @@
+import { Workflow } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router"
 
 import { PageTabs } from "@/features/page-tabs/PageTabs"
@@ -25,6 +26,7 @@ export function WorkflowsPage() {
       <PageTabs
         title={title}
         subtitle={subtitle}
+        icon={Workflow}
         tabs={workflowTabs}
         defaultTab={searchParams.get("tab") ?? undefined}
         onNew={createAndOpen}

@@ -14,6 +14,7 @@ export interface CellSelectOption {
 export type CellOpts =
   | {
       variant: "short-text";
+      regex?: string;
     }
   | {
       variant: "long-text";
@@ -39,7 +40,16 @@ export type CellOpts =
       variant: "date";
     }
   | {
+      variant: "time";
+      showSeconds?: boolean;
+    }
+  | {
+      variant: "datetime";
+      showSeconds?: boolean;
+    }
+  | {
       variant: "url";
+      regex?: string;
     }
   | {
       variant: "secret";

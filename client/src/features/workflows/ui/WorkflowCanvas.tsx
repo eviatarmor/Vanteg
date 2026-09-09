@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   addEdge,
-  Background,
-  BackgroundVariant,
-  Controls,
   Panel,
   ReactFlow,
   ReactFlowProvider,
@@ -15,19 +12,28 @@ import {
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 
-import { createFreezeNode } from "../model/create-node"
+import { createVantegNode } from "../model/create-node"
 import { wireConnection } from "../model/node-io"
 import { saveWorkflow } from "../model/store"
 import type {
-  FreezeNode,
-  FreezeNodePatch,
+  VantegNode,
+  VantegNodePatch,
   Workflow,
   WorkflowNodeType,
 } from "../model/types"
 import { NodeActionMenu, PaneAddMenu } from "./FlowMenus"
-import { workflowNodeTypes } from "./FreezeNode"
+import { workflowNodeTypes } from "./VantegNode"
+import {
+  FlowCanvasChrome,
+  flowCanvasClassName,
+  flowInteractionProps,
+  flowProOptions,
+  flowSnapGrid,
+} from "@/components/flow-canvas/canvas-controls"
+
 import { NodePickerDialog } from "./NodePickerDialog"
 import { NodeSheet } from "./NodeSheet"
+import { WorkflowRunBar } from "./WorkflowToolbar"
 
 export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
   return (
@@ -49,6 +55,7 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
     nodeId: string
   } | null>(null)
   const dropPosition = useRef({ x: 120, y: 160 })
+  const [locked, setLocked] = useState(false)
   const { screenToFlowPosition, fitView } = useReactFlow()
 
   function revealNodes() {
@@ -78,19 +85,19 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
     })
   }
 
-  const onNodeClick: NodeMouseHandler<FreezeNode> = useCallback(() => {
+  const onNodeClick: NodeMouseHandler<VantegNode> = useCallback(() => {
     setPaneMenu(null)
     setNodeMenu(null)
   }, [])
 
-  const onNodeDoubleClick: NodeMouseHandler<FreezeNode> = useCallback(
+  const onNodeDoubleClick: NodeMouseHandler<VantegNode> = useCallback(
     (_event, node) => {
       setSheetId(node.id)
     },
     []
   )
 
-  const onNodeContextMenu: NodeMouseHandler<FreezeNode> = useCallback(
+  const onNodeContextMenu: NodeMouseHandler<VantegNode> = useCallback(
     (event, node) => {
       event.preventDefault()
       event.stopPropagation()
@@ -101,12 +108,12 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
   )
 
   function addNode(nodeType: WorkflowNodeType) {
-    const node = createFreezeNode(nodeType.id, dropPosition.current)
+    const node = createVantegNode(nodeType.id, dropPosition.current)
     setNodes((current) => [...current, node])
     revealNodes()
   }
 
-  function updateNode(nodeId: string, patch: FreezeNodePatch) {
+  function updateNode(nodeId: string, patch: VantegNodePatch) {
     setNodes((current) =>
       current.map((node) =>
         node.id === nodeId
@@ -121,7 +128,7 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
     if (!node) {
       return
     }
-    const copy: FreezeNode = {
+    const copy: VantegNode = {
       ...node,
       id: crypto.randomUUID(),
       selected: false,
@@ -180,19 +187,21 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
           nodeTypes={workflowNodeTypes}
           fitView
           snapToGrid
-          snapGrid={[16, 16]}
+          snapGrid={flowSnapGrid}
           colorMode="light"
-          deleteKeyCode={sheetId ? null : ["Backspace", "Delete"]}
-          className="h-full w-full bg-background"
+          deleteKeyCode={sheetId || locked ? null : ["Backspace", "Delete"]}
+          proOptions={flowProOptions}
+          className={flowCanvasClassName}
+          {...flowInteractionProps(locked)}
         >
-          <Background variant={BackgroundVariant.Dots} gap={18} size={1} />
-          <Controls />
-          <Panel
-            position="top-center"
-            className="pointer-events-none text-xs text-muted-foreground"
-          >
-            Right-click the canvas to add a step. Double-click a node to edit it.
-          </Panel>
+          <FlowCanvasChrome locked={locked} onLockedChange={setLocked}>
+            <Panel position="top-right" className="m-3">
+              <WorkflowRunBar
+                workflowId={workflow.id}
+                workflowName={workflow.name}
+              />
+            </Panel>
+          </FlowCanvasChrome>
         </ReactFlow>
       </div>
       <PaneAddMenu
@@ -214,6 +223,8 @@ function WorkflowCanvasInner({ workflow }: { workflow: Workflow }) {
       />
       <NodeSheet
         node={sheetNode}
+        nodes={nodes}
+        edges={edges}
         onClose={() => setSheetId(null)}
         onChange={updateNode}
       />

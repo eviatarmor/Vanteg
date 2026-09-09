@@ -1,73 +1,12 @@
-export type FieldVariant =
-  | "short-text"
-  | "long-text"
-  | "number"
-  | "select"
-  | "checkbox"
-  | "date"
-  | "url"
-
-export interface SelectOption {
-  label: string
-  value: string
-}
-
-export interface SheetField {
-  id: string
-  name: string
-  variant: FieldVariant
-  required?: boolean
-  description?: string
-  defaultValue?: string | number | boolean
-  options?: SelectOption[]
-}
-
-export type AuthKind =
-  | "oauth2"
-  | "api-key"
-  | "jwt"
-  | "basic"
-  | "bearer"
-  | "service-account"
-
-export interface ConnectorAuth {
-  kind: AuthKind
-  oauthAppId?: string
-}
-
-export type ConnectorCategory =
-  | "Google"
-  | "Microsoft"
-  | "Communication"
-  | "CRM"
-  | "Project"
-  | "Developer"
-  | "Payments"
-  | "Marketing"
-  | "Storage"
-  | "Databases"
-  | "AI"
-  | "Social"
-  | "Commerce"
-  | "Analytics"
-  | "HR"
-  | "Finance"
-  | "Support"
-  | "Design"
-  | "Auth"
-  | "Infra"
-
-export interface Connector {
-  id: string
-  name: string
-  description: string
-  category: ConnectorCategory
-  iconSlug: string
-  auth: ConnectorAuth
-  inFields: SheetField[]
-  dataFields: SheetField[]
-  outFields: SheetField[]
-}
+export type {
+  AuthKind,
+  Connector,
+  ConnectorAuth,
+  ConnectorCategory,
+  FieldVariant,
+  SelectOption,
+  SheetField,
+} from "@workspace/integrations"
 
 export interface CredentialField {
   id: string

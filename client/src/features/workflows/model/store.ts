@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react"
 
-import { createFreezeNode } from "./create-node"
+import { createVantegNode } from "./create-node"
 import type { Workflow, WorkflowStatus } from "./types"
 
 let workflows: Workflow[] = []
@@ -29,7 +29,7 @@ export function createDraft(): Workflow {
     id: crypto.randomUUID(),
     name: nextName(),
     status: "draft",
-    nodes: [createFreezeNode("manual", { x: 80, y: 160 })],
+    nodes: [createVantegNode("manual", { x: 80, y: 160 })],
     edges: [],
     updatedAt: Date.now(),
   }

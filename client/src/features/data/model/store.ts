@@ -5,6 +5,7 @@ import {
   nowTimestamp,
   systemTimestampColumns,
 } from "./system-columns"
+import { isTextColumnVariant, isTimeColumnVariant } from "./column-types"
 import type {
   Database,
   DatabaseCellVariant,
@@ -15,6 +16,7 @@ import type {
   DataSnapshot,
   KeyValueItem,
   SelectOption,
+  TextFormat,
 } from "./types"
 
 const listeners = new Set<() => void>()
@@ -66,7 +68,7 @@ function createSeed(): DataSnapshot {
                   {
                     id: "user-ada",
                     name: "Ada Lovelace",
-                    email: "ada@freeze.dev",
+                    email: "ada@vanteg.dev",
                     role: "admin",
                     active: true,
                     createdAt: "2026-03-01T12:00:00.000Z",
@@ -75,7 +77,7 @@ function createSeed(): DataSnapshot {
                   {
                     id: "user-grace",
                     name: "Grace Hopper",
-                    email: "grace@freeze.dev",
+                    email: "grace@vanteg.dev",
                     role: "member",
                     active: true,
                     createdAt: "2026-03-02T12:00:00.000Z",
@@ -84,7 +86,7 @@ function createSeed(): DataSnapshot {
                   {
                     id: "user-alan",
                     name: "Alan Turing",
-                    email: "alan@freeze.dev",
+                    email: "alan@vanteg.dev",
                     role: "member",
                     active: false,
                     createdAt: "2026-03-03T12:00:00.000Z",
@@ -190,7 +192,7 @@ function createSeed(): DataSnapshot {
                   {
                     id: "staging-user-1",
                     name: "Test User",
-                    email: "test@staging.freeze.dev",
+                    email: "test@staging.vanteg.dev",
                     createdAt: "2026-03-15T12:00:00.000Z",
                     updatedAt: "2026-03-15T12:00:00.000Z",
                   },
@@ -206,8 +208,8 @@ function createSeed(): DataSnapshot {
         id: "vars-global",
         name: "Global",
         items: [
-          { id: "var-app-name", key: "APP_NAME", value: "Freeze" },
-          { id: "var-api-url", key: "API_URL", value: "https://api.freeze.dev" },
+          { id: "var-app-name", key: "APP_NAME", value: "Vanteg" },
+          { id: "var-api-url", key: "API_URL", value: "https://api.vanteg.dev" },
           { id: "var-region", key: "DEFAULT_REGION", value: "us-east-1" },
         ],
       },
@@ -218,7 +220,7 @@ function createSeed(): DataSnapshot {
           {
             id: "var-staging-api",
             key: "API_URL",
-            value: "https://staging.api.freeze.dev",
+            value: "https://staging.api.vanteg.dev",
           },
           { id: "var-staging-log", key: "LOG_LEVEL", value: "debug" },
         ],
@@ -227,7 +229,7 @@ function createSeed(): DataSnapshot {
         id: "vars-production",
         name: "Production",
         items: [
-          { id: "var-prod-api", key: "API_URL", value: "https://api.freeze.dev" },
+          { id: "var-prod-api", key: "API_URL", value: "https://api.vanteg.dev" },
           { id: "var-prod-log", key: "LOG_LEVEL", value: "info" },
         ],
       },
@@ -241,7 +243,7 @@ function createSeed(): DataSnapshot {
           {
             id: "secret-stripe",
             key: "STRIPE_SECRET_KEY",
-            value: "sk_test_freeze",
+            value: "sk_test_vanteg",
           },
         ],
       },
@@ -252,7 +254,7 @@ function createSeed(): DataSnapshot {
           {
             id: "secret-staging-db",
             key: "DATABASE_URL",
-            value: "postgres://freeze:freeze@localhost:5432/freeze_staging",
+            value: "postgres://vanteg:vanteg@localhost:5432/vanteg_staging",
           },
         ],
       },
@@ -268,7 +270,7 @@ function createSeed(): DataSnapshot {
           {
             id: "secret-prod-db",
             key: "DATABASE_URL",
-            value: "postgres://freeze:freeze@localhost:5432/freeze",
+            value: "postgres://vanteg:vanteg@localhost:5432/vanteg",
           },
         ],
       },
@@ -418,7 +420,13 @@ function emptyCellValue(variant: DatabaseCellVariant): unknown {
   if (variant === "checkbox") {
     return false
   }
-  if (variant === "number" || variant === "date" || variant === "select") {
+  if (
+    variant === "number" ||
+    variant === "date" ||
+    variant === "time" ||
+    variant === "datetime" ||
+    variant === "select"
+  ) {
     return null
   }
   return ""
@@ -435,6 +443,15 @@ function uniqueColumnId(table: DatabaseTable, name: string): string {
     index += 1
   }
   return `${base}-${index}`
+}
+
+function insertIndexForNewColumn(columns: readonly DatabaseColumn[]): number {
+  for (let index = columns.length - 1; index >= 0; index -= 1) {
+    if (!isSystemColumnId(columns[index]?.id ?? "")) {
+      return index + 1
+    }
+  }
+  return 0
 }
 
 export function addTableRow(tableId: string): DatabaseRow | undefined {
@@ -466,16 +483,35 @@ export function addTableRow(tableId: string): DatabaseRow | undefined {
   return row
 }
 
+export type TableColumnInput = {
+  name: string
+  variant: DatabaseCellVariant
+  options?: SelectOption[]
+  regex?: string
+  textFormat?: TextFormat
+  showSeconds?: boolean
+}
+
+function columnFieldsFromInput(input: TableColumnInput): Omit<DatabaseColumn, "id" | "system"> {
+  const name = input.name.trim()
+  const regex = isTextColumnVariant(input.variant) ? input.regex?.trim() : undefined
+  return {
+    name,
+    variant: input.variant,
+    options: input.variant === "select" ? input.options : undefined,
+    regex: regex || undefined,
+    textFormat: isTextColumnVariant(input.variant) ? input.textFormat : undefined,
+    showSeconds:
+      isTimeColumnVariant(input.variant) && input.showSeconds ? true : undefined,
+  }
+}
+
 export function addTableColumn(
   tableId: string,
-  input: {
-    name: string
-    variant: DatabaseCellVariant
-    options?: SelectOption[]
-  }
+  input: TableColumnInput
 ): DatabaseColumn | undefined {
-  const name = input.name.trim()
-  if (!name) {
+  const fields = columnFieldsFromInput(input)
+  if (!fields.name) {
     return undefined
   }
   const match = findTable(snapshot.databases, tableId)
@@ -483,27 +519,29 @@ export function addTableColumn(
     return undefined
   }
   const column: DatabaseColumn = {
-    id: uniqueColumnId(match.table, name),
-    name,
-    variant: input.variant,
-    options: input.variant === "select" ? input.options : undefined,
+    id: uniqueColumnId(match.table, fields.name),
+    ...fields,
   }
   const empty = emptyCellValue(column.variant)
+  const insertAt = insertIndexForNewColumn(match.table.columns)
   snapshot = {
     ...snapshot,
     databases: snapshot.databases.map((database) => ({
       ...database,
       schemas: database.schemas.map((schema) => ({
         ...schema,
-        tables: schema.tables.map((table) =>
-          table.id === tableId
-            ? {
-                ...table,
-                columns: [...table.columns, column],
-                rows: table.rows.map((row) => ({ ...row, [column.id]: empty })),
-              }
-            : table
-        ),
+        tables: schema.tables.map((table) => {
+          if (table.id !== tableId) {
+            return table
+          }
+          const columns = [...table.columns]
+          columns.splice(insertAt, 0, column)
+          return {
+            ...table,
+            columns,
+            rows: table.rows.map((row) => ({ ...row, [column.id]: empty })),
+          }
+        }),
       })),
     })),
   }
@@ -531,6 +569,119 @@ export function deleteTableRows(tableId: string, rowIds: readonly string[]): voi
     })),
   }
   emit()
+}
+
+export function reorderTableColumn(
+  tableId: string,
+  columnId: string,
+  targetColumnId: string | null
+): void {
+  const match = findTable(snapshot.databases, tableId)
+  if (!match) {
+    return
+  }
+  const columns = match.table.columns
+  const from = columns.findIndex((column) => column.id === columnId)
+  if (from < 0) {
+    return
+  }
+  const to =
+    targetColumnId === null
+      ? columns.length
+      : columns.findIndex((column) => column.id === targetColumnId)
+  if (to < 0 || from === to) {
+    return
+  }
+  const next = [...columns]
+  const [moved] = next.splice(from, 1)
+  if (!moved) {
+    return
+  }
+  const insertAt = from < to ? to - 1 : to
+  next.splice(insertAt, 0, moved)
+  snapshot = {
+    ...snapshot,
+    databases: snapshot.databases.map((database) => ({
+      ...database,
+      schemas: database.schemas.map((schema) => ({
+        ...schema,
+        tables: schema.tables.map((table) =>
+          table.id === tableId ? { ...table, columns: next } : table
+        ),
+      })),
+    })),
+  }
+  emit()
+}
+
+export function shiftTableColumn(
+  tableId: string,
+  columnId: string,
+  direction: -1 | 1
+): void {
+  const match = findTable(snapshot.databases, tableId)
+  if (!match) {
+    return
+  }
+  const from = match.table.columns.findIndex((column) => column.id === columnId)
+  if (from < 0) {
+    return
+  }
+  const neighbor = match.table.columns[from + direction]
+  if (!neighbor) {
+    return
+  }
+  if (direction < 0) {
+    reorderTableColumn(tableId, columnId, neighbor.id)
+    return
+  }
+  const afterNeighbor = match.table.columns[from + 2]
+  reorderTableColumn(tableId, columnId, afterNeighbor?.id ?? null)
+}
+
+export function updateTableColumn(
+  tableId: string,
+  columnId: string,
+  input: TableColumnInput
+): DatabaseColumn | undefined {
+  if (isSystemColumnId(columnId)) {
+    return undefined
+  }
+  const fields = columnFieldsFromInput(input)
+  if (!fields.name) {
+    return undefined
+  }
+  const match = findTable(snapshot.databases, tableId)
+  const existing = match?.table.columns.find((column) => column.id === columnId)
+  if (!match || !existing) {
+    return undefined
+  }
+  const column: DatabaseColumn = { ...existing, ...fields }
+  const variantChanged = existing.variant !== fields.variant
+  const empty = emptyCellValue(fields.variant)
+  snapshot = {
+    ...snapshot,
+    databases: snapshot.databases.map((database) => ({
+      ...database,
+      schemas: database.schemas.map((schema) => ({
+        ...schema,
+        tables: schema.tables.map((table) => {
+          if (table.id !== tableId) {
+            return table
+          }
+          return {
+            ...table,
+            columns: table.columns.map((item) => (item.id === columnId ? column : item)),
+            rows: variantChanged
+              ? table.rows.map((row) => ({ ...row, [columnId]: empty }))
+              : table.rows,
+          }
+        }),
+      })),
+    })),
+  }
+  emit()
+  return column
 }
 
 export function deleteTableColumn(tableId: string, columnId: string): void {

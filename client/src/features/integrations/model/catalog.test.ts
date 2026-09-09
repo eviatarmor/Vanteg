@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { getOAuthApp } from "@infra/integrations/oauth-apps"
+import { getOAuthApp } from "@workspace/integrations"
 
 import { CONNECTORS, getConnector, listConnectorCategories } from "./catalog"
 
@@ -22,6 +22,13 @@ describe("integration catalog", () => {
         /^(oauth2|api-key|jwt|basic|bearer|service-account)$/
       )
     }
+  })
+
+  it("includes Klaviyo, Freshdesk, and BambooHR", () => {
+    expect(getConnector("klaviyo")?.auth).toEqual({ kind: "oauth2", oauthAppId: "klaviyo" })
+    expect(getConnector("freshdesk")?.auth).toEqual({ kind: "api-key" })
+    expect(getConnector("bamboohr")?.auth).toEqual({ kind: "api-key" })
+    expect(getConnector("aws-lambda")?.category).toBe("Infra")
   })
 
   it("includes Google Sheets, Slack, Stripe, and Workday with the right auth", () => {
@@ -50,7 +57,7 @@ describe("integration catalog", () => {
     )
   })
 
-  it("points every OAuth connector at a Freeze-owned app", () => {
+  it("points every OAuth connector at a Vanteg-owned app", () => {
     for (const connector of CONNECTORS) {
       if (connector.auth.kind !== "oauth2") {
         continue

@@ -6,8 +6,8 @@ variable "environment" {
 
 variable "public_base_url" {
   type        = string
-  description = "Public origin of the Freeze app, used as the OAuth redirect base."
-  default     = "https://app.freeze.dev"
+  description = "Public origin of the Vanteg app, used as the OAuth redirect base."
+  default     = "https://app.vanteg.dev"
 }
 
 variable "aws_region" {
@@ -17,7 +17,7 @@ variable "aws_region" {
 
 variable "google_project" {
   type        = string
-  description = "GCP project that Freeze uses for Google APIs."
+  description = "GCP project that Vanteg uses for Google APIs."
   default     = ""
 }
 
@@ -28,13 +28,13 @@ variable "google_region" {
 
 variable "manage_microsoft" {
   type        = bool
-  description = "Create the Freeze Microsoft Entra (Azure AD) application and store its credentials in SSM."
+  description = "Create the Vanteg Microsoft Entra (Azure AD) application and store its credentials in SSM."
   default     = true
 }
 
 variable "manage_google_apis" {
   type        = bool
-  description = "Enable Google APIs needed by Freeze-owned Google OAuth scopes."
+  description = "Enable Google APIs needed by Vanteg-owned Google OAuth scopes."
   default     = true
 }
 

@@ -11,7 +11,7 @@ export function NotFoundPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader title={title} subtitle={subtitle} />
+      <PageHeader title={title} subtitle={subtitle} icon={FileQuestion} />
       <EmptyState
         icon={FileQuestion}
         title="This page does not exist"

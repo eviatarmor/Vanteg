@@ -1,5 +1,5 @@
 import { getNodeType } from "./node-catalog"
-import type { FreezeNode, FreezeNodeData, NodeKind, NodeVar } from "./types"
+import type { VantegNode, VantegNodeData, NodeKind, NodeVar } from "./types"
 
 function makeVar(key: string, value = ""): NodeVar {
   return { id: crypto.randomUUID(), key, value }
@@ -55,9 +55,9 @@ export function defaultNodeIo(catalogId: string): {
 }
 
 export function mapUpstreamOutputs(
-  source: FreezeNode,
-  target: FreezeNode
-): FreezeNodeData {
+  source: VantegNode,
+  target: VantegNode
+): VantegNodeData {
   const existing = new Set(target.data.inVars.map((item) => item.key))
   const mapped = source.data.outVars
     .filter((item) => item.key && !existing.has(item.key))
@@ -70,10 +70,10 @@ export function mapUpstreamOutputs(
 }
 
 export function wireConnection(
-  nodes: FreezeNode[],
+  nodes: VantegNode[],
   sourceId: string | null | undefined,
   targetId: string | null | undefined
-): FreezeNode[] {
+): VantegNode[] {
   if (!sourceId || !targetId || sourceId === targetId) {
     return nodes
   }

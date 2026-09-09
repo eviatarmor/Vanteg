@@ -8,9 +8,12 @@ import type {
   Table,
 } from "@tanstack/react-table";
 import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   EyeOffIcon,
+  PencilIcon,
   PinIcon,
   PinOffIcon,
   Trash2Icon,
@@ -39,6 +42,8 @@ interface DataGridColumnHeaderProps<TData, TValue>
   header: Header<TData, TValue>;
   table: Table<TData>;
   onColumnDelete?: (columnId: string) => void;
+  onColumnEdit?: (columnId: string) => void;
+  onColumnShift?: (columnId: string, direction: -1 | 1) => void;
 }
 
 export function DataGridColumnHeader<TData, TValue>({
@@ -47,6 +52,8 @@ export function DataGridColumnHeader<TData, TValue>({
   className,
   onPointerDown,
   onColumnDelete,
+  onColumnEdit,
+  onColumnShift,
   ...props
 }: DataGridColumnHeaderProps<TData, TValue>) {
   const column = header.column;
@@ -107,6 +114,12 @@ export function DataGridColumnHeader<TData, TValue>({
     column.pin(false);
   }, [column]);
 
+  const visibleColumns = table.getVisibleLeafColumns();
+  const columnIndex = visibleColumns.findIndex((item) => item.id === column.id);
+  const canMoveLeft = columnIndex > 0;
+  const canMoveRight =
+    columnIndex >= 0 && columnIndex < visibleColumns.length - 1;
+
   const onTriggerPointerDown = React.useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
       onPointerDown?.(event);
@@ -127,6 +140,7 @@ export function DataGridColumnHeader<TData, TValue>({
           className={cn(
             "flex h-9 w-full items-center justify-between gap-2 px-2 py-0 text-sm hover:bg-accent/40 data-[state=open]:bg-accent/40 [&_svg]:size-4",
             isAnyColumnResizing && "pointer-events-none",
+            props.draggable && "cursor-grab active:cursor-grabbing",
             className,
           )}
           onPointerDown={onTriggerPointerDown}
@@ -214,6 +228,29 @@ export function DataGridColumnHeader<TData, TValue>({
               )}
             </>
           )}
+          {onColumnShift ? (
+            <>
+              {(column.getCanSort() || column.getCanPin()) && (
+                <DropdownMenuSeparator />
+              )}
+              <DropdownMenuItem
+                className="[&_svg]:text-muted-foreground"
+                disabled={!canMoveLeft}
+                onSelect={() => onColumnShift(column.id, -1)}
+              >
+                <ArrowLeftIcon />
+                Move left
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="[&_svg]:text-muted-foreground"
+                disabled={!canMoveRight}
+                onSelect={() => onColumnShift(column.id, 1)}
+              >
+                <ArrowRightIcon />
+                Move right
+              </DropdownMenuItem>
+            </>
+          ) : null}
           {column.getCanHide() && (
             <>
               <DropdownMenuSeparator />
@@ -226,16 +263,27 @@ export function DataGridColumnHeader<TData, TValue>({
               </DropdownMenuItem>
             </>
           )}
-          {onColumnDelete ? (
+          {onColumnEdit || onColumnDelete ? (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => onColumnDelete(column.id)}
-              >
-                <Trash2Icon />
-                Delete column
-              </DropdownMenuItem>
+              {onColumnEdit ? (
+                <DropdownMenuItem
+                  className="[&_svg]:text-muted-foreground"
+                  onSelect={() => onColumnEdit(column.id)}
+                >
+                  <PencilIcon />
+                  Edit column
+                </DropdownMenuItem>
+              ) : null}
+              {onColumnDelete ? (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => onColumnDelete(column.id)}
+                >
+                  <Trash2Icon />
+                  Delete column
+                </DropdownMenuItem>
+              ) : null}
             </>
           ) : null}
         </DropdownMenuContent>
@@ -297,7 +345,11 @@ function DataGridColumnResizerImpl<TData, TValue>({
           ? "bg-primary"
           : "opacity-0 hover:opacity-100",
       )}
+      draggable={false}
       onDoubleClick={onDoubleClick}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
       onMouseDown={header.getResizeHandler()}
       onTouchStart={header.getResizeHandler()}
     />

@@ -13,11 +13,48 @@ import {
   flexRender,
   getColumnBorderVisibility,
   getColumnPinningStyle,
+  getColumnWidthStyle,
 } from "@/lib/data-grid";
 import { cn } from "@workspace/ui/lib/utils";
 import type { Direction } from "@/types/data-grid";
 
 const EMPTY_CELL_SELECTION_SET = new Set<string>();
+const COLUMN_DND_MIME = "application/x-vanteg-column";
+const ADD_COLUMN_DROP_ID = "__add-column__";
+
+type ColumnDropIndicator = {
+  overId: string;
+  edge: "start" | "end";
+};
+
+function dropEdgeFromPoint(event: React.DragEvent): "start" | "end" {
+  const rect = event.currentTarget.getBoundingClientRect();
+  return event.clientX > rect.left + rect.width / 2 ? "end" : "start";
+}
+
+function insertTargetId(
+  overId: string,
+  edge: "start" | "end",
+  columnIds: readonly string[],
+): string | null {
+  if (overId === ADD_COLUMN_DROP_ID) {
+    return null;
+  }
+  if (edge === "start") {
+    return overId;
+  }
+  const index = columnIds.indexOf(overId);
+  return index >= 0 ? (columnIds[index + 1] ?? null) : null;
+}
+
+function dropIndicatorClass(indicator: ColumnDropIndicator | null, overId: string) {
+  if (indicator?.overId !== overId) {
+    return undefined;
+  }
+  return indicator.edge === "start"
+    ? "shadow-[inset_2px_0_0_0_var(--color-primary)]"
+    : "shadow-[inset_-2px_0_0_0_var(--color-primary)]";
+}
 
 interface DataGridProps<TData>
   extends Omit<ReturnType<typeof useDataGrid<TData>>, "dir">,
@@ -27,6 +64,9 @@ interface DataGridProps<TData>
   stretchColumns?: boolean;
   onColumnAdd?: () => void;
   onColumnDelete?: (columnId: string) => void;
+  onColumnEdit?: (columnId: string) => void;
+  onColumnMove?: (columnId: string, targetColumnId: string | null) => void;
+  onColumnShift?: (columnId: string, direction: -1 | 1) => void;
   flush?: boolean;
 }
 
@@ -55,6 +95,9 @@ export function DataGrid<TData>({
   onRowAdd: onRowAddProp,
   onColumnAdd: onColumnAddProp,
   onColumnDelete: onColumnDeleteProp,
+  onColumnEdit: onColumnEditProp,
+  onColumnMove: onColumnMoveProp,
+  onColumnShift: onColumnShiftProp,
   height = 600,
   stretchColumns = false,
   adjustLayout = false,
@@ -69,6 +112,16 @@ export function DataGrid<TData>({
 
   const onRowAddRef = useAsRef(onRowAddProp);
   const onColumnAddRef = useAsRef(onColumnAddProp);
+  const onColumnMoveRef = useAsRef(onColumnMoveProp);
+  const [dropIndicator, setDropIndicator] =
+    React.useState<ColumnDropIndicator | null>(null);
+  const draggingColumnIdRef = React.useRef<string | null>(null);
+  const leafColumnIds = React.useMemo(
+    () => table.getVisibleLeafColumns().map((column) => column.id),
+    [table, columns],
+  );
+  const columnOrderKey = leafColumnIds.join("|");
+  const canReorderColumns = Boolean(onColumnMoveProp);
 
   const onRowAdd = React.useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -90,6 +143,73 @@ export function DataGrid<TData>({
       onColumnAddRef.current?.();
     },
     [onColumnAddRef],
+  );
+
+  const onColumnDragStart = React.useCallback(
+    (event: React.DragEvent, columnId: string) => {
+      if (!onColumnMoveRef.current) {
+        event.preventDefault();
+        return;
+      }
+      event.dataTransfer.setData(COLUMN_DND_MIME, columnId);
+      event.dataTransfer.setData("text/plain", columnId);
+      event.dataTransfer.effectAllowed = "move";
+      draggingColumnIdRef.current = columnId;
+      event.currentTarget
+        .closest("[data-slot='grid-header-cell']")
+        ?.setAttribute("data-dragging", "true");
+    },
+    [onColumnMoveRef],
+  );
+
+  const clearColumnDragging = React.useCallback(() => {
+    draggingColumnIdRef.current = null;
+    dataGridRef.current
+      ?.querySelectorAll("[data-slot='grid-header-cell'][data-dragging]")
+      .forEach((node) => {
+        node.removeAttribute("data-dragging");
+      });
+    setDropIndicator(null);
+  }, [dataGridRef]);
+
+  const onColumnDragEnd = React.useCallback(() => {
+    clearColumnDragging();
+  }, [clearColumnDragging]);
+
+  const onColumnDragOver = React.useCallback(
+    (event: React.DragEvent, overId: string) => {
+      if (!onColumnMoveRef.current || !draggingColumnIdRef.current) {
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      const edge =
+        overId === ADD_COLUMN_DROP_ID ? "start" : dropEdgeFromPoint(event);
+      setDropIndicator((current) =>
+        current?.overId === overId && current.edge === edge
+          ? current
+          : { overId, edge },
+      );
+    },
+    [onColumnMoveRef],
+  );
+
+  const onColumnDrop = React.useCallback(
+    (event: React.DragEvent, overId: string) => {
+      event.preventDefault();
+      const fromId =
+        draggingColumnIdRef.current ||
+        event.dataTransfer.getData(COLUMN_DND_MIME) ||
+        event.dataTransfer.getData("text/plain");
+      const edge =
+        overId === ADD_COLUMN_DROP_ID ? "start" : dropEdgeFromPoint(event);
+      const targetId = insertTargetId(overId, edge, leafColumnIds);
+      if (fromId && fromId !== targetId) {
+        onColumnMoveRef.current?.(fromId, targetId);
+      }
+      clearColumnDragging();
+    },
+    [clearColumnDragging, leafColumnIds, onColumnMoveRef],
   );
 
   const onFooterCellKeyDown = React.useCallback(
@@ -189,16 +309,41 @@ export function DataGrid<TData>({
                     }
                     data-slot="grid-header-cell"
                     tabIndex={-1}
-                    className={cn("relative shrink-0", {
-                      grow: stretchColumns && header.column.id !== "select",
-                      "border-e":
-                        showEndBorder && header.column.id !== "select",
-                      "border-s":
-                        showStartBorder && header.column.id !== "select",
-                    })}
+                    className={cn(
+                      "relative shrink-0 data-[dragging=true]:opacity-50",
+                      {
+                        grow:
+                          stretchColumns &&
+                          !onColumnAddProp &&
+                          header.column.id !== "select",
+                        "border-e":
+                          showEndBorder && header.column.id !== "select",
+                        "border-s":
+                          showStartBorder && header.column.id !== "select",
+                      },
+                      dropIndicatorClass(dropIndicator, header.column.id),
+                    )}
                     style={{
                       ...getColumnPinningStyle({ column: header.column, dir }),
-                      width: `calc(var(--header-${header.id}-size) * 1px)`,
+                      ...getColumnWidthStyle(
+                        `--header-${header.id}-size`,
+                        header.getSize(),
+                      ),
+                    }}
+                    onDragOver={
+                      canReorderColumns
+                        ? (event) => onColumnDragOver(event, header.column.id)
+                        : undefined
+                    }
+                    onDrop={
+                      canReorderColumns
+                        ? (event) => onColumnDrop(event, header.column.id)
+                        : undefined
+                    }
+                    onDragLeave={() => {
+                      setDropIndicator((current) =>
+                        current?.overId === header.column.id ? null : current,
+                      );
                     }}
                   >
                     {header.isPlaceholder ? null : typeof header.column
@@ -213,6 +358,17 @@ export function DataGrid<TData>({
                       <DataGridColumnHeader
                         header={header}
                         table={table}
+                        draggable={canReorderColumns}
+                        onDragStart={(event) =>
+                          onColumnDragStart(event, header.column.id)
+                        }
+                        onDragEnd={onColumnDragEnd}
+                        onColumnShift={onColumnShiftProp}
+                        onColumnEdit={
+                          readOnly || header.column.columnDef.meta?.readOnly
+                            ? undefined
+                            : onColumnEditProp
+                        }
                         onColumnDelete={
                           readOnly || header.column.columnDef.meta?.readOnly
                             ? undefined
@@ -228,7 +384,26 @@ export function DataGrid<TData>({
                   role="columnheader"
                   aria-colindex={headerGroup.headers.length + 1}
                   data-slot="grid-add-column"
-                  className="sticky end-0 z-10 flex h-9 min-w-40 shrink-0 border-s bg-muted/30"
+                  className={cn(
+                    "flex h-9 min-w-40 shrink-0 border-s bg-muted/30",
+                    stretchColumns && "grow",
+                    dropIndicatorClass(dropIndicator, ADD_COLUMN_DROP_ID),
+                  )}
+                  onDragOver={
+                    canReorderColumns
+                      ? (event) => onColumnDragOver(event, ADD_COLUMN_DROP_ID)
+                      : undefined
+                  }
+                  onDrop={
+                    canReorderColumns
+                      ? (event) => onColumnDrop(event, ADD_COLUMN_DROP_ID)
+                      : undefined
+                  }
+                  onDragLeave={() => {
+                    setDropIndicator((current) =>
+                      current?.overId === ADD_COLUMN_DROP_ID ? null : current,
+                    );
+                  }}
                 >
                   <button
                     type="button"
@@ -285,7 +460,8 @@ export function DataGrid<TData>({
                 adjustLayout={adjustLayout}
                 stretchColumns={stretchColumns}
                 readOnly={readOnly}
-                onColumnAdd={onColumnAddProp ? onColumnAdd : undefined}
+                showAddColumn={Boolean(onColumnAddProp)}
+                columnOrderKey={columnOrderKey}
               />
             );
           })}
@@ -307,7 +483,10 @@ export function DataGrid<TData>({
               <div
                 role="gridcell"
                 tabIndex={0}
-                className="relative flex h-9 grow items-center bg-muted/30 transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none"
+                className={cn(
+                  "relative flex h-9 items-center bg-muted/30 transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none",
+                  !onColumnAddProp && "grow",
+                )}
                 style={{
                   width: table.getTotalSize(),
                   minWidth: table.getTotalSize(),
@@ -324,8 +503,10 @@ export function DataGrid<TData>({
                 <div
                   role="gridcell"
                   data-slot="grid-add-column-footer"
-                  className="min-w-40 shrink-0 border-s bg-muted/30"
-                  onClick={onColumnAdd}
+                  className={cn(
+                    "min-w-40 shrink-0 border-s bg-muted/30",
+                    stretchColumns && "grow",
+                  )}
                 />
               ) : null}
             </div>

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
@@ -59,6 +59,32 @@ describe("AgentsPage", () => {
     await user.click(screen.getByRole("checkbox", { name: "Support" }))
 
     expect(screen.getByRole("checkbox", { name: "Support" })).toBeChecked()
+  })
+
+  it("groups models by company with icons in the model selector", async () => {
+    const user = userEvent.setup()
+    renderAgents("/agents/agent-research")
+
+    const trigger = screen.getByRole("button", { name: "Model" })
+    expect(trigger).toHaveTextContent("Grok 4.6")
+    expect(trigger.querySelector('img[alt="xai logo"]')).toBeInTheDocument()
+
+    await user.click(trigger)
+
+    const picker = screen.getByRole("dialog", { name: "Model Selector" })
+    for (const company of ["OpenAI", "Anthropic", "Google", "xAI", "Moonshot", "Z.ai", "Meta"]) {
+      expect(within(picker).getByText(company)).toBeInTheDocument()
+    }
+    expect(within(picker).queryByText("Mistral")).not.toBeInTheDocument()
+    expect(within(picker).queryByText("DeepSeek")).not.toBeInTheDocument()
+    expect(within(picker).getByRole("option", { name: /GPT-6 Astra/i })).toBeInTheDocument()
+    expect(within(picker).getByRole("option", { name: /Muse Spark/i })).toBeInTheDocument()
+    expect(picker.querySelector('img[alt="openai logo"]')).toBeInTheDocument()
+    expect(picker.querySelector('img[alt="anthropic logo"]')).toBeInTheDocument()
+
+    await user.click(within(picker).getByRole("option", { name: /GPT-6 Astra/i }))
+
+    expect(screen.getByRole("button", { name: "Model" })).toHaveTextContent("GPT-6 Astra")
   })
 
   it("creates an agent from the name prompt", async () => {

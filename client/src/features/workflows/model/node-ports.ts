@@ -47,6 +47,7 @@ export function getNodePorts(catalogId: string): NodePort[] {
         { id: "false", type: "source", label: "False", color: "rose" },
       ]
     case "switch":
+    case "paths":
       return [
         { id: "in", type: "target", label: "In", color: "slate" },
         { id: "a", type: "source", label: "A", color: "violet" },

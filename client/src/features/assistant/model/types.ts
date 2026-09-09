@@ -27,7 +27,7 @@ export interface AssistantChatContext {
 
 export const defaultAssistantSuggestions = [
   "What can I do on this page?",
-  "Give me a quick tour of Freeze",
+  "Give me a quick tour of Vanteg",
   "Help me decide what to build next",
 ] as const
 

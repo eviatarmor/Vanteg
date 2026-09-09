@@ -9,11 +9,11 @@ export function HelpPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader title={title} subtitle={subtitle} />
+      <PageHeader title={title} subtitle={subtitle} icon={CircleHelp} />
       <EmptyState
         icon={CircleHelp}
         title="No help articles yet"
-        description="Guides and answers for Freeze will show up here."
+        description="Guides and answers for Vanteg will show up here."
         className="min-h-0 flex-1"
       />
     </div>

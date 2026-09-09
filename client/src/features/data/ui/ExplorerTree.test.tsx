@@ -34,6 +34,7 @@ describe("ExplorerTree", () => {
     )
 
     expect(screen.getByRole("tree", { name: "Databases" })).toBeInTheDocument()
+    expect(document.querySelector('[data-slot="scroll-fade"]')).toBeInTheDocument()
     expect(screen.getByRole("treeitem", { name: /users/ })).toHaveAttribute(
       "aria-selected",
       "true"

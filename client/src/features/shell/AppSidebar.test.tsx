@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 import { SidebarProvider } from "@workspace/ui/components/sidebar"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
+
+import { resetInbox } from "@/features/inbox/model/store"
 
 import { AppSidebar } from "./AppSidebar"
 
@@ -20,10 +22,14 @@ function renderSidebar() {
 }
 
 describe("AppSidebar", () => {
-  it("renders Freeze branding, grouped nav, inbox badge, and owner", () => {
+  beforeEach(() => {
+    resetInbox()
+  })
+
+  it("renders Vanteg branding, grouped nav, inbox badge, and owner", () => {
     renderSidebar()
 
-    expect(screen.getByText("Freeze")).toBeInTheDocument()
+    expect(screen.getByText("Vanteg")).toBeInTheDocument()
     expect(screen.queryByText("Hudson Plumbing")).not.toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /inbox/i })).toBeInTheDocument()

@@ -31,19 +31,19 @@ describe("integrations store", () => {
   })
 
   it("saves a Stripe API key as a credential", () => {
-    connectConnector("stripe", { apiKey: "sk_test_freeze" })
+    connectConnector("stripe", { apiKey: "sk_test_vanteg" })
 
     const credential = getIntegrationsSnapshot().credentials[0]
     expect(credential?.kind).toBe("api-key")
-    expect(credential?.fields.apiKey).toBe("sk_test_freeze")
+    expect(credential?.fields.apiKey).toBe("sk_test_vanteg")
   })
 
   it("inserts data rows and records output variables", () => {
     const connection = connectConnector("google-sheets")
     addDataRow(connection.id, {
       name: "Ada Lovelace",
-      email: "ada@freeze.dev",
-      company: "Freeze",
+      email: "ada@vanteg.dev",
+      company: "Vanteg",
       status: "active",
     })
     const rowId = getIntegrationsSnapshot().connections[0]?.sheets.data.at(-1)?.id

@@ -13,7 +13,7 @@ export function NotificationButton() {
     >
       <Link to="/inbox" aria-label="Notifications">
         <Bell />
-        <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-freeze-badge" />
+        <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-vanteg-badge" />
       </Link>
     </Button>
   )

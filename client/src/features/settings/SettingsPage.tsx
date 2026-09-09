@@ -9,7 +9,7 @@ export function SettingsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader title={title} subtitle={subtitle} />
+      <PageHeader title={title} subtitle={subtitle} icon={Settings} />
       <EmptyState
         icon={Settings}
         title="No settings yet"

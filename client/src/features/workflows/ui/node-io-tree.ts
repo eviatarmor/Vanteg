@@ -1,0 +1,70 @@
+import type { ExplorerNode } from "@/features/data/ui/ExplorerTree"
+
+import type { VantegEdge, VantegNode, NodeVar } from "../model/types"
+
+function varLeaves(vars: NodeVar[], prefix: string, hintFor?: (item: NodeVar) => string | undefined): ExplorerNode[] {
+  return vars
+    .filter((item) => item.key)
+    .map((item) => ({
+      id: `${prefix}:${item.id}`,
+      label: item.key,
+      icon: "variable" as const,
+      hint: hintFor?.(item) ?? (item.value || undefined),
+    }))
+}
+
+export function outExplorerNodes(node: VantegNode): ExplorerNode[] {
+  const children = varLeaves(
+    node.data.outVars,
+    `out:${node.id}`,
+    (item) => `{{${node.data.label}.${item.key}}}`
+  )
+  if (children.length === 0) {
+    return []
+  }
+  return [
+    {
+      id: `out:${node.id}`,
+      label: node.data.label,
+      icon: "folder",
+      children,
+    },
+  ]
+}
+
+export function inExplorerNodes(
+  nodeId: string,
+  nodes: VantegNode[],
+  edges: VantegEdge[]
+): ExplorerNode[] {
+  const seen = new Set<string>()
+  const sources: VantegNode[] = []
+  for (const edge of edges) {
+    if (edge.target !== nodeId || seen.has(edge.source)) {
+      continue
+    }
+    const source = nodes.find((item) => item.id === edge.source)
+    if (!source) {
+      continue
+    }
+    seen.add(source.id)
+    sources.push(source)
+  }
+
+  return sources
+    .map((source) => ({
+      id: `in:${source.id}`,
+      label: source.data.label,
+      icon: "folder" as const,
+      children: varLeaves(
+        source.data.outVars,
+        `in:${source.id}`,
+        (item) => `{{${source.data.label}.${item.key}}}`
+      ),
+    }))
+    .filter((group) => (group.children?.length ?? 0) > 0)
+}
+
+export function explorerGroupIds(nodes: ExplorerNode[]): string[] {
+  return nodes.filter((node) => (node.children?.length ?? 0) > 0).map((node) => node.id)
+}

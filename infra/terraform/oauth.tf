@@ -4,8 +4,8 @@ locals {
     id => "${trimsuffix(var.public_base_url, "/")}${app.redirect_path}"
   }
 
-  microsoft_client_id     = try(azuread_application.freeze[0].client_id, lookup(var.oauth_client_ids, "microsoft", "PENDING"))
-  microsoft_client_secret = try(azuread_application_password.freeze[0].value, lookup(var.oauth_client_secrets, "microsoft", "PENDING"))
+  microsoft_client_id     = try(azuread_application.vanteg[0].client_id, lookup(var.oauth_client_ids, "microsoft", "PENDING"))
+  microsoft_client_secret = try(azuread_application_password.vanteg[0].value, lookup(var.oauth_client_secrets, "microsoft", "PENDING"))
 
   oauth_client_id_values = {
     for id, app in local.oauth_apps :
@@ -21,13 +21,13 @@ locals {
 resource "aws_ssm_parameter" "oauth_client_id" {
   for_each = local.oauth_apps
 
-  name        = "/freeze/${var.environment}/oauth/${each.key}/client_id"
+  name        = "/vanteg/${var.environment}/oauth/${each.key}/client_id"
   description = each.value.client_id_env
   type        = "SecureString"
   value       = local.oauth_client_id_values[each.key]
 
   tags = {
-    App      = "freeze"
+    App      = "vanteg"
     OAuthApp = each.key
     EnvVar   = each.value.client_id_env
   }
@@ -40,13 +40,13 @@ resource "aws_ssm_parameter" "oauth_client_id" {
 resource "aws_ssm_parameter" "oauth_client_secret" {
   for_each = local.oauth_apps
 
-  name        = "/freeze/${var.environment}/oauth/${each.key}/client_secret"
+  name        = "/vanteg/${var.environment}/oauth/${each.key}/client_secret"
   description = each.value.client_secret_env
   type        = "SecureString"
   value       = local.oauth_client_secret_values[each.key]
 
   tags = {
-    App      = "freeze"
+    App      = "vanteg"
     OAuthApp = each.key
     EnvVar   = each.value.client_secret_env
   }
@@ -57,8 +57,8 @@ resource "aws_ssm_parameter" "oauth_client_secret" {
 }
 
 resource "aws_iam_policy" "oauth_secrets" {
-  name        = "freeze-${var.environment}-oauth-secrets"
-  description = "Read Freeze-owned OAuth client credentials from SSM."
+  name        = "vanteg-${var.environment}-oauth-secrets"
+  description = "Read Vanteg-owned OAuth client credentials from SSM."
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -70,7 +70,7 @@ resource "aws_iam_policy" "oauth_secrets" {
           "ssm:GetParameters",
           "ssm:GetParametersByPath",
         ]
-        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/freeze/${var.environment}/oauth/*"
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/vanteg/${var.environment}/oauth/*"
       }
     ]
   })

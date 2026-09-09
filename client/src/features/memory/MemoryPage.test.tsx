@@ -72,6 +72,7 @@ describe("MemoryPage", () => {
 
     expect(screen.getByRole("grid", { name: "Data grid" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /Name/ })).toBeInTheDocument()
+    expect(screen.queryByRole("columnheader", { name: /Status/ })).not.toBeInTheDocument()
     expect(getMemorySnapshot().documents.some((document) => document.name === "notes.md")).toBe(
       true
     )

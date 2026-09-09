@@ -2,11 +2,16 @@ import * as React from "react"
 import { cn } from "cn"
 import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"
 
+import { ScrollFadeEdge } from "@workspace/ui/components/scroll-fade"
+import { useScrollOverflow } from "@workspace/ui/hooks/use-scroll-overflow"
+
 function ScrollArea({
   className,
   children,
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+  const { ref, canScrollDown } = useScrollOverflow<HTMLDivElement>()
+
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
@@ -14,6 +19,7 @@ function ScrollArea({
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
+        ref={ref}
         data-slot="scroll-area-viewport"
         className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
       >
@@ -21,6 +27,7 @@ function ScrollArea({
       </ScrollAreaPrimitive.Viewport>
       <ScrollBar />
       <ScrollAreaPrimitive.Corner />
+      <ScrollFadeEdge visible={canScrollDown} />
     </ScrollAreaPrimitive.Root>
   )
 }
@@ -43,7 +50,7 @@ function ScrollBar({
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
         data-slot="scroll-area-thumb"
-        className="relative flex-1 rounded-full bg-border"
+        className="relative flex-1 rounded-full bg-scrollbar-thumb hover:bg-scrollbar-thumb-hover"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   )

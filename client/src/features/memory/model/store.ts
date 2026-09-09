@@ -70,10 +70,10 @@ function createSeed(): MemorySnapshot {
       {
         id: "doc-overview",
         knowledgeBaseId: "kb-product",
-        name: "freeze-overview.md",
+        name: "vanteg-overview.md",
         size: 214,
         type: "text/markdown",
-        text: "# Freeze\n\nFreeze is a workspace for workflows, data, and agents.\nAgents can share memory bases and retrieve uploaded knowledge files.",
+        text: "# Vanteg\n\nVanteg is a workspace for workflows, data, and agents.\nAgents can share memory bases and retrieve uploaded knowledge files.",
         uploadedAt: Date.parse("2026-04-04T10:00:00Z"),
       },
       {

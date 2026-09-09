@@ -8,6 +8,9 @@ import {
   addTableRow,
   deleteTableColumn,
   deleteTableRows,
+  reorderTableColumn,
+  shiftTableColumn,
+  updateTableColumn,
   updateTableRows,
 } from "../model/store"
 import type { DatabaseColumn, DatabaseRow, DatabaseTable } from "../model/types"
@@ -27,8 +30,14 @@ function cellOpts(column: DatabaseColumn): CellOpts {
   if (column.variant === "date") {
     return { variant: "date" }
   }
+  if (column.variant === "time") {
+    return { variant: "time", showSeconds: column.showSeconds }
+  }
+  if (column.variant === "datetime") {
+    return { variant: "datetime", showSeconds: column.showSeconds }
+  }
   if (column.variant === "url") {
-    return { variant: "url" }
+    return { variant: "url", regex: column.regex }
   }
   if (column.variant === "long-text") {
     return { variant: "long-text" }
@@ -36,11 +45,15 @@ function cellOpts(column: DatabaseColumn): CellOpts {
   if (column.variant === "secret") {
     return { variant: "secret" }
   }
-  return { variant: "short-text" }
+  return { variant: "short-text", regex: column.regex }
 }
 
 export function TableGrid({ table }: { table: DatabaseTable }) {
-  const [addColumnOpen, setAddColumnOpen] = useState(false)
+  const [columnDialog, setColumnDialog] = useState<"add" | string | null>(null)
+  const editingColumn =
+    columnDialog && columnDialog !== "add"
+      ? table.columns.find((column) => column.id === columnDialog)
+      : undefined
 
   const columns = useMemo<ColumnDef<DatabaseRow>[]>(
     () =>
@@ -79,13 +92,29 @@ export function TableGrid({ table }: { table: DatabaseTable }) {
           rows.map((row) => row.id)
         )
       }}
-      onColumnAdd={() => setAddColumnOpen(true)}
+      onColumnAdd={() => setColumnDialog("add")}
+      onColumnEdit={(columnId) => setColumnDialog(columnId)}
       onColumnDelete={(columnId) => deleteTableColumn(table.id, columnId)}
+      onColumnMove={(columnId, targetColumnId) => {
+        reorderTableColumn(table.id, columnId, targetColumnId)
+      }}
+      onColumnShift={(columnId, direction) => {
+        shiftTableColumn(table.id, columnId, direction)
+      }}
     >
       <AddColumnDialog
-        open={addColumnOpen}
-        onOpenChange={setAddColumnOpen}
+        open={columnDialog !== null}
+        column={editingColumn}
+        onOpenChange={(open) => {
+          if (!open) {
+            setColumnDialog(null)
+          }
+        }}
         onAdd={(input) => {
+          if (columnDialog && columnDialog !== "add") {
+            updateTableColumn(table.id, columnDialog, input)
+            return
+          }
           addTableColumn(table.id, input)
         }}
       />

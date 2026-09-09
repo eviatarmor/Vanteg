@@ -4,6 +4,7 @@ import { Check, Upload, X } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { DataGridCellWrapper } from "@/components/data-grid/data-grid-cell-wrapper";
+import { TimePickerColumns } from "@/components/data-grid/time-field";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Calendar } from "@workspace/ui/components/calendar";
@@ -23,6 +24,10 @@ import {
   PopoverContent,
 } from "@workspace/ui/components/popover";
 import {
+  TimePicker,
+  TimePickerPanel,
+} from "@workspace/ui/components/time-picker";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -36,16 +41,21 @@ import { useBadgeOverflow } from "@/hooks/use-badge-overflow";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import {
   formatDateForDisplay,
+  formatDateTimeForDisplay,
   formatDateToString,
   formatFileSize,
+  formatTimeForDisplay,
   getCellKey,
   getFileIcon,
   getLineCount,
   getUrlHref,
+  joinDateTime,
   parseLocalDate,
+  splitDateTime,
 } from "@/lib/data-grid";
 import { cn } from "@workspace/ui/lib/utils";
 import { applySecretInput, maskSecretLast } from "@/features/data/model/mask-secret";
+import { valueMatchesRegex } from "@/features/data/model/column-types";
 import type { DataGridCellProps, FileCellData } from "@/types/data-grid";
 
 export function ShortTextCell<TData>({
@@ -66,6 +76,8 @@ export function ShortTextCell<TData>({
   const cellRef = React.useRef<HTMLDivElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const prevIsEditingRef = React.useRef(false);
+  const cellOpts = cell.column.columnDef.meta?.cell;
+  const regex = cellOpts?.variant === "short-text" ? cellOpts.regex : undefined;
 
   const prevInitialValueRef = React.useRef(initialValue);
   if (initialValue !== prevInitialValueRef.current) {
@@ -127,6 +139,7 @@ export function ShortTextCell<TData>({
         }
       } else if (
         isFocused &&
+        !readOnly &&
         event.key.length === 1 &&
         !event.ctrlKey &&
         !event.metaKey
@@ -147,7 +160,7 @@ export function ShortTextCell<TData>({
         });
       }
     },
-    [isEditing, isFocused, initialValue, tableMeta, rowIndex, columnId],
+    [isEditing, isFocused, initialValue, tableMeta, rowIndex, columnId, readOnly],
   );
 
   React.useEffect(() => {
@@ -173,6 +186,7 @@ export function ShortTextCell<TData>({
   }, [isEditing, value]);
 
   const displayValue = !isEditing ? (value ?? "") : "";
+  const invalid = !valueMatchesRegex(value ?? "", regex);
 
   return (
     <DataGridCellWrapper<TData>
@@ -193,7 +207,9 @@ export function ShortTextCell<TData>({
       <div
         role="textbox"
         data-slot="grid-cell-content"
-        contentEditable={isEditing}
+        contentEditable={isEditing && !readOnly}
+        aria-readonly={readOnly || undefined}
+        aria-invalid={invalid || undefined}
         tabIndex={-1}
         ref={cellRef}
         onBlur={onBlur}
@@ -202,6 +218,7 @@ export function ShortTextCell<TData>({
         className={cn("size-full overflow-hidden outline-none", {
           "whitespace-nowrap **:inline **:whitespace-nowrap [&_br]:hidden":
             isEditing,
+          "text-destructive": invalid && !isEditing,
         })}
       >
         {displayValue}
@@ -669,6 +686,8 @@ export function UrlCell<TData>({
   const cellRef = React.useRef<HTMLDivElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const prevIsEditingRef = React.useRef(false);
+  const urlCellOpts = cell.column.columnDef.meta?.cell;
+  const regex = urlCellOpts?.variant === "url" ? urlCellOpts.regex : undefined;
 
   const prevInitialValueRef = React.useRef(initialValue);
   if (initialValue !== prevInitialValueRef.current) {
@@ -815,6 +834,7 @@ export function UrlCell<TData>({
   const displayValue = !isEditing ? (value ?? "") : "";
   const urlHref = displayValue ? getUrlHref(displayValue) : "";
   const isDangerousUrl = displayValue && !urlHref;
+  const invalid = !valueMatchesRegex(value ?? "", regex);
 
   return (
     <DataGridCellWrapper<TData>
@@ -844,6 +864,7 @@ export function UrlCell<TData>({
             target="_blank"
             rel="noopener noreferrer"
             className="truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary/60 data-invalid:cursor-not-allowed data-focused:text-foreground data-invalid:text-destructive data-focused:decoration-foreground/50 data-invalid:decoration-destructive/50 data-focused:hover:decoration-foreground/70 data-invalid:hover:decoration-destructive/70"
+            aria-invalid={invalid || undefined}
             onClick={onLinkClick}
           >
             {displayValue}
@@ -1528,6 +1549,269 @@ export function DateCell<TData>({
               selected={selectedDate}
               onSelect={onDateSelect}
             />
+          </PopoverContent>
+        )}
+      </Popover>
+    </DataGridCellWrapper>
+  );
+}
+
+export function TimeCell<TData>({
+  cell,
+  tableMeta,
+  rowIndex,
+  columnId,
+  rowHeight,
+  isFocused,
+  isEditing,
+  isSelected,
+  isSearchMatch,
+  isActiveSearchMatch,
+  readOnly,
+}: DataGridCellProps<TData>) {
+  const initialValue = (cell.getValue() as string) ?? "";
+  const [value, setValue] = React.useState(initialValue);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const cellOpts = cell.column.columnDef.meta?.cell;
+  const showSeconds = cellOpts?.variant === "time" ? cellOpts.showSeconds : false;
+
+  const prevInitialValueRef = React.useRef(initialValue);
+  if (initialValue !== prevInitialValueRef.current) {
+    prevInitialValueRef.current = initialValue;
+    setValue(initialValue);
+  }
+
+  const onTimeChange = React.useCallback(
+    (next: string) => {
+      if (readOnly) return;
+      setValue(next);
+      tableMeta?.onDataUpdate?.({
+        rowIndex,
+        columnId,
+        value: next || null,
+      });
+    },
+    [tableMeta, rowIndex, columnId, readOnly],
+  );
+
+  const ignoreDismissRef = React.useRef(false);
+
+  const onOpenChange = React.useCallback(
+    (open: boolean) => {
+      if (open && !readOnly) {
+        // The opening double-click is outside the popover and would dismiss it.
+        ignoreDismissRef.current = true;
+        window.setTimeout(() => {
+          ignoreDismissRef.current = false;
+        }, 300);
+        tableMeta?.onCellEditingStart?.(rowIndex, columnId);
+      } else if (!ignoreDismissRef.current) {
+        tableMeta?.onCellEditingStop?.();
+      }
+    },
+    [tableMeta, rowIndex, columnId, readOnly],
+  );
+
+  const onWrapperKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (isEditing && event.key === "Escape") {
+        event.preventDefault();
+        setValue(initialValue);
+        tableMeta?.onCellEditingStop?.();
+      } else if (isFocused && event.key === "Tab") {
+        event.preventDefault();
+        tableMeta?.onCellEditingStop?.({
+          direction: event.shiftKey ? "left" : "right",
+        });
+      }
+    },
+    [isEditing, isFocused, initialValue, tableMeta],
+  );
+
+  return (
+    <DataGridCellWrapper<TData>
+      ref={containerRef}
+      cell={cell}
+      tableMeta={tableMeta}
+      rowIndex={rowIndex}
+      columnId={columnId}
+      rowHeight={rowHeight}
+      isEditing={isEditing}
+      isFocused={isFocused}
+      isSelected={isSelected}
+      isSearchMatch={isSearchMatch}
+      isActiveSearchMatch={isActiveSearchMatch}
+      readOnly={readOnly}
+      onKeyDown={onWrapperKeyDown}
+    >
+      <Popover open={isEditing} onOpenChange={onOpenChange}>
+        <PopoverAnchor asChild>
+          <span data-slot="grid-cell-content" className="flex size-full items-center">
+            {formatTimeForDisplay(value)}
+          </span>
+        </PopoverAnchor>
+        {isEditing && !readOnly ? (
+          <PopoverContent
+            data-grid-cell-editor=""
+            align="start"
+            alignOffset={-8}
+            className="w-auto p-0"
+            onPointerDownOutside={(event) => {
+              if (
+                containerRef.current &&
+                event.target instanceof Node &&
+                containerRef.current.contains(event.target)
+              ) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <TimePicker
+              value={value}
+              onValueChange={onTimeChange}
+              showSeconds={showSeconds}
+              withPopover={false}
+            >
+              <TimePickerPanel className="p-1">
+                <TimePickerColumns showSeconds={showSeconds} />
+              </TimePickerPanel>
+            </TimePicker>
+          </PopoverContent>
+        ) : null}
+      </Popover>
+    </DataGridCellWrapper>
+  );
+}
+
+export function DateTimeCell<TData>({
+  cell,
+  tableMeta,
+  rowIndex,
+  columnId,
+  rowHeight,
+  isFocused,
+  isEditing,
+  isSelected,
+  isSearchMatch,
+  isActiveSearchMatch,
+  readOnly,
+}: DataGridCellProps<TData>) {
+  const initialValue = (cell.getValue() as string) ?? "";
+  const [value, setValue] = React.useState(initialValue);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const cellOpts = cell.column.columnDef.meta?.cell;
+  const showSeconds =
+    cellOpts?.variant === "datetime" ? cellOpts.showSeconds : false;
+  const { date: datePart, time: timePart } = splitDateTime(value);
+  const selectedDate = datePart ? (parseLocalDate(datePart) ?? undefined) : undefined;
+
+  const prevInitialValueRef = React.useRef(initialValue);
+  if (initialValue !== prevInitialValueRef.current) {
+    prevInitialValueRef.current = initialValue;
+    setValue(initialValue);
+  }
+
+  const commit = React.useCallback(
+    (date: string, time: string) => {
+      if (readOnly) return;
+      const next = joinDateTime(date, time);
+      setValue(next ?? "");
+      tableMeta?.onDataUpdate?.({ rowIndex, columnId, value: next });
+    },
+    [tableMeta, rowIndex, columnId, readOnly],
+  );
+
+  const onDateSelect = React.useCallback(
+    (date: Date | undefined) => {
+      if (!date || readOnly) return;
+      commit(formatDateToString(date), timePart);
+    },
+    [commit, timePart, readOnly],
+  );
+
+  const onOpenChange = React.useCallback(
+    (open: boolean) => {
+      if (open && !readOnly) {
+        tableMeta?.onCellEditingStart?.(rowIndex, columnId);
+      } else {
+        tableMeta?.onCellEditingStop?.();
+      }
+    },
+    [tableMeta, rowIndex, columnId, readOnly],
+  );
+
+  const onWrapperKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (isEditing && event.key === "Escape") {
+        event.preventDefault();
+        setValue(initialValue);
+        tableMeta?.onCellEditingStop?.();
+      } else if (isFocused && event.key === "Tab") {
+        event.preventDefault();
+        tableMeta?.onCellEditingStop?.({
+          direction: event.shiftKey ? "left" : "right",
+        });
+      }
+    },
+    [isEditing, isFocused, initialValue, tableMeta],
+  );
+
+  return (
+    <DataGridCellWrapper<TData>
+      ref={containerRef}
+      cell={cell}
+      tableMeta={tableMeta}
+      rowIndex={rowIndex}
+      columnId={columnId}
+      rowHeight={rowHeight}
+      isEditing={isEditing}
+      isFocused={isFocused}
+      isSelected={isSelected}
+      isSearchMatch={isSearchMatch}
+      isActiveSearchMatch={isActiveSearchMatch}
+      readOnly={readOnly}
+      onKeyDown={onWrapperKeyDown}
+    >
+      <Popover open={isEditing} onOpenChange={onOpenChange}>
+        <PopoverAnchor asChild>
+          <span data-slot="grid-cell-content">
+            {formatDateTimeForDisplay(value)}
+          </span>
+        </PopoverAnchor>
+        {isEditing && (
+          <PopoverContent
+            data-grid-cell-editor=""
+            align="start"
+            alignOffset={-8}
+            className="w-auto p-0"
+            onPointerDownOutside={(event) => {
+              if (
+                containerRef.current &&
+                event.target instanceof Node &&
+                containerRef.current.contains(event.target)
+              ) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <Calendar
+              autoFocus
+              captionLayout="dropdown"
+              mode="single"
+              defaultMonth={selectedDate ?? new Date()}
+              selected={selectedDate}
+              onSelect={onDateSelect}
+            />
+            <TimePicker
+              value={timePart}
+              onValueChange={(next) => commit(datePart, next)}
+              showSeconds={showSeconds}
+              withPopover={false}
+            >
+              <TimePickerPanel className="border-t p-1">
+                <TimePickerColumns showSeconds={showSeconds} />
+              </TimePickerPanel>
+            </TimePicker>
           </PopoverContent>
         )}
       </Popover>

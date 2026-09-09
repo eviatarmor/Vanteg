@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
-import { createFreezeNode } from "@/features/workflows/model/create-node"
+import { resetInbox } from "@/features/inbox/model/store"
+
+import { createVantegNode } from "@/features/workflows/model/create-node"
 import type { Workflow } from "@/features/workflows/model/types"
 
 import { searchWorkspace } from "./search"
@@ -10,13 +12,17 @@ function workflow(name: string, status: Workflow["status"] = "draft"): Workflow 
     id: "wf-1",
     name,
     status,
-    nodes: [createFreezeNode("manual", { x: 0, y: 0 })],
+    nodes: [createVantegNode("manual", { x: 0, y: 0 })],
     edges: [],
     updatedAt: 1,
   }
 }
 
 describe("searchWorkspace", () => {
+  beforeEach(() => {
+    resetInbox()
+  })
+
   it("finds workflows by name and step label", () => {
     const named = searchWorkspace("intake", [workflow("Form intake")])
     const stepped = searchWorkspace("manual", [workflow("Form intake")])

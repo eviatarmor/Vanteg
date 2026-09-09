@@ -10,9 +10,12 @@ import {
   deleteTableRows,
   findTable,
   getDataSnapshot,
+  reorderTableColumn,
   resetDataStore,
   selectDatabaseNode,
   selectVariableGroup,
+  shiftTableColumn,
+  updateTableColumn,
   updateTableRows,
 } from "./store"
 
@@ -87,6 +90,33 @@ describe("data store", () => {
     expect(table?.rows.every((row) => row.phone === "")).toBe(true)
   })
 
+  it("stores a regex schema on text columns", () => {
+    const column = addTableColumn("table-users", {
+      name: "Handle",
+      variant: "short-text",
+      regex: "^[a-z]+$",
+      textFormat: "plain",
+    })
+
+    expect(column?.regex).toBe("^[a-z]+$")
+    expect(column?.textFormat).toBe("plain")
+  })
+
+  it("inserts a new column before created and updated timestamps", () => {
+    addTableColumn("table-users", { name: "Phone", variant: "short-text" })
+    const table = findTable(getDataSnapshot().databases, "table-users")?.table
+
+    expect(table?.columns.map((column) => column.id)).toEqual([
+      "name",
+      "email",
+      "role",
+      "active",
+      "phone",
+      "createdAt",
+      "updatedAt",
+    ])
+  })
+
   it("selects a table from the database tree", () => {
     selectDatabaseNode("table-orders")
 
@@ -99,6 +129,77 @@ describe("data store", () => {
     const table = findTable(getDataSnapshot().databases, "table-users")?.table
 
     expect(table?.rows.map((row) => row.id)).toEqual(["user-grace", "user-alan"])
+  })
+
+  it("moves a column before another column", () => {
+    reorderTableColumn("table-users", "email", "name")
+    const table = findTable(getDataSnapshot().databases, "table-users")?.table
+
+    expect(table?.columns.map((column) => column.id).slice(0, 2)).toEqual([
+      "email",
+      "name",
+    ])
+  })
+
+  it("shifts a column one step right", () => {
+    shiftTableColumn("table-users", "name", 1)
+    const table = findTable(getDataSnapshot().databases, "table-users")?.table
+
+    expect(table?.columns.map((column) => column.id).slice(0, 2)).toEqual([
+      "email",
+      "name",
+    ])
+  })
+
+  it("moves a column to the end", () => {
+    reorderTableColumn("table-users", "name", null)
+    const table = findTable(getDataSnapshot().databases, "table-users")?.table
+
+    expect(table?.columns.map((column) => column.id)).toEqual([
+      "email",
+      "role",
+      "active",
+      "createdAt",
+      "updatedAt",
+      "name",
+    ])
+  })
+
+  it("updates a column name and type without changing its id", () => {
+    const renamed = updateTableColumn("table-users", "name", {
+      name: "Full name",
+      variant: "short-text",
+    })
+    expect(renamed?.id).toBe("name")
+    expect(findTable(getDataSnapshot().databases, "table-users")?.table.rows[0]?.name).toBe(
+      "Ada Lovelace"
+    )
+
+    const column = updateTableColumn("table-users", "email", {
+      name: "Work email",
+      variant: "number",
+    })
+    const table = findTable(getDataSnapshot().databases, "table-users")?.table
+    const updated = table?.columns.find((item) => item.id === "email")
+
+    expect(column?.id).toBe("email")
+    expect(updated?.name).toBe("Work email")
+    expect(updated?.variant).toBe("number")
+    expect(table?.rows[0]?.email).toBeNull()
+  })
+
+  it("does not update created at or updated at", () => {
+    expect(
+      updateTableColumn("table-users", "createdAt", {
+        name: "Created",
+        variant: "short-text",
+      })
+    ).toBeUndefined()
+    expect(
+      findTable(getDataSnapshot().databases, "table-users")?.table.columns.find(
+        (column) => column.id === "createdAt"
+      )?.name
+    ).toBe("Created At")
   })
 
   it("deletes a table column and its cell values", () => {

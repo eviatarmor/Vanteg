@@ -18,6 +18,7 @@ import {
 } from "@/components/ai-elements/prompt-input"
 import { Suggestion } from "@/components/ai-elements/suggestion"
 import { Button } from "@workspace/ui/components/button"
+import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 
 import { useWorkflows } from "@/features/workflows/model/store"
 
@@ -45,7 +46,7 @@ function EmptyComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
           <PromptInputTextarea
             value={input}
             onChange={(event) => setInput(event.currentTarget.value)}
-            placeholder="Ask Freeze…"
+            placeholder="Ask Vanteg…"
             aria-label="Message"
             className="min-h-11"
           />
@@ -111,7 +112,7 @@ export function AssistantPanel() {
         </Button>
       </div>
       {view === "history" ? (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <ScrollFade className="min-h-0 flex-1">
           <div className="flex flex-col gap-1 p-2">
             {conversations.length === 0 ? (
               <p className="px-2 py-6 text-center text-sm text-muted-foreground">
@@ -138,7 +139,7 @@ export function AssistantPanel() {
               ))
             )}
           </div>
-        </div>
+        </ScrollFade>
       ) : active ? (
         <ChatThread
           key={active.id}
@@ -153,7 +154,7 @@ export function AssistantPanel() {
               <ConversationEmptyState
                 className="min-h-40 p-2"
                 icon={<Sparkles className="size-8" />}
-                title="Ask Freeze"
+                title="Ask Vanteg"
                 description="Start a conversation, or pick a prompt."
               />
               <div className="flex w-full flex-col gap-2">

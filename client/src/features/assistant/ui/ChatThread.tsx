@@ -121,7 +121,7 @@ export function ChatThread({
             <ConversationEmptyState
               className="p-2"
               icon={<Sparkles className="size-8" />}
-              title="Ask Freeze"
+              title="Ask Vanteg"
               description="Start a conversation, or pick a prompt below."
             >
               <div className="flex w-full flex-col gap-2">
@@ -169,7 +169,7 @@ export function ChatThread({
             <PromptInputTextarea
               value={input}
               onChange={(event) => setInput(event.currentTarget.value)}
-              placeholder="Ask Freeze…"
+              placeholder="Ask Vanteg…"
               aria-label="Message"
               className="min-h-11"
             />

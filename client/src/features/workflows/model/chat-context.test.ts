@@ -26,6 +26,6 @@ describe("chat context", () => {
         pageTitle: "Workflows",
         workflow: context,
       })
-    ).toContain("Freeze")
+    ).toContain("Vanteg")
   })
 })

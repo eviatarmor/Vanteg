@@ -11,6 +11,7 @@ import {
 } from "@workspace/ui/components/dialog"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
+import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 
 import { useAgents } from "@/features/agents/model/store"
 import { AgentIcon } from "@/features/agents/ui/AgentIcon"
@@ -59,7 +60,7 @@ export function AddMemberDialog({
             placeholder="Lead SWE"
           />
         </div>
-        <div className="grid max-h-64 gap-1 overflow-auto">
+        <ScrollFade className="max-h-64" viewportClassName="grid gap-1">
           {agents.map((agent) => (
             <button
               key={agent.id}
@@ -71,7 +72,7 @@ export function AddMemberDialog({
               <span className="min-w-0 flex-1 truncate">{agent.name}</span>
             </button>
           ))}
-        </div>
+        </ScrollFade>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

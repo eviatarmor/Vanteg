@@ -17,6 +17,9 @@ import {
 } from "@workspace/ui/components/input-group"
 import { SearchIcon, CheckIcon } from "lucide-react"
 
+import { ScrollFadeEdge } from "@workspace/ui/components/scroll-fade"
+import { useScrollOverflow } from "@workspace/ui/hooks/use-scroll-overflow"
+
 function Command({
   className,
   ...props
@@ -92,15 +95,21 @@ function CommandList({
   className,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
+  const { ref, canScrollDown } = useScrollOverflow<HTMLDivElement>()
+
   return (
-    <CommandPrimitive.List
-      data-slot="command-list"
-      className={cn(
-        "no-scrollbar max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none",
-        className
-      )}
-      {...props}
-    />
+    <div className="relative min-h-0">
+      <CommandPrimitive.List
+        ref={ref}
+        data-slot="command-list"
+        className={cn(
+          "no-scrollbar max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none",
+          className
+        )}
+        {...props}
+      />
+      <ScrollFadeEdge visible={canScrollDown} />
+    </div>
   )
 }
 

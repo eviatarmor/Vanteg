@@ -11,7 +11,6 @@ interface KnowledgeGridRow {
   id: string
   name: string
   size: string
-  status: string
   uploadedAt: string
 }
 
@@ -20,7 +19,6 @@ function toRow(document: KnowledgeDocument): KnowledgeGridRow {
     id: document.id,
     name: document.name,
     size: formatBytes(document.size),
-    status: document.text ? "Indexed" : "Stored",
     uploadedAt: new Date(document.uploadedAt).toISOString(),
   }
 }
@@ -41,7 +39,7 @@ export function KnowledgeDocumentsGrid({
         header: "Name",
         minSize: 180,
         size: 260,
-        meta: { label: "Name", cell: { variant: "short-text" } },
+        meta: { label: "Name", cell: { variant: "short-text" }, readOnly: true },
       },
       {
         id: "size",
@@ -50,14 +48,6 @@ export function KnowledgeDocumentsGrid({
         minSize: 100,
         size: 120,
         meta: { label: "Size", cell: { variant: "short-text" }, readOnly: true },
-      },
-      {
-        id: "status",
-        accessorKey: "status",
-        header: "Status",
-        minSize: 100,
-        size: 120,
-        meta: { label: "Status", cell: { variant: "short-text" }, readOnly: true },
       },
       {
         id: "uploadedAt",

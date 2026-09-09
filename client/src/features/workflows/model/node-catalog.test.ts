@@ -71,6 +71,8 @@ describe("workflow node catalog", () => {
       "merge",
       "loop",
       "transform",
+      "paths",
+      "formatter",
     ])
     expect(listCommonIntegrations().map((node) => node.id)).toEqual([
       "http",
@@ -91,7 +93,17 @@ describe("workflow node catalog", () => {
       expect.arrayContaining(["http", "slack", "github", "ai"])
     )
     expect(listConnectorApps().map((app) => app.name)).toEqual(
-      expect.arrayContaining(["Slack", "GitHub", "HTTP", "Google", "Email"])
+      expect.arrayContaining([
+        "Slack",
+        "GitHub",
+        "HTTP",
+        "Google",
+        "Email",
+        "HubSpot",
+        "Stripe",
+        "Google Calendar",
+        "Zendesk",
+      ])
     )
     expect(
       listConnectorApps()
@@ -137,7 +149,22 @@ describe("workflow node catalog", () => {
         "google-drive-new-file",
         "spreadsheet-create-row",
         "google-drive-upload",
+        "spreadsheet-delete-row",
+        "google-drive-new-folder",
       ])
     )
+  })
+
+  it("covers CRM, payments, and the missing database insert action", () => {
+    const hubspot = listConnectorApps().find((app) => app.id === "hubspot")
+    const stripe = listConnectorApps().find((app) => app.id === "stripe")
+    const database = listConnectorApps().find((app) => app.id === "database")
+    expect(hubspot?.methods.map((method) => method.id)).toEqual(
+      expect.arrayContaining(["hubspot-deal-stage-changed", "hubspot-create-contact"])
+    )
+    expect(stripe?.methods.map((method) => method.id)).toEqual(
+      expect.arrayContaining(["stripe-payment-failed", "stripe-subscription-cancelled"])
+    )
+    expect(database?.methods.map((method) => method.id)).toContain("database-insert-row")
   })
 })

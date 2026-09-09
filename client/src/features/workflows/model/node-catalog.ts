@@ -1,3 +1,10 @@
+import {
+  listFeaturedMethods,
+  listPickerConnectorApps,
+  type ConnectorApp as IntegrationConnectorApp,
+  type Method,
+} from "@workspace/integrations"
+
 import type { NodeField, WorkflowNodeType } from "./types"
 
 const HTTP_METHODS = [
@@ -37,7 +44,18 @@ function method(
   }
 }
 
-const nodeTypes: WorkflowNodeType[] = [
+function toNode(item: Method): WorkflowNodeType {
+  return {
+    id: item.id,
+    label: item.label,
+    description: item.description,
+    kind: item.kind,
+    category: item.kind === "trigger" ? "Triggers" : "Apps",
+    fields: item.fields.map((field) => ({ ...field })),
+  }
+}
+
+const platformNodes: WorkflowNodeType[] = [
   {
     id: "manual",
     label: "Manual",
@@ -54,7 +72,7 @@ const nodeTypes: WorkflowNodeType[] = [
     category: "Triggers",
     fields: [
       httpMethodField("POST"),
-      { key: "path", label: "Path", placeholder: "/hooks/freeze" },
+      { key: "path", label: "Path", placeholder: "/hooks/vanteg" },
     ],
   },
   {
@@ -186,255 +204,6 @@ const nodeTypes: WorkflowNodeType[] = [
     category: "Actions",
     fields: [{ key: "prompt", label: "Prompt", placeholder: "Summarize the input" }],
   },
-  {
-    id: "slack",
-    label: "Send message",
-    description: "Post a Slack message.",
-    kind: "action",
-    category: "Apps",
-    fields: [
-      { key: "channel", label: "Channel", placeholder: "#ops" },
-      { key: "message", label: "Message", placeholder: "Workflow finished" },
-    ],
-  },
-  {
-    id: "spreadsheet",
-    label: "Update row",
-    description: "Create or update a spreadsheet row.",
-    kind: "action",
-    category: "Apps",
-    fields: [{ key: "sheet", label: "Sheet", placeholder: "Leads" }],
-  },
-  {
-    id: "database",
-    label: "Query rows",
-    description: "Read or write database rows.",
-    kind: "action",
-    category: "Apps",
-    fields: [
-      { key: "operation", label: "Operation", placeholder: "insert" },
-      { key: "table", label: "Table", placeholder: "jobs" },
-    ],
-  },
-  {
-    id: "github",
-    label: "Create issue",
-    description: "Create issues, comments, or pull requests.",
-    kind: "action",
-    category: "Apps",
-    fields: [
-      { key: "repo", label: "Repository", placeholder: "acme/app" },
-      { key: "action", label: "Action", placeholder: "create issue" },
-    ],
-  },
-  {
-    id: "notion",
-    label: "Create page",
-    description: "Create or update a Notion page or database row.",
-    kind: "action",
-    category: "Apps",
-    fields: [{ key: "page", label: "Page or database", placeholder: "Tasks" }],
-  },
-  {
-    id: "airtable",
-    label: "Create record",
-    description: "Create or update an Airtable record.",
-    kind: "action",
-    category: "Apps",
-    fields: [{ key: "base", label: "Base", placeholder: "CRM" }],
-  },
-  {
-    id: "discord",
-    label: "Send message",
-    description: "Send a Discord channel message.",
-    kind: "action",
-    category: "Apps",
-    fields: [
-      { key: "channel", label: "Channel", placeholder: "#alerts" },
-      { key: "message", label: "Message", placeholder: "Workflow finished" },
-    ],
-  },
-  {
-    id: "slack-new-message",
-    label: "New message",
-    description: "Start when a Slack message is posted.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "channel", label: "Channel", placeholder: "#ops" }],
-  },
-  {
-    id: "slack-reaction",
-    label: "New reaction",
-    description: "Start when someone reacts in Slack.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "channel", label: "Channel", placeholder: "#ops" }],
-  },
-  {
-    id: "slack-update-message",
-    label: "Update message",
-    description: "Edit an existing Slack message.",
-    kind: "action",
-    category: "Apps",
-    fields: [
-      { key: "channel", label: "Channel", placeholder: "#ops" },
-      { key: "message", label: "Message", placeholder: "Updated text" },
-    ],
-  },
-  {
-    id: "github-new-issue",
-    label: "New issue",
-    description: "Start when a GitHub issue is opened.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "repo", label: "Repository", placeholder: "acme/app" }],
-  },
-  {
-    id: "github-pull-request",
-    label: "Pull request opened",
-    description: "Start when a GitHub pull request is opened.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "repo", label: "Repository", placeholder: "acme/app" }],
-  },
-  {
-    id: "github-comment",
-    label: "Create comment",
-    description: "Comment on a GitHub issue or pull request.",
-    kind: "action",
-    category: "Apps",
-    fields: [
-      { key: "repo", label: "Repository", placeholder: "acme/app" },
-      { key: "body", label: "Comment", placeholder: "Looks good" },
-    ],
-  },
-  {
-    id: "spreadsheet-new-row",
-    label: "New row",
-    description: "Start when a spreadsheet row is added.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "sheet", label: "Sheet", placeholder: "Leads" }],
-  },
-  {
-    id: "database-new-row",
-    label: "New row",
-    description: "Start when a database row is inserted.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "table", label: "Table", placeholder: "jobs" }],
-  },
-  {
-    id: "notion-page-updated",
-    label: "Page updated",
-    description: "Start when a Notion page changes.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "page", label: "Page or database", placeholder: "Tasks" }],
-  },
-  {
-    id: "airtable-new-record",
-    label: "New record",
-    description: "Start when an Airtable record is created.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "base", label: "Base", placeholder: "CRM" }],
-  },
-  {
-    id: "discord-new-message",
-    label: "New message",
-    description: "Start when a Discord message is posted.",
-    kind: "trigger",
-    category: "Triggers",
-    fields: [{ key: "channel", label: "Channel", placeholder: "#alerts" }],
-  },
-  method("slack-new-channel", "trigger", "New channel", "Start when a Slack channel is created.", [
-    { key: "name", label: "Name contains", placeholder: "incidents" },
-  ]),
-  method("slack-app-mentioned", "trigger", "App mentioned", "Start when this app is mentioned in Slack.", [
-    { key: "channel", label: "Channel", placeholder: "#ops" },
-  ]),
-  method("slack-upload-file", "action", "Upload file", "Upload a file to a Slack channel.", [
-    { key: "channel", label: "Channel", placeholder: "#ops" },
-    { key: "path", label: "File path", placeholder: "/tmp/report.pdf" },
-  ]),
-  method("slack-add-reaction", "action", "Add reaction", "React to a Slack message.", [
-    { key: "channel", label: "Channel", placeholder: "#ops" },
-    { key: "emoji", label: "Emoji", placeholder: "eyes" },
-    { key: "ts", label: "Message ts", placeholder: "{{Webhook.ts}}" },
-  ]),
-  method("github-new-commit", "trigger", "New commit", "Start when a commit is pushed.", [
-    { key: "repo", label: "Repository", placeholder: "acme/app" },
-    { key: "branch", label: "Branch", placeholder: "main" },
-  ]),
-  method("github-new-release", "trigger", "Release published", "Start when a GitHub release is published.", [
-    { key: "repo", label: "Repository", placeholder: "acme/app" },
-  ]),
-  method("github-create-pr", "action", "Create pull request", "Open a GitHub pull request.", [
-    { key: "repo", label: "Repository", placeholder: "acme/app" },
-    { key: "title", label: "Title", placeholder: "Fix login" },
-    { key: "head", label: "Head branch", placeholder: "fix/login" },
-    { key: "base", label: "Base branch", placeholder: "main" },
-  ]),
-  method("github-add-label", "action", "Add label", "Add a label to a GitHub issue or pull request.", [
-    { key: "repo", label: "Repository", placeholder: "acme/app" },
-    { key: "number", label: "Issue or PR", placeholder: "12" },
-    { key: "label", label: "Label", placeholder: "bug" },
-  ]),
-  method("spreadsheet-updated-row", "trigger", "Updated row", "Start when a spreadsheet row changes.", [
-    { key: "sheet", label: "Sheet", placeholder: "Leads" },
-  ]),
-  method("spreadsheet-create-row", "action", "Create row", "Append a spreadsheet row.", [
-    { key: "sheet", label: "Sheet", placeholder: "Leads" },
-    { key: "values", label: "Values", placeholder: "Ada, ada@acme.com", control: "textarea" },
-  ]),
-  method("google-drive-new-file", "trigger", "New Drive file", "Start when a file is added to Google Drive.", [
-    { key: "folder", label: "Folder", placeholder: "Inbox" },
-  ]),
-  method("google-drive-upload", "action", "Upload Drive file", "Upload a file to Google Drive.", [
-    { key: "folder", label: "Folder", placeholder: "Inbox" },
-    { key: "path", label: "File path", placeholder: "/tmp/export.csv" },
-  ]),
-  method("notion-new-page", "trigger", "New page", "Start when a Notion page is created.", [
-    { key: "page", label: "Parent page or database", placeholder: "Tasks" },
-  ]),
-  method("notion-new-database-item", "trigger", "New database item", "Start when a Notion database row is added.", [
-    { key: "database", label: "Database", placeholder: "Tasks" },
-  ]),
-  method("notion-update-page", "action", "Update page", "Update a Notion page.", [
-    { key: "page", label: "Page", placeholder: "Tasks" },
-    { key: "content", label: "Content", placeholder: "Status: done", control: "textarea" },
-  ]),
-  method("notion-create-database-item", "action", "Create database item", "Add a row to a Notion database.", [
-    { key: "database", label: "Database", placeholder: "Tasks" },
-    { key: "title", label: "Title", placeholder: "Follow up" },
-  ]),
-  method("airtable-record-updated", "trigger", "Record updated", "Start when an Airtable record changes.", [
-    { key: "base", label: "Base", placeholder: "CRM" },
-    { key: "table", label: "Table", placeholder: "Leads" },
-  ]),
-  method("airtable-update-record", "action", "Update record", "Update an Airtable record.", [
-    { key: "base", label: "Base", placeholder: "CRM" },
-    { key: "recordId", label: "Record ID", placeholder: "rec123" },
-  ]),
-  method("airtable-find-records", "action", "Find records", "Search Airtable records.", [
-    { key: "base", label: "Base", placeholder: "CRM" },
-    { key: "formula", label: "Formula", placeholder: "{Email} = 'ada@acme.com'" },
-  ]),
-  method("discord-new-reaction", "trigger", "New reaction", "Start when someone reacts in Discord.", [
-    { key: "channel", label: "Channel", placeholder: "#alerts" },
-  ]),
-  method("discord-member-joined", "trigger", "Member joined", "Start when a member joins a Discord server.", [
-    { key: "server", label: "Server", placeholder: "Acme" },
-  ]),
-  method("discord-update-message", "action", "Update message", "Edit a Discord channel message.", [
-    { key: "channel", label: "Channel", placeholder: "#alerts" },
-    { key: "message", label: "Message", placeholder: "Updated text" },
-  ]),
-  method("discord-add-reaction", "action", "Add reaction", "React to a Discord message.", [
-    { key: "channel", label: "Channel", placeholder: "#alerts" },
-    { key: "emoji", label: "Emoji", placeholder: "✅" },
-  ]),
   method("http-poll", "trigger", "Poll URL", "Start when an HTTP endpoint changes.", [
     httpMethodField("GET"),
     { key: "url", label: "URL", placeholder: "https://api.example.com/status" },
@@ -450,8 +219,30 @@ const nodeTypes: WorkflowNodeType[] = [
     { key: "to", label: "To", placeholder: "ada@acme.com" },
     { key: "body", label: "Body", placeholder: "Thanks, we got it.", control: "textarea" },
   ]),
+  method("email-forward", "action", "Forward email", "Forward an inbound email.", [
+    { key: "to", label: "To", placeholder: "ops@acme.com" },
+    { key: "body", label: "Note", placeholder: "Routing to ops.", control: "textarea" },
+  ]),
+  method("database-new-row", "trigger", "New row", "Start when a database row is inserted.", [
+    { key: "table", label: "Table", placeholder: "jobs" },
+  ]),
   method("database-row-updated", "trigger", "Row updated", "Start when a database row changes.", [
     { key: "table", label: "Table", placeholder: "jobs" },
+  ]),
+  {
+    id: "database",
+    label: "Query rows",
+    description: "Read or write database rows.",
+    kind: "action",
+    category: "Apps",
+    fields: [
+      { key: "operation", label: "Operation", placeholder: "insert" },
+      { key: "table", label: "Table", placeholder: "jobs" },
+    ],
+  },
+  method("database-insert-row", "action", "Insert row", "Insert a database row.", [
+    { key: "table", label: "Table", placeholder: "jobs" },
+    { key: "values", label: "Values", placeholder: "status=open", control: "textarea" },
   ]),
   method("database-update-row", "action", "Update row", "Update a database row.", [
     { key: "table", label: "Table", placeholder: "jobs" },
@@ -465,6 +256,9 @@ const nodeTypes: WorkflowNodeType[] = [
     { key: "channel", label: "Channel", placeholder: "support" },
   ]),
   method("ai-generation-finished", "trigger", "Generation finished", "Start when an AI generation completes.", [
+    { key: "model", label: "Model", placeholder: "grok-4" },
+  ]),
+  method("ai-generation-failed", "trigger", "Generation failed", "Start when an AI generation errors.", [
     { key: "model", label: "Model", placeholder: "grok-4" },
   ]),
   method("ai-classify", "action", "Classify", "Classify text with an AI model.", [
@@ -481,10 +275,17 @@ const nodeTypes: WorkflowNodeType[] = [
   method("file-updated", "trigger", "File updated", "Start when a file changes.", [
     { key: "path", label: "Path", placeholder: "/tmp/export.csv" },
   ]),
+  method("file-deleted", "trigger", "File deleted", "Start when a file is deleted.", [
+    { key: "path", label: "Path", placeholder: "/tmp/inbox" },
+  ]),
   method("file-delete", "action", "Delete file", "Delete a file.", [
     { key: "path", label: "Path", placeholder: "/tmp/export.csv" },
   ]),
   method("file-copy", "action", "Copy file", "Copy a file to a new path.", [
+    { key: "from", label: "From", placeholder: "/tmp/export.csv" },
+    { key: "to", label: "To", placeholder: "/tmp/archive/export.csv" },
+  ]),
+  method("file-move", "action", "Move file", "Move a file to a new path.", [
     { key: "from", label: "From", placeholder: "/tmp/export.csv" },
     { key: "to", label: "To", placeholder: "/tmp/archive/export.csv" },
   ]),
@@ -528,7 +329,10 @@ const nodeTypes: WorkflowNodeType[] = [
     description: "Wait before continuing.",
     kind: "logic",
     category: "Logic",
-    fields: [{ key: "duration", label: "Duration", placeholder: "5m" }],
+    fields: [
+      { key: "duration", label: "Duration", placeholder: "5m", help: "Wait this long, or leave empty and set Until." },
+      { key: "until", label: "Until", placeholder: "2026-09-08T09:00" },
+    ],
   },
   {
     id: "code",
@@ -538,12 +342,22 @@ const nodeTypes: WorkflowNodeType[] = [
     category: "Logic",
     fields: [
       {
+        key: "language",
+        label: "Language",
+        placeholder: "javascript",
+        control: "select",
+        options: [
+          { value: "javascript", label: "JavaScript" },
+          { value: "python", label: "Python" },
+        ],
+      },
+      {
         key: "code",
         label: "Code",
         placeholder: "return items",
         control: "code",
         language: "javascript",
-        help: "JavaScript that runs for each item. Return the data to pass downstream.",
+        help: "Snippet that runs for each item. Return the data to pass downstream.",
       },
     ],
   },
@@ -595,8 +409,47 @@ const nodeTypes: WorkflowNodeType[] = [
       },
     ],
   },
+  {
+    id: "paths",
+    label: "Paths",
+    description: "Branch into multiple conditional paths.",
+    kind: "logic",
+    category: "Logic",
+    fields: [
+      { key: "field", label: "Field", placeholder: "status" },
+      {
+        key: "paths",
+        label: "Paths",
+        placeholder: "won\nlost\nopen",
+        control: "textarea",
+        help: "One path per line. The workflow continues on the first matching path.",
+      },
+    ],
+  },
+  {
+    id: "formatter",
+    label: "Formatter",
+    description: "Transform text, numbers, or dates between steps.",
+    kind: "logic",
+    category: "Logic",
+    fields: [
+      {
+        key: "operation",
+        label: "Operation",
+        placeholder: "text",
+        control: "select",
+        options: [
+          { value: "text", label: "Text" },
+          { value: "number", label: "Number" },
+          { value: "date", label: "Date" },
+        ],
+      },
+      { key: "input", label: "Value", placeholder: "{{Webhook.body}}" },
+    ],
+  },
 ]
 
+const nodeTypes: WorkflowNodeType[] = [...platformNodes, ...listFeaturedMethods().map(toNode)]
 const nodeTypesById = new Map(nodeTypes.map((node) => [node.id, node]))
 
 const COMMON_TRIGGER_IDS = [
@@ -664,171 +517,91 @@ export interface ConnectorApp {
   methods: WorkflowNodeType[]
 }
 
-const CONNECTOR_APPS: {
-  id: string
-  name: string
-  description: string
-  iconCatalogId: string
-  iconSlug?: string
-  methodIds: readonly string[]
-}[] = [
-  {
-    id: "slack",
-    name: "Slack",
-    description: "Channels, messages, and reactions.",
-    iconCatalogId: "slack",
-    iconSlug: "slack",
-    methodIds: [
-      "slack-new-message",
-      "slack-reaction",
-      "slack-new-channel",
-      "slack-app-mentioned",
-      "slack",
-      "slack-update-message",
-      "slack-upload-file",
-      "slack-add-reaction",
-    ],
-  },
-  {
-    id: "github",
-    name: "GitHub",
-    description: "Issues, pull requests, and comments.",
-    iconCatalogId: "github",
-    iconSlug: "github",
-    methodIds: [
-      "github-new-issue",
-      "github-pull-request",
-      "github-new-commit",
-      "github-new-release",
-      "github",
-      "github-comment",
-      "github-create-pr",
-      "github-add-label",
-    ],
-  },
-  {
-    id: "google",
-    name: "Google",
-    description: "Spreadsheets and rows.",
-    iconCatalogId: "spreadsheet",
-    iconSlug: "google-sheets",
-    methodIds: [
-      "spreadsheet-new-row",
-      "spreadsheet-updated-row",
-      "google-drive-new-file",
-      "spreadsheet",
-      "spreadsheet-create-row",
-      "google-drive-upload",
-    ],
-  },
-  {
-    id: "notion",
-    name: "Notion",
-    description: "Pages and databases.",
-    iconCatalogId: "notion",
-    iconSlug: "notion",
-    methodIds: [
-      "notion-page-updated",
-      "notion-new-page",
-      "notion-new-database-item",
-      "notion",
-      "notion-update-page",
-      "notion-create-database-item",
-    ],
-  },
-  {
-    id: "airtable",
-    name: "Airtable",
-    description: "Bases and records.",
-    iconCatalogId: "airtable",
-    iconSlug: "airtable",
-    methodIds: [
-      "airtable-new-record",
-      "airtable-record-updated",
-      "airtable",
-      "airtable-update-record",
-      "airtable-find-records",
-    ],
-  },
-  {
-    id: "discord",
-    name: "Discord",
-    description: "Servers, channels, and messages.",
-    iconCatalogId: "discord",
-    iconSlug: "discord",
-    methodIds: [
-      "discord-new-message",
-      "discord-new-reaction",
-      "discord-member-joined",
-      "discord",
-      "discord-update-message",
-      "discord-add-reaction",
-    ],
-  },
+const PLATFORM_APPS: ConnectorApp[] = [
   {
     id: "http",
     name: "HTTP",
     description: "Webhooks and REST requests.",
     iconCatalogId: "http",
-    methodIds: ["webhook", "http-poll", "http", "respond-webhook", "http-download"],
+    methods: nodesByIds(["webhook", "http-poll", "http", "respond-webhook", "http-download"]),
   },
   {
     id: "email",
     name: "Email",
     description: "Inbound and outbound mail.",
     iconCatalogId: "email-send",
-    methodIds: ["email", "email-new-attachment", "email-send", "email-reply"],
+    methods: nodesByIds(["email", "email-new-attachment", "email-send", "email-reply", "email-forward"]),
   },
   {
     id: "database",
     name: "Database",
     description: "Tables and rows.",
     iconCatalogId: "database",
-    methodIds: [
+    methods: nodesByIds([
       "database-new-row",
       "database-row-updated",
       "database",
+      "database-insert-row",
       "database-update-row",
       "database-delete-row",
-    ],
+    ]),
   },
   {
     id: "ai",
     name: "AI",
     description: "Prompts and model calls.",
     iconCatalogId: "ai",
-    methodIds: ["ai-chat-received", "ai-generation-finished", "ai", "ai-classify", "ai-extract"],
+    methods: nodesByIds([
+      "ai-chat-received",
+      "ai-generation-finished",
+      "ai-generation-failed",
+      "ai",
+      "ai-classify",
+      "ai-extract",
+    ]),
   },
   {
     id: "file",
     name: "File",
     description: "Read and write files.",
     iconCatalogId: "file",
-    methodIds: ["file-created", "file-updated", "file", "file-delete", "file-copy"],
+    methods: nodesByIds([
+      "file-created",
+      "file-updated",
+      "file-deleted",
+      "file",
+      "file-delete",
+      "file-copy",
+      "file-move",
+    ]),
   },
   {
     id: "notification",
     name: "Notification",
     description: "Push and in-app alerts.",
     iconCatalogId: "notification",
-    methodIds: [
+    methods: nodesByIds([
       "notification-received",
       "notification-clicked",
       "notification",
       "notification-broadcast",
-    ],
+    ]),
   },
 ]
 
-export function listConnectorApps(): ConnectorApp[] {
-  return CONNECTOR_APPS.map((app) => ({
+function toConnectorApp(app: IntegrationConnectorApp): ConnectorApp {
+  return {
     id: app.id,
     name: app.name,
     description: app.description,
     iconCatalogId: app.iconCatalogId,
     iconSlug: app.iconSlug,
-    methods: nodesByIds(app.methodIds),
-  }))
+    methods: app.methods.map(toNode),
+  }
+}
+
+export function listConnectorApps(): ConnectorApp[] {
+  return [...listPickerConnectorApps().map(toConnectorApp), ...PLATFORM_APPS]
 }
 
 export function listPickerSections(): {
@@ -837,7 +610,7 @@ export function listPickerSections(): {
   nodes: WorkflowNodeType[]
 }[] {
   const connectorMethodIds = new Set(
-    CONNECTOR_APPS.flatMap((app) => [...app.methodIds])
+    listConnectorApps().flatMap((app) => app.methods.map((item) => item.id))
   )
   return [
     {

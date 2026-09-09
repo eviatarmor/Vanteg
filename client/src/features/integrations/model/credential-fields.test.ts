@@ -4,7 +4,7 @@ import { getConnector } from "./catalog"
 import { credentialFieldsFor, isManagedOAuth } from "./credential-fields"
 
 describe("credential fields", () => {
-  it("lets users connect Google through the Freeze-owned app", () => {
+  it("lets users connect Google through the Vanteg-owned app", () => {
     const sheets = getConnector("google-sheets")
     expect(sheets).toBeDefined()
     expect(isManagedOAuth(sheets!)).toBe(true)

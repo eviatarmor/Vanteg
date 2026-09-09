@@ -1,4 +1,4 @@
-import { getOAuthApp } from "@infra/integrations/oauth-apps"
+import { getOAuthApp } from "@workspace/integrations"
 
 import type { Connector, CredentialField } from "./types"
 

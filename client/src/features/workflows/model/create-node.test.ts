@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { createFreezeNode } from "./create-node"
+import { createVantegNode } from "./create-node"
 
-describe("createFreezeNode", () => {
-  it("builds a freeze node from a catalog id", () => {
-    const node = createFreezeNode("webhook", { x: 12, y: 24 })
+describe("createVantegNode", () => {
+  it("builds a vanteg node from a catalog id", () => {
+    const node = createVantegNode("webhook", { x: 12, y: 24 })
 
-    expect(node.type).toBe("freeze")
+    expect(node.type).toBe("vanteg")
     expect(node.position).toEqual({ x: 12, y: 24 })
     expect(node.data.catalogId).toBe("webhook")
     expect(node.data.label).toBe("Webhook")

@@ -5,6 +5,7 @@ import * as React from "react";
 import {
   CheckboxCell,
   DateCell,
+  DateTimeCell,
   FileCell,
   LongTextCell,
   MultiSelectCell,
@@ -12,6 +13,7 @@ import {
   SecretCell,
   SelectCell,
   ShortTextCell,
+  TimeCell,
   UrlCell,
 } from "@/components/data-grid/data-grid-cell-variants";
 import type { DataGridCellProps } from "@/types/data-grid";
@@ -91,6 +93,12 @@ function DataGridCellImpl<TData>({
       break;
     case "date":
       Comp = DateCell;
+      break;
+    case "time":
+      Comp = TimeCell;
+      break;
+    case "datetime":
+      Comp = DateTimeCell;
       break;
     case "file":
       Comp = FileCell;

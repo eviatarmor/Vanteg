@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react"
-import { Plus, SquareDashed } from "lucide-react"
+import { Plus, SquareDashed, type LucideIcon } from "lucide-react"
 import { useSearchParams } from "react-router"
 
 import { Button } from "@workspace/ui/components/button"
@@ -35,6 +35,7 @@ export function PageTabs({
   defaultTab,
   title,
   subtitle,
+  icon,
   panelClassName,
 }: {
   tabs: readonly PageTab[]
@@ -44,6 +45,7 @@ export function PageTabs({
   defaultTab?: string
   title?: string
   subtitle?: string
+  icon?: LucideIcon
   panelClassName?: string
 }) {
   const firstTab = tabs[0]?.id
@@ -105,14 +107,15 @@ export function PageTabs({
     <Tabs
       value={tabId ?? firstTab}
       onValueChange={selectTab}
-      className="min-h-0 flex-1 gap-0 overflow-hidden"
+      className="min-h-0 min-w-0 flex-1 gap-0 overflow-hidden"
     >
       <div className="shrink-0 border-b border-border">
         {title ? (
           <PageHeader
             title={title}
             subtitle={subtitle}
-            className="pb-2"
+            icon={icon}
+            className="border-b-0 pb-2"
             action={
               newAction ? (
                 <Button size="sm" onClick={handleNew}>
@@ -152,7 +155,7 @@ export function PageTabs({
         <TabsContent
           key={tab.id}
           value={tab.id}
-          className={cn("min-h-0 flex-1 overflow-auto px-6 py-6", panelClassName)}
+          className={cn("min-h-0 min-w-0 flex-1 overflow-auto px-6 py-6", panelClassName)}
         >
           {renderPanel ? (
             renderPanel(tab)

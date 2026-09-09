@@ -1,7 +1,7 @@
 import { getAgentSnapshot } from "@/features/agents/model/store"
 import { getTeamSnapshot } from "@/features/teams/model/store"
 import { dataTabs } from "@/features/data/tabs"
-import { inboxItems } from "@/features/inbox/model/items"
+import { listPendingInbox } from "@/features/inbox/model/store"
 import { integrationTabs } from "@/features/integrations/tabs"
 import { memoryTabs } from "@/features/memory/tabs"
 import { getMemorySnapshot } from "@/features/memory/model/store"
@@ -66,7 +66,7 @@ export function buildSearchIndex(workflows: readonly Workflow[]): SearchHit[] {
     path: `/workflows/${workflow.id}`,
   }))
 
-  const inboxHits: SearchHit[] = inboxItems.map((item) => ({
+  const inboxHits: SearchHit[] = listPendingInbox().map((item) => ({
     id: item.id,
     title: item.title,
     subtitle: item.body,

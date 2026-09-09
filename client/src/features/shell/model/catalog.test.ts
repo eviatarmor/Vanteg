@@ -12,10 +12,10 @@ import {
 } from "./catalog"
 
 describe("workspace identity", () => {
-  it("uses Freeze as the product name, not Bay", () => {
+  it("uses Vanteg as the product name, not Bay", () => {
     const identity = getWorkspaceIdentity()
-    expect(identity.productName).toBe("Freeze")
-    expect(identity.assistantActionLabel).toBe("Ask Freeze")
+    expect(identity.productName).toBe("Vanteg")
+    expect(identity.assistantActionLabel).toBe("Ask Vanteg")
     expect(identity).not.toHaveProperty("organizationName")
     expect(identity.productName.toLowerCase()).not.toContain("bay")
     expect(identity.assistantActionLabel.toLowerCase()).not.toContain("bay")
@@ -124,7 +124,7 @@ describe("getPageCopy", () => {
     })
     expect(getPageCopy("/api-keys")).toEqual({
       title: "API Keys",
-      subtitle: "API keys for calling Freeze from outside this workspace.",
+      subtitle: "API keys for calling Vanteg from outside this workspace.",
     })
     expect(getPageCopy("/missing")).toEqual({
       title: "Page not found",

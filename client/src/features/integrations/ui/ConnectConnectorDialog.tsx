@@ -72,7 +72,7 @@ export function ConnectConnectorDialog({
           </DialogTitle>
           <DialogDescription>
             {managed
-              ? `Freeze uses its own ${getOAuthApp(connector.auth.oauthAppId ?? "")?.name ?? "OAuth"} app. You only sign in — no client ID or secret.`
+              ? `Vanteg uses its own ${getOAuthApp(connector.auth.oauthAppId ?? "")?.name ?? "OAuth"} app. You only sign in — no client ID or secret.`
               : `Save ${connector.name} credentials to use this app from workflow steps.`}
           </DialogDescription>
         </DialogHeader>

@@ -172,6 +172,18 @@ export function getColumnPinningStyle<TData>(params: {
   };
 }
 
+export function getColumnWidthStyle(
+  cssVarName: string,
+  fallbackSize: number,
+): React.CSSProperties {
+  const width = `calc(var(${cssVarName}, ${fallbackSize}) * 1px)`;
+  return {
+    width,
+    minWidth: width,
+    flexBasis: width,
+  };
+}
+
 export function getScrollDirection(
   direction: string,
 ): "left" | "right" | "home" | "end" | undefined {
@@ -463,6 +475,76 @@ export function formatDateForDisplay(dateStr: unknown): string {
   const date = parseLocalDate(dateStr);
   if (!date) return typeof dateStr === "string" ? dateStr : "";
   return date.toLocaleDateString();
+}
+
+export function parseTimeString(value: unknown): {
+  hour: number;
+  minute: number;
+  second?: number;
+} | null {
+  if (typeof value !== "string" || !value) return null;
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const second = match[3] === undefined ? undefined : Number(match[3]);
+  if (
+    hour > 23 ||
+    minute > 59 ||
+    (second !== undefined && second > 59)
+  ) {
+    return null;
+  }
+  return { hour, minute, second };
+}
+
+export function formatTimeForDisplay(value: unknown): string {
+  const parsed = parseTimeString(value);
+  if (!parsed) return typeof value === "string" ? value : "";
+  const date = new Date();
+  date.setHours(parsed.hour, parsed.minute, parsed.second ?? 0, 0);
+  return date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    second: parsed.second === undefined ? undefined : "2-digit",
+  });
+}
+
+export function parseLocalDateTime(value: unknown): Date | null {
+  if (typeof value !== "string" || !value) return null;
+  const [datePart, timePart] = value.split("T");
+  const date = parseLocalDate(datePart);
+  if (!date) return null;
+  if (!timePart) return date;
+  const parsed = parseTimeString(timePart);
+  if (!parsed) return date;
+  date.setHours(parsed.hour, parsed.minute, parsed.second ?? 0, 0);
+  return date;
+}
+
+export function splitDateTime(value: unknown): { date: string; time: string } {
+  if (typeof value !== "string" || !value) {
+    return { date: "", time: "" };
+  }
+  const [datePart = "", timePart = ""] = value.split("T");
+  return { date: datePart, time: timePart };
+}
+
+export function joinDateTime(date: string, time: string): string | null {
+  if (!date && !time) return null;
+  if (!date) return time || null;
+  if (!time) return date;
+  return `${date}T${time}`;
+}
+
+export function formatDateTimeForDisplay(value: unknown): string {
+  if (!value) return "";
+  const date = parseLocalDateTime(value);
+  if (!date) return typeof value === "string" ? value : "";
+  if (typeof value === "string" && !value.includes("T")) {
+    return formatDateForDisplay(value);
+  }
+  return date.toLocaleString();
 }
 
 export function formatFileSize(bytes: number): string {

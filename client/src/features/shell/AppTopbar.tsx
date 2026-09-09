@@ -13,7 +13,7 @@ import { SidebarTrigger } from "@workspace/ui/components/sidebar"
 import { AppSearch } from "@/features/search/AppSearch"
 import { WorkflowEditorChrome } from "@/features/workflows/ui/WorkflowEditorChrome"
 
-import { AskFreezeButton } from "./AskFreezeButton"
+import { AskVantegButton } from "./AskVantegButton"
 import { FeedbackButton } from "./FeedbackButton"
 import { NotificationButton } from "./NotificationButton"
 import { getActivePageTab } from "./model/page-tab"
@@ -62,7 +62,7 @@ export function AppTopbar({ title }: { title: string }) {
         <AppSearch />
       </div>
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
-        <AskFreezeButton />
+        <AskVantegButton />
         <FeedbackButton />
         <NotificationButton />
       </div>

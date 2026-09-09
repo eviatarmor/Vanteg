@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus } from "lucide-react"
+import { Plug, Plus } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -43,7 +43,7 @@ export function IntegrationsPage() {
       <PageHeader
         title={title}
         subtitle={subtitle}
-        className="border-b"
+        icon={Plug}
         action={
           <Button size="sm" onClick={openPicker}>
             <Plus />
@@ -55,7 +55,7 @@ export function IntegrationsPage() {
         <ConfiguredConnectors onAdd={openPicker} />
       </div>
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-3xl">
+        <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-5xl xl:max-w-6xl">
           <DialogHeader>
             <DialogTitle>Add connector</DialogTitle>
             <DialogDescription>Pick an app to connect.</DialogDescription>

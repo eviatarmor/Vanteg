@@ -1,0 +1,80 @@
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
+
+import { Button } from "@workspace/ui/components/button"
+
+import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorEmpty,
+  ModelSelectorGroup,
+  ModelSelectorInput,
+  ModelSelectorItem,
+  ModelSelectorList,
+  ModelSelectorLogo,
+  ModelSelectorName,
+  ModelSelectorTrigger,
+} from "@/components/ai-elements/model-selector"
+
+import {
+  getAgentModel,
+  getAgentProvider,
+  modelsByProvider,
+  type AgentModel,
+} from "../model/types"
+
+export function AgentModelSelect({
+  value,
+  onChange,
+}: {
+  value: AgentModel
+  onChange: (value: AgentModel) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = getAgentModel(value)
+  const selectedProvider = getAgentProvider(selected.provider)
+
+  return (
+    <ModelSelector open={open} onOpenChange={setOpen}>
+      <ModelSelectorTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          id="agent-model"
+          aria-label="Model"
+          className="w-full justify-between bg-card font-normal"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <ModelSelectorLogo provider={selectedProvider.logo} />
+            <ModelSelectorName>{selected.label}</ModelSelectorName>
+          </span>
+          <ChevronDown className="size-4 text-muted-foreground" />
+        </Button>
+      </ModelSelectorTrigger>
+      <ModelSelectorContent>
+        <ModelSelectorInput placeholder="Search models" />
+        <ModelSelectorList>
+          <ModelSelectorEmpty>No models found.</ModelSelectorEmpty>
+          {modelsByProvider().map(({ provider, models }) => (
+            <ModelSelectorGroup heading={provider.name} key={provider.id}>
+              {models.map((model) => (
+                <ModelSelectorItem
+                  key={model.value}
+                  value={`${provider.name} ${model.label}`}
+                  data-checked={model.value === value}
+                  onSelect={() => {
+                    onChange(model.value)
+                    setOpen(false)
+                  }}
+                >
+                  <ModelSelectorLogo provider={provider.logo} />
+                  <ModelSelectorName>{model.label}</ModelSelectorName>
+                </ModelSelectorItem>
+              ))}
+            </ModelSelectorGroup>
+          ))}
+        </ModelSelectorList>
+      </ModelSelectorContent>
+    </ModelSelector>
+  )
+}

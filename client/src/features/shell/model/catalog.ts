@@ -8,8 +8,8 @@ import type {
 } from "./types"
 
 const workspaceIdentity: WorkspaceIdentity = {
-  productName: "Freeze",
-  assistantActionLabel: "Ask Freeze",
+  productName: "Vanteg",
+  assistantActionLabel: "Ask Vanteg",
 }
 
 const currentUser: CurrentUser = {
@@ -93,15 +93,15 @@ export function getAllNavItems(): NavItem[] {
 
 const pageSubtitles: Record<string, string> = {
   "/": "Your workspace at a glance.",
-  "/inbox": "Items that need a look.",
+  "/inbox": "Approve, deny, or always allow work from agents and workflows.",
   "/workflows": "Build, draft, and run automations.",
   "/agents": "Personalize agents and assign shared memory and knowledge.",
   "/teams": "Orchestrate multiple agents as a graph, like a lead and senior SWE.",
   "/data": "Tables, variables, and secrets used by workflows.",
   "/memory": "Shared memory bases and knowledge files.",
   "/integrations": "Connect apps used by workflow steps.",
-  "/api-keys": "API keys for calling Freeze from outside this workspace.",
-  "/help": "Guides and answers for Freeze.",
+  "/api-keys": "API keys for calling Vanteg from outside this workspace.",
+  "/help": "Guides and answers for Vanteg.",
   "/settings": "Workspace and account preferences.",
 }
 

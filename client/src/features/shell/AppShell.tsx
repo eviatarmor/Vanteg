@@ -15,7 +15,7 @@ export function AppShell() {
   return (
     <SidebarProvider className="h-svh overflow-hidden bg-sidebar">
       <AppSidebar />
-      <SidebarInset className="min-h-0 bg-background">
+      <SidebarInset className="min-h-0 min-w-0 overflow-hidden bg-background">
         <AppTopbar title={title} />
         <AssistantDock>
           <Outlet />

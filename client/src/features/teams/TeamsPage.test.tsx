@@ -48,6 +48,16 @@ describe("TeamsPage", () => {
     expect(screen.getByText("Lead SWE agent")).toBeInTheDocument()
   })
 
+  it("uses the shared canvas toolbar instead of default React Flow controls", () => {
+    renderTeams("/teams/team-swe")
+
+    expect(document.querySelector(".react-flow__controls")).toBeNull()
+    expect(screen.getByRole("button", { name: "Zoom in" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Zoom out" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Fit view" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Lock canvas" })).toBeInTheDocument()
+  })
+
   it("adds an agent from the canvas menu", async () => {
     const user = userEvent.setup()
     renderTeams("/teams/team-swe")

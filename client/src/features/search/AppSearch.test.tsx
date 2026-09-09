@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider, useLocation } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
 
+import { resetInbox } from "@/features/inbox/model/store"
 import { createDraft, resetWorkflows, saveWorkflow } from "@/features/workflows/model/store"
 
 import { AppSearch } from "./AppSearch"
@@ -34,6 +35,7 @@ function renderSearch(path = "/") {
 describe("AppSearch", () => {
   beforeEach(() => {
     resetWorkflows()
+    resetInbox()
   })
 
   it("shows a search field in the top bar", () => {
@@ -59,13 +61,26 @@ describe("AppSearch", () => {
     expect(screen.getByText(`/workflows/${workflow.id}`)).toBeInTheDocument()
   })
 
+  it("clears the query from a control that fills the field", async () => {
+    const user = userEvent.setup()
+    renderSearch()
+
+    await user.click(screen.getByRole("searchbox", { name: "Search" }))
+    await user.type(screen.getByRole("searchbox", { name: "Search" }), "lasdasd")
+
+    expect(screen.queryByText("Ctrl+K")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Clear search" }))
+
+    expect(screen.getByRole("searchbox", { name: "Search" })).toHaveValue("")
+  })
+
   it("finds inbox items", async () => {
     const user = userEvent.setup()
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "webhook")
+    await user.type(screen.getByRole("searchbox", { name: "Search" }), "credential")
 
-    expect(screen.getByRole("option", { name: /Webhook delivery/i })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: /Slack credential needs renewal/i })).toBeInTheDocument()
   })
 })

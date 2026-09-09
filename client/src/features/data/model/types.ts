@@ -5,8 +5,12 @@ export type DatabaseCellVariant =
   | "select"
   | "checkbox"
   | "date"
+  | "time"
+  | "datetime"
   | "url"
   | "secret"
+
+export type TextFormat = "plain" | "email" | "url" | "phone" | "uuid"
 
 export interface SelectOption {
   label: string
@@ -18,6 +22,9 @@ export interface DatabaseColumn {
   name: string
   variant: DatabaseCellVariant
   options?: SelectOption[]
+  regex?: string
+  textFormat?: TextFormat
+  showSeconds?: boolean
   system?: boolean
 }
 

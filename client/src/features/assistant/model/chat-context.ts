@@ -42,7 +42,7 @@ export function suggestionsForPath(pathname: string): readonly string[] {
   if (pathname.startsWith("/api-keys")) {
     return [
       "When do I use a credential vs an API key?",
-      "How do I call Freeze with an API key?",
+      "How do I call Vanteg with an API key?",
     ]
   }
   if (pathname.startsWith("/memory") || pathname.startsWith("/agents")) {
@@ -56,7 +56,7 @@ export function suggestionsForPath(pathname: string): readonly string[] {
 
 export function buildSystemPrompt(context?: AssistantChatContext): string {
   const lines = [
-    "You are Freeze, an assistant for the Freeze workspace.",
+    "You are Vanteg, an assistant for the Vanteg workspace.",
     "Help with workflows, data, integrations, memory, agents, and the rest of the product.",
     "Be concise.",
   ]

@@ -4,7 +4,7 @@ import { handleChatRequest, localAssistantReply } from "./chat-handler"
 
 describe("chat handler", () => {
   it("describes the workflow when no API key is set", async () => {
-    const request = new Request("http://freeze.local/api/chat", {
+    const request = new Request("http://vanteg.local/api/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({

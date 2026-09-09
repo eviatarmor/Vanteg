@@ -1,12 +1,4 @@
 import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
-import {
-  Editable,
-  EditableArea,
-  EditableInput,
-  EditableLabel,
-  EditablePreview,
-} from "@workspace/ui/components/editable"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
 import {
@@ -29,13 +21,17 @@ import {
   TabsList,
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
+import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 import { Textarea } from "@workspace/ui/components/textarea"
+
+import { ExplorerTree } from "@/features/data/ui/ExplorerTree"
 
 import { getNodeType } from "../model/node-catalog"
 import { getNodePorts, portColorValue } from "../model/node-ports"
-import type { FreezeNode, FreezeNodePatch, NodeVar } from "../model/types"
+import type { VantegEdge, VantegNode, VantegNodePatch } from "../model/types"
 import { CodeField } from "./CodeField"
 import { NodeIcon } from "./node-icons"
+import { explorerGroupIds, inExplorerNodes, outExplorerNodes } from "./node-io-tree"
 
 const sheetTabs = [
   { id: "in", label: "In" },
@@ -43,74 +39,42 @@ const sheetTabs = [
   { id: "out", label: "Out" },
 ] as const
 
-function NodeVarsGrid({
-  vars,
-  onChange,
+function NodeIoTree({
+  nodes,
+  empty,
+  label,
 }: {
-  vars: NodeVar[]
-  onChange: (vars: NodeVar[]) => void
+  nodes: ReturnType<typeof outExplorerNodes>
+  empty: string
+  label: string
 }) {
-  function patch(id: string, field: "key" | "value", value: string) {
-    onChange(
-      vars.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    )
+  if (nodes.length === 0) {
+    return <p className="p-4 text-sm text-muted-foreground">{empty}</p>
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto p-3">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-muted-foreground">
-            <th className="px-2 py-2 text-left font-medium">Key</th>
-            <th className="px-2 py-2 text-left font-medium">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {vars.map((item) => (
-            <tr key={item.id} className="border-b">
-              <td className="p-1">
-                <Input
-                  value={item.key}
-                  aria-label="Key"
-                  onChange={(event) => patch(item.id, "key", event.target.value)}
-                />
-              </td>
-              <td className="p-1">
-                <Input
-                  value={item.value}
-                  aria-label="Value"
-                  onChange={(event) =>
-                    patch(item.id, "value", event.target.value)
-                  }
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="mt-2 self-start"
-        onClick={() =>
-          onChange([...vars, { id: crypto.randomUUID(), key: "", value: "" }])
-        }
-      >
-        Add variable
-      </Button>
-    </div>
+    <ExplorerTree
+      aria-label={label}
+      readOnly
+      className="min-h-0 flex-1 px-2 py-2"
+      nodes={nodes}
+      defaultExpanded={explorerGroupIds(nodes)}
+    />
   )
 }
 
 export function NodeSheet({
   node,
+  nodes = [],
+  edges = [],
   onClose,
   onChange,
 }: {
-  node: FreezeNode | null
+  node: VantegNode | null
+  nodes?: VantegNode[]
+  edges?: VantegEdge[]
   onClose: () => void
-  onChange: (nodeId: string, patch: FreezeNodePatch) => void
+  onChange: (nodeId: string, patch: VantegNodePatch) => void
 }) {
   const catalog = node ? getNodeType(node.data.catalogId) : undefined
   const ports = node ? getNodePorts(node.data.catalogId) : []
@@ -123,7 +87,7 @@ export function NodeSheet({
     >
       <SheetContent
         side="right"
-        className="gap-0 sm:max-w-xl"
+        className="gap-0 sm:max-w-4xl data-[side=right]:sm:max-w-4xl"
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
@@ -168,15 +132,17 @@ export function NodeSheet({
                 value="in"
                 className="min-h-0 flex-1 overflow-hidden p-0"
               >
-                <NodeVarsGrid
-                  vars={node.data.inVars}
-                  onChange={(inVars) => onChange(node.id, { inVars })}
+                <NodeIoTree
+                  label="In"
+                  nodes={inExplorerNodes(node.id, nodes, edges)}
+                  empty="No variables from previous nodes. Connect an upstream step to receive its outputs."
                 />
               </TabsContent>
               <TabsContent
                 value="setup"
-                className="flex-1 overflow-auto px-4 py-4"
+                className="min-h-0 flex-1 overflow-hidden p-0"
               >
+                <ScrollFade className="h-full" viewportClassName="px-4 py-4">
                 <div className="flex flex-col gap-5">
                   <section className="grid gap-2">
                     <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -201,18 +167,15 @@ export function NodeSheet({
                     </div>
                   </section>
                   <section className="grid gap-2">
-                    <Editable
+                    <Label htmlFor="node-name">Name</Label>
+                    <Input
+                      id="node-name"
                       value={node.data.label}
-                      onValueChange={(label) => onChange(node.id, { label })}
                       placeholder="Step name"
-                      className="gap-1.5"
-                    >
-                      <EditableLabel>Name</EditableLabel>
-                      <EditableArea className="w-full">
-                        <EditablePreview className="min-h-8 w-full rounded-lg border border-transparent px-2.5 py-1.5 hover:border-border" />
-                        <EditableInput className="h-8 shadow-none" />
-                      </EditableArea>
-                    </Editable>
+                      onChange={(event) =>
+                        onChange(node.id, { label: event.target.value })
+                      }
+                    />
                     <p className="text-xs text-muted-foreground">
                       Shown on the canvas. Does not change the step type.
                     </p>
@@ -329,14 +292,16 @@ export function NodeSheet({
                     />
                   </section>
                 </div>
+                </ScrollFade>
               </TabsContent>
               <TabsContent
                 value="out"
                 className="min-h-0 flex-1 overflow-hidden p-0"
               >
-                <NodeVarsGrid
-                  vars={node.data.outVars}
-                  onChange={(outVars) => onChange(node.id, { outVars })}
+                <NodeIoTree
+                  label="Out"
+                  nodes={outExplorerNodes(node)}
+                  empty="No outputs to send to the next node."
                 />
               </TabsContent>
             </Tabs>

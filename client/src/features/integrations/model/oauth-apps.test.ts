@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
 
-import { getOAuthApp, oauthApps, terraformOAuthApps } from "@infra/integrations/oauth-apps"
+import { getOAuthApp, oauthApps, terraformOAuthApps } from "@workspace/integrations"
 
 const terraformDir = path.resolve(process.cwd(), "../infra/terraform")
 
-describe("Freeze-owned OAuth apps", () => {
+describe("Vanteg-owned OAuth apps", () => {
   it("registers a managed Google app so users never paste a client secret", () => {
     const google = getOAuthApp("google")
     expect(google?.managed).toBe(true)
@@ -19,7 +19,16 @@ describe("Freeze-owned OAuth apps", () => {
 
   it("covers Slack, GitHub, Microsoft, and other managed providers", () => {
     expect(oauthApps.map((app) => app.id)).toEqual(
-      expect.arrayContaining(["google", "microsoft", "slack", "github", "notion"])
+      expect.arrayContaining([
+        "google",
+        "microsoft",
+        "slack",
+        "github",
+        "notion",
+        "klaviyo",
+        "pandadoc",
+        "acuity",
+      ])
     )
     expect(oauthApps.every((app) => app.managed)).toBe(true)
   })

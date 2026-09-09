@@ -1,3 +1,4 @@
+import { Brain } from "lucide-react"
 import { useSearchParams } from "react-router"
 
 import { PageTabs } from "@/features/page-tabs/PageTabs"
@@ -17,6 +18,7 @@ export function MemoryPage() {
       <PageTabs
         title={title}
         subtitle={subtitle}
+        icon={Brain}
         tabs={memoryTabs}
         defaultTab={searchParams.get("tab") ?? undefined}
         panelClassName="flex overflow-hidden p-0"

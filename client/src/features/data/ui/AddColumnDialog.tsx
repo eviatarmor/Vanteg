@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 
 import { Button } from "@workspace/ui/components/button"
+import { Cascader } from "@workspace/ui/components/cascader"
 import {
   Dialog,
   DialogContent,
@@ -11,58 +12,116 @@ import {
 } from "@workspace/ui/components/dialog"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
+import { Switch } from "@workspace/ui/components/switch"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select"
+  TagsInput,
+  TagsInputInput,
+  TagsInputItem,
+  TagsInputList,
+} from "@workspace/ui/components/tags-input"
 
-import { databaseColumnTypes } from "../model/column-types"
-import type { DatabaseCellVariant, SelectOption } from "../model/types"
+import {
+  databaseColumnTypeTree,
+  findColumnType,
+  findColumnTypeId,
+  isTextColumnVariant,
+  isTimeColumnVariant,
+} from "../model/column-types"
+import type { DatabaseColumn, DatabaseCellVariant, SelectOption, TextFormat } from "../model/types"
+
+function optionFromLabel(label: string): SelectOption {
+  return {
+    label,
+    value: label.toLowerCase().replace(/\s+/g, "-"),
+  }
+}
+
+const typeItems = databaseColumnTypeTree.map((type) => ({
+  value: type.id,
+  label: type.label,
+  children: type.children?.map((child) => ({
+    value: child.id,
+    label: child.label,
+  })),
+}))
 
 export function AddColumnDialog({
   open,
+  column,
   onOpenChange,
   onAdd,
 }: {
   open: boolean
+  column?: DatabaseColumn
   onOpenChange: (open: boolean) => void
   onAdd: (input: {
     name: string
     variant: DatabaseCellVariant
     options?: SelectOption[]
+    regex?: string
+    textFormat?: TextFormat
+    showSeconds?: boolean
   }) => void
 }) {
   const [name, setName] = useState("")
-  const [variant, setVariant] = useState<DatabaseCellVariant>("short-text")
-  const [optionsText, setOptionsText] = useState("")
+  const [typeId, setTypeId] = useState("plain")
+  const [regex, setRegex] = useState("")
+  const [options, setOptions] = useState<string[]>([])
+  const [showSeconds, setShowSeconds] = useState(false)
+  const isEdit = Boolean(column)
+
+  const selectedType = findColumnType(typeId) ?? findColumnType("plain")
+  const variant = selectedType?.variant ?? "short-text"
+  const showRegex = isTextColumnVariant(variant)
+  const showTimeOptions = isTimeColumnVariant(variant)
 
   function reset() {
     setName("")
-    setVariant("short-text")
-    setOptionsText("")
+    setTypeId("plain")
+    setRegex("")
+    setOptions([])
+    setShowSeconds(false)
   }
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    if (!column) {
+      reset()
+      return
+    }
+    setName(column.name)
+    setTypeId(findColumnTypeId(column))
+    setRegex(column.regex ?? "")
+    setOptions(column.options?.map((option) => option.label) ?? [])
+    setShowSeconds(Boolean(column.showSeconds))
+  }, [open, column])
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmed = name.trim()
-    if (!trimmed) {
+    if (!trimmed || !selectedType || selectedType.children?.length) {
       return
     }
-    const options =
-      variant === "select"
-        ? optionsText
-            .split(",")
-            .map((part) => part.trim())
-            .filter(Boolean)
-            .map((label) => ({
-              label,
-              value: label.toLowerCase().replace(/\s+/g, "-"),
-            }))
-        : undefined
-    onAdd({ name: trimmed, variant, options })
+    onAdd({
+      name: trimmed,
+      variant,
+      ...(variant === "select"
+        ? {
+            options: options
+              .map((label) => optionFromLabel(label.trim()))
+              .filter((item) => item.label),
+          }
+        : {}),
+      ...(showRegex
+        ? {
+            ...(regex.trim() ? { regex: regex.trim() } : {}),
+            ...(selectedType.textFormat ? { textFormat: selectedType.textFormat } : {}),
+          }
+        : {}),
+      ...(showTimeOptions && showSeconds ? { showSeconds: true } : {}),
+    })
     reset()
     onOpenChange(false)
   }
@@ -80,9 +139,11 @@ export function AddColumnDialog({
       <DialogContent>
         <form onSubmit={submit} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>Add column</DialogTitle>
+            <DialogTitle>{isEdit ? "Edit column" : "Add column"}</DialogTitle>
             <DialogDescription>
-              Name the column and choose how its values are edited.
+              {isEdit
+                ? "Rename the column or change how its values are edited."
+                : "Name the column and choose how its values are edited."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
@@ -97,37 +158,77 @@ export function AddColumnDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="column-type">Type</Label>
-            <Select
-              value={variant}
-              onValueChange={(value) => {
-                if (!value) {
+            <Cascader
+              id="column-type"
+              aria-label="Type"
+              items={typeItems}
+              value={typeId}
+              onValueChange={(next) => {
+                const type = findColumnType(next)
+                if (!type || type.children?.length) {
                   return
                 }
-                setVariant(value as DatabaseCellVariant)
+                setTypeId(next)
+                setRegex(type.regex ?? "")
+                if (type.variant !== "select") {
+                  setOptions([])
+                }
+                if (!isTimeColumnVariant(type.variant)) {
+                  setShowSeconds(false)
+                }
               }}
-            >
-              <SelectTrigger id="column-type" className="w-full" aria-label="Type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {databaseColumnTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
+          {showRegex ? (
+            <div className="grid gap-2">
+              <Label htmlFor="column-regex">Regex</Label>
+              <Input
+                id="column-regex"
+                value={regex}
+                onChange={(event) => setRegex(event.target.value)}
+                placeholder="Optional pattern"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </div>
+          ) : null}
+          {showTimeOptions ? (
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="column-seconds">Include seconds</Label>
+              <Switch
+                id="column-seconds"
+                checked={showSeconds}
+                onCheckedChange={setShowSeconds}
+              />
+            </div>
+          ) : null}
           {variant === "select" ? (
             <div className="grid gap-2">
               <Label htmlFor="column-options">Options</Label>
-              <Input
-                id="column-options"
-                value={optionsText}
-                onChange={(event) => setOptionsText(event.target.value)}
-                placeholder="Admin, Member, Guest"
-                autoComplete="off"
-              />
+              <TagsInput
+                value={options}
+                onValueChange={setOptions}
+                addOnPaste
+                addOnTab
+                blurBehavior="add"
+                editable
+                className="w-full gap-0"
+                onValidate={(value) => value.trim().length > 0}
+              >
+                {({ value }) => (
+                  <TagsInputList className="min-h-8 rounded-lg bg-card px-2 py-1.5">
+                    {value.map((item) => (
+                      <TagsInputItem key={item} value={item} className="rounded-full bg-muted">
+                        {item}
+                      </TagsInputItem>
+                    ))}
+                    <TagsInputInput
+                      id="column-options"
+                      placeholder={value.length === 0 ? "Type an option and press Enter" : "Add another"}
+                    />
+                  </TagsInputList>
+                )}
+              </TagsInput>
             </div>
           ) : null}
           <DialogFooter>
@@ -135,7 +236,7 @@ export function AddColumnDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim()}>
-              Add column
+              {isEdit ? "Save" : "Add column"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,3 +1,4 @@
+import { Database } from "lucide-react"
 import { useSearchParams } from "react-router"
 
 import { PageTabs } from "@/features/page-tabs/PageTabs"
@@ -13,13 +14,14 @@ export function DataPage() {
   const [searchParams] = useSearchParams()
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <PageTabs
         title={title}
         subtitle={subtitle}
+        icon={Database}
         tabs={dataTabs}
         defaultTab={searchParams.get("tab") ?? undefined}
-        panelClassName="flex overflow-hidden p-0"
+        panelClassName="flex min-h-0 min-w-0 overflow-hidden p-0"
         onCreate={(tab, name, value) => {
           if (tab.id === "database") {
             createTable(name)

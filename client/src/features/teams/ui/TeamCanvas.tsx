@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import {
   addEdge,
-  Background,
-  BackgroundVariant,
-  Controls,
   MarkerType,
-  Panel,
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
@@ -15,6 +11,14 @@ import {
   type NodeTypes,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
+
+import {
+  FlowCanvasChrome,
+  flowCanvasClassName,
+  flowInteractionProps,
+  flowProOptions,
+  flowSnapGrid,
+} from "@/components/flow-canvas/canvas-controls"
 
 import {
   DropdownMenu,
@@ -50,6 +54,7 @@ function TeamCanvasInner({ team }: { team: Team }) {
   const [paneMenu, setPaneMenu] = useState<{ x: number; y: number } | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [sheetId, setSheetId] = useState<string | null>(null)
+  const [locked, setLocked] = useState(false)
 
   useEffect(() => {
     saveTeam(team.id, { nodes, edges })
@@ -95,18 +100,14 @@ function TeamCanvasInner({ team }: { team: Team }) {
         nodeTypes={nodeTypes}
         fitView
         snapToGrid
-        snapGrid={[16, 16]}
+        snapGrid={flowSnapGrid}
         colorMode="light"
-        className="h-full w-full bg-background"
+        deleteKeyCode={sheetId || locked ? null : ["Backspace", "Delete"]}
+        proOptions={flowProOptions}
+        className={flowCanvasClassName}
+        {...flowInteractionProps(locked)}
       >
-        <Background variant={BackgroundVariant.Dots} gap={18} size={1} />
-        <Controls />
-        <Panel
-          position="top-center"
-          className="pointer-events-none text-xs text-muted-foreground"
-        >
-          Right-click to add an agent. Connect nodes to orchestrate handoffs.
-        </Panel>
+        <FlowCanvasChrome locked={locked} onLockedChange={setLocked} />
       </ReactFlow>
       {paneMenu ? (
         <DropdownMenu open onOpenChange={(open) => !open && setPaneMenu(null)}>

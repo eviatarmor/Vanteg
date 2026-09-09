@@ -15,6 +15,7 @@ import {
   getCellKey,
   getColumnBorderVisibility,
   getColumnPinningStyle,
+  getColumnWidthStyle,
   getRowHeightValue,
 } from "@/lib/data-grid";
 import { cn } from "@workspace/ui/lib/utils";
@@ -42,7 +43,8 @@ interface DataGridRowProps<TData> extends React.ComponentProps<"div"> {
   readOnly: boolean;
   stretchColumns: boolean;
   adjustLayout: boolean;
-  onColumnAdd?: () => void;
+  showAddColumn?: boolean;
+  columnOrderKey: string;
 }
 
 export const DataGridRow = React.memo(DataGridRowImpl, (prev, next) => {
@@ -145,7 +147,11 @@ export const DataGridRow = React.memo(DataGridRowImpl, (prev, next) => {
     return false;
   }
 
-  if (!!prev.onColumnAdd !== !!next.onColumnAdd) {
+  if (prev.showAddColumn !== next.showAddColumn) {
+    return false;
+  }
+
+  if (prev.columnOrderKey !== next.columnOrderKey) {
     return false;
   }
 
@@ -171,7 +177,8 @@ function DataGridRowImpl<TData>({
   readOnly,
   stretchColumns,
   adjustLayout,
-  onColumnAdd,
+  showAddColumn,
+  columnOrderKey,
   className,
   style,
   ref,
@@ -199,10 +206,10 @@ function DataGridRowImpl<TData>({
 
   // Memoize visible cells to avoid recreating cell array on every render
   // Though TanStack returns new Cell wrappers, memoizing the array helps React's reconciliation
-  // biome-ignore lint/correctness/useExhaustiveDependencies: columnVisibility and columnPinning are used for calculating the visible cells
+  // biome-ignore lint/correctness/useExhaustiveDependencies: columnVisibility, columnPinning, and columnOrderKey invalidate visible cells
   const visibleCells = React.useMemo(
     () => row.getVisibleCells(),
-    [row, columnVisibility, columnPinning],
+    [row, columnVisibility, columnPinning, columnOrderKey],
   );
 
   return (
@@ -262,13 +269,16 @@ function DataGridRowImpl<TData>({
             data-slot="grid-cell"
             tabIndex={-1}
             className={cn("shrink-0", {
-              grow: stretchColumns && columnId !== "select",
+              grow: stretchColumns && !showAddColumn && columnId !== "select",
               "border-e": showEndBorder && columnId !== "select",
               "border-s": showStartBorder && columnId !== "select",
             })}
             style={{
               ...getColumnPinningStyle({ column: cell.column, dir }),
-              width: `calc(var(--col-${columnId}-size) * 1px)`,
+              ...getColumnWidthStyle(
+                `--col-${columnId}-size`,
+                cell.column.getSize(),
+              ),
             }}
           >
             {typeof cell.column.columnDef.header === "function" ? (
@@ -297,13 +307,15 @@ function DataGridRowImpl<TData>({
           </div>
         );
       })}
-      {!readOnly && onColumnAdd ? (
+      {!readOnly && showAddColumn ? (
         <div
           role="gridcell"
           aria-colindex={visibleCells.length + 1}
           data-slot="grid-add-column-cell"
-          className="sticky end-0 min-w-40 shrink-0 border-s bg-muted/30"
-          onClick={onColumnAdd}
+          className={cn(
+            "min-w-40 shrink-0 border-s bg-muted/30",
+            stretchColumns && "grow",
+          )}
         />
       ) : null}
     </div>

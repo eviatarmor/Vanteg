@@ -1,8 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react"
 import { useNavigate } from "react-router"
-import { Search } from "lucide-react"
+import { Search, X } from "lucide-react"
 
 import { Input } from "@workspace/ui/components/input"
+import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 
 import { useWorkflows } from "@/features/workflows/model/store"
 
@@ -56,6 +57,13 @@ export function AppSearch() {
     document.addEventListener("pointerdown", onPointerDown)
     return () => document.removeEventListener("pointerdown", onPointerDown)
   }, [open])
+
+  function clearQuery() {
+    setQuery("")
+    setActiveIndex(0)
+    inputRef.current?.focus()
+    setOpen(true)
+  }
 
   function go(hit: SearchHit) {
     setOpen(false)
@@ -119,18 +127,29 @@ export function AppSearch() {
         }
         autoComplete="off"
         spellCheck={false}
-        className="h-8 border-sidebar-border bg-sidebar-accent/50 pr-12 pl-8 text-sidebar-foreground placeholder:text-sidebar-foreground/45 focus-visible:border-sidebar-ring"
+        className="h-8 appearance-none border-sidebar-border bg-sidebar-accent/50 pr-12 pl-8 text-sidebar-foreground placeholder:text-sidebar-foreground/45 focus-visible:border-sidebar-ring [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden"
       />
-      <kbd className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded-md border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 font-sans text-[10px] text-sidebar-foreground/55 sm:inline">
-        {hint}
-      </kbd>
+      {query ? (
+        <button
+          type="button"
+          aria-label="Clear search"
+          className="absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          onClick={clearQuery}
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : (
+        <kbd className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded-md border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 font-sans text-[10px] text-sidebar-foreground/55 sm:inline">
+          {hint}
+        </kbd>
+      )}
       {open ? (
-        <div className="absolute top-[calc(100%+8px)] left-1/2 z-50 w-[min(36rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10">
-          <div
+        <div className="absolute top-[calc(100%+8px)] left-1/2 z-50 w-[min(36rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 [--scroll-fade-from:var(--popover)]">
+          <ScrollFade
             id={listId}
             role="listbox"
             aria-label="Search results"
-            className="max-h-80 overflow-auto"
+            className="max-h-80"
           >
             {hits.length === 0 ? (
               <p className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -174,7 +193,7 @@ export function AppSearch() {
                 )
               })
             )}
-          </div>
+          </ScrollFade>
         </div>
       ) : null}
     </div>

@@ -3,6 +3,7 @@ import { Bot, Plus } from "lucide-react"
 import { matchPath, useLocation, useNavigate } from "react-router"
 
 import { Button } from "@workspace/ui/components/button"
+import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,7 @@ export function AgentsPage() {
       <PageHeader
         title={title}
         subtitle={subtitle}
+        icon={Bot}
         action={
           <Button size="sm" onClick={openCreate}>
             <Plus />
@@ -58,7 +60,7 @@ export function AgentsPage() {
           </Button>
         }
       />
-      <div className="flex min-h-0 flex-1 border-t">
+      <div className="flex min-h-0 flex-1">
         <ResizableSidebar
           id="agents-sidebar"
           sidebar={
@@ -66,9 +68,9 @@ export function AgentsPage() {
               <div className="px-3 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 Agents
               </div>
-              <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+              <ScrollFade className="min-h-0 min-w-0 flex-1">
                 <AgentList agents={agents} selectedId={selected?.id} />
-              </div>
+              </ScrollFade>
             </>
           }
         >

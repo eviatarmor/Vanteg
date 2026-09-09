@@ -15,31 +15,36 @@ function renderApiKeys() {
 }
 
 describe("ApiKeysPage", () => {
-  it("shows the empty API keys workspace", () => {
+  it("shows private and public key tabs under a header separator", () => {
     renderApiKeys()
 
     expect(screen.getByRole("heading", { name: "API Keys" })).toBeInTheDocument()
     expect(
-      screen.getByText("API keys for calling Freeze from outside this workspace.")
+      screen.getByText("API keys for calling Vanteg from outside this workspace.")
     ).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "No API keys yet" })).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        "API keys for calling Freeze from outside this workspace will appear here."
-      )
-    ).toBeVisible()
-    expect(screen.getAllByRole("button", { name: "New API key" }).length).toBeGreaterThan(
+    expect(screen.getByRole("tab", { name: "Private keys" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Public keys" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "No private keys yet" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "No API keys yet" })).not.toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "New private key" }).length).toBeGreaterThan(
       0
     )
+    expect(
+      screen.getByRole("heading", { name: "API Keys" }).closest("div")?.parentElement
+        ?.parentElement
+    ).toHaveClass("border-b")
   })
 
-  it("opens a name prompt when creating an API key", async () => {
+  it("opens a name prompt for a public key", async () => {
     const user = userEvent.setup()
     renderApiKeys()
 
-    await user.click(screen.getAllByRole("button", { name: "New API key" })[0]!)
+    await user.click(screen.getByRole("tab", { name: "Public keys" }))
 
-    expect(screen.getByRole("dialog", { name: "New API key" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "No public keys yet" })).toBeInTheDocument()
+    await user.click(screen.getAllByRole("button", { name: "New public key" })[0]!)
+
+    expect(screen.getByRole("dialog", { name: "New public key" })).toBeInTheDocument()
     expect(screen.getByPlaceholderText("Key name")).toBeInTheDocument()
   })
 })

@@ -28,13 +28,13 @@ describe("AppTopbar", () => {
     resetAssistantOpen()
   })
 
-  it("shows the page title, Ask Freeze, and notifications", () => {
+  it("shows the page title, Ask Vanteg, and notifications", () => {
     renderTopbar("/", "Home")
 
     const header = screen.getByRole("banner")
     expect(header).toHaveTextContent("Home")
     expect(screen.getByRole("searchbox", { name: "Search" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Ask Freeze" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Ask Vanteg" })).toHaveAttribute(
       "aria-pressed",
       "false"
     )

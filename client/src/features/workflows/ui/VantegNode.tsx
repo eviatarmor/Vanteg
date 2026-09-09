@@ -5,7 +5,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { getNodeType } from "../model/node-catalog"
 import { getNodePorts, portColorValue } from "../model/node-ports"
-import type { FreezeNode as FreezeNodeType, NodePort } from "../model/types"
+import type { VantegNode as VantegNodeType, NodePort } from "../model/types"
 import { NodeIcon } from "./node-icons"
 
 const kindClass: Record<string, string> = {
@@ -45,10 +45,10 @@ function Ports({
   )
 }
 
-export const FreezeNode = memo(function FreezeNode({
+export const VantegNode = memo(function VantegNode({
   data,
   selected,
-}: NodeProps<FreezeNodeType>) {
+}: NodeProps<VantegNodeType>) {
   const catalog = getNodeType(data.catalogId)
   const kind = catalog?.kind ?? "action"
   const ports = getNodePorts(data.catalogId)
@@ -94,4 +94,4 @@ export const FreezeNode = memo(function FreezeNode({
   )
 })
 
-export const workflowNodeTypes = { freeze: FreezeNode }
+export const workflowNodeTypes = { vanteg: VantegNode }

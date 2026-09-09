@@ -51,6 +51,8 @@
         "redirect_path": "/integrations/oauth/slack/callback",
         "scopes": [
           "channels:read",
+          "channels:manage",
+          "groups:write",
           "chat:write",
           "reactions:write",
           "users:read"
@@ -111,8 +113,11 @@
         "token_url": "https://api.hubapi.com/oauth/v1/token",
         "redirect_path": "/integrations/oauth/hubspot/callback",
         "scopes": [
+          "crm.objects.contacts.read",
           "crm.objects.contacts.write",
-          "crm.objects.companies.write"
+          "crm.objects.companies.write",
+          "crm.objects.deals.read",
+          "crm.objects.deals.write"
         ]
       },
       "salesforce": {
@@ -277,7 +282,8 @@
         "redirect_path": "/integrations/oauth/zendesk/callback",
         "scopes": [
           "tickets:write",
-          "users:write"
+          "users:write",
+          "read"
         ]
       },
       "mailchimp": {
@@ -635,6 +641,42 @@
         "token_url": "https://api.helpscout.net/v2/oauth2/token",
         "redirect_path": "/integrations/oauth/helpscout/callback",
         "scopes": []
+      },
+      "klaviyo": {
+        "name": "Klaviyo",
+        "client_id_env": "FREEZE_KLAVIYO_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_KLAVIYO_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://www.klaviyo.com/oauth/authorize",
+        "token_url": "https://a.klaviyo.com/oauth/token",
+        "redirect_path": "/integrations/oauth/klaviyo/callback",
+        "scopes": [
+          "lists:read",
+          "profiles:write",
+          "events:write",
+          "campaigns:write"
+        ]
+      },
+      "pandadoc": {
+        "name": "PandaDoc",
+        "client_id_env": "FREEZE_PANDADOC_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_PANDADOC_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://app.pandadoc.com/oauth2/authorize",
+        "token_url": "https://api.pandadoc.com/oauth2/access_token",
+        "redirect_path": "/integrations/oauth/pandadoc/callback",
+        "scopes": [
+          "read+write"
+        ]
+      },
+      "acuity": {
+        "name": "Acuity Scheduling",
+        "client_id_env": "FREEZE_ACUITY_OAUTH_CLIENT_ID",
+        "client_secret_env": "FREEZE_ACUITY_OAUTH_CLIENT_SECRET",
+        "authorize_url": "https://acuityscheduling.com/oauth2/authorize",
+        "token_url": "https://acuityscheduling.com/oauth2/token",
+        "redirect_path": "/integrations/oauth/acuity/callback",
+        "scopes": [
+          "api-v1"
+        ]
       }
     }
   }

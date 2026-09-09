@@ -99,6 +99,18 @@ describe("DataPage", () => {
     )
 
     expect(screen.getByRole("columnheader", { name: /Phone/ })).toBeInTheDocument()
+
+    const grid = screen.getByRole("grid", { name: "Data grid" })
+    expect(grid.getAttribute("style")).toMatch(/--col-phone-size/)
+    expect(grid.getAttribute("style")).toMatch(/--header-phone-size/)
+    expect(grid.getAttribute("style")).toMatch(/--col-createdAt-size/)
+
+    const headerRow = screen.getByRole("button", { name: "Phone" }).closest(
+      "[data-slot='grid-header-row']"
+    )
+    const headerCells = headerRow?.querySelectorAll("[data-slot='grid-header-cell']")
+    const headerNames = [...(headerCells ?? [])].map((cell) => cell.textContent)
+    expect(headerNames?.join(" ")).toMatch(/Phone.*Created At.*Updated At/)
   })
 
   it("deletes a column from the header menu", async () => {
@@ -109,7 +121,7 @@ describe("DataPage", () => {
     await user.click(screen.getByRole("menuitem", { name: "Delete column" }))
 
     expect(screen.queryByRole("columnheader", { name: /Email/ })).not.toBeInTheDocument()
-    expect(screen.queryByText("ada@freeze.dev")).not.toBeInTheDocument()
+    expect(screen.queryByText("ada@vanteg.dev")).not.toBeInTheDocument()
   })
 
   it("does not offer delete on created at or updated at", async () => {
@@ -118,6 +130,95 @@ describe("DataPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Created At" }))
     expect(screen.queryByRole("menuitem", { name: "Delete column" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("menuitem", { name: "Edit column" })).not.toBeInTheDocument()
+  })
+
+  it("edits a column from the header menu", async () => {
+    const user = userEvent.setup()
+    renderData()
+
+    await user.click(screen.getByRole("button", { name: "Email" }))
+    await user.click(screen.getByRole("menuitem", { name: "Edit column" }))
+
+    expect(screen.getByRole("dialog", { name: "Edit column" })).toBeInTheDocument()
+    expect(screen.getByLabelText("Name")).toHaveValue("Email")
+
+    await user.clear(screen.getByLabelText("Name"))
+    await user.type(screen.getByLabelText("Name"), "Work email")
+    await user.click(screen.getByRole("button", { name: "Save" }))
+
+    expect(screen.getByRole("columnheader", { name: /Work email/ })).toBeInTheDocument()
+    expect(screen.queryByRole("columnheader", { name: /^Email / })).not.toBeInTheDocument()
+  })
+
+  it("moves a column left and right from the header menu", async () => {
+    const user = userEvent.setup()
+    renderData()
+
+    await user.click(screen.getByRole("button", { name: "Name" }))
+    expect(screen.getByRole("menuitem", { name: "Move left" })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    )
+    await user.keyboard("{Escape}")
+
+    await user.click(screen.getByRole("button", { name: "Updated At" }))
+    expect(screen.getByRole("menuitem", { name: "Move right" })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    )
+    await user.keyboard("{Escape}")
+
+    await user.click(screen.getByRole("button", { name: "Email" }))
+    await user.click(screen.getByRole("menuitem", { name: "Move left" }))
+
+    const headerRow = screen.getByRole("button", { name: "Email" }).closest(
+      "[data-slot='grid-header-row']"
+    )
+    const headerNames = [
+      ...(headerRow?.querySelectorAll("[data-slot='grid-header-cell']") ?? []),
+    ].map((cell) => cell.textContent)
+
+    expect(headerNames[0]).toMatch(/Email/)
+    expect(headerNames[1]).toMatch(/Name/)
+
+    await user.click(screen.getByRole("button", { name: "Email" }))
+    await user.click(screen.getByRole("menuitem", { name: "Move right" }))
+
+    const restoredNames = [
+      ...(screen
+        .getByRole("button", { name: "Name" })
+        .closest("[data-slot='grid-header-row']")
+        ?.querySelectorAll("[data-slot='grid-header-cell']") ?? []),
+    ].map((cell) => cell.textContent)
+
+    expect(restoredNames[0]).toMatch(/Name/)
+    expect(restoredNames[1]).toMatch(/Email/)
+  })
+
+  it("makes data column headers draggable", () => {
+    renderData()
+
+    expect(screen.getByRole("button", { name: "Email" })).toHaveAttribute("draggable")
+    expect(screen.getByRole("button", { name: "Created At" })).toHaveAttribute("draggable")
+    expect(screen.getByRole("button", { name: "Add column" })).not.toHaveAttribute("draggable")
+  })
+
+  it("places add column after the last data column in the scrollable header", () => {
+    renderData()
+
+    const addColumn = screen.getByRole("button", { name: "Add column" })
+    expect(addColumn.closest("[data-slot='grid-add-column']")).not.toHaveClass("sticky")
+
+    const headerRow = addColumn.closest("[data-slot='grid-header-row']")
+    const headerCells = headerRow?.querySelectorAll(
+      "[data-slot='grid-header-cell'], [data-slot='grid-add-column']"
+    )
+    expect(headerCells?.[headerCells.length - 1]).toHaveAttribute(
+      "data-slot",
+      "grid-add-column"
+    )
+    expect(headerCells?.[headerCells.length - 2]?.textContent).toMatch(/Updated At/)
   })
 
   it("shows a variable tree and data table", async () => {

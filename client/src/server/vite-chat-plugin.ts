@@ -41,7 +41,7 @@ function attachChatApi(middlewares: Connect.Server, apiKey?: string) {
 
     try {
       const body = await readBody(req)
-      const webRequest = new Request("http://freeze.local/api/chat", {
+      const webRequest = new Request("http://vanteg.local/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: new Uint8Array(body),
@@ -58,7 +58,7 @@ function attachChatApi(middlewares: Connect.Server, apiKey?: string) {
 
 export function chatApiPlugin(apiKey?: string): Plugin {
   return {
-    name: "freeze-chat-api",
+    name: "vanteg-chat-api",
     configureServer(server: ViteDevServer) {
       attachChatApi(server.middlewares, apiKey)
     },

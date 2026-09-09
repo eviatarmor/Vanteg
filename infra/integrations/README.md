@@ -1,14 +1,14 @@
-# Freeze-owned integration apps
+# Vanteg-owned integration apps
 
-This folder holds the OAuth clients Freeze operates so workspace users can click **Connect** instead of pasting a client ID and secret.
+This folder holds the OAuth clients Vanteg operates so workspace users can click **Connect** instead of pasting a client ID and secret.
 
 ## How it works
 
-1. `oauth-apps.ts` is the catalog of Freeze-owned OAuth apps (Google, Microsoft, Slack, GitHub, and the rest).
+1. `oauth-apps.ts` is the catalog of Vanteg-owned OAuth apps (Google, Microsoft, Slack, GitHub, and the rest).
 2. Terraform in `infra/terraform/` wires the rest:
    - Redirect URIs from `public_base_url` + each app's `redirect_path`
    - AWS SSM parameters for every `FREEZE_*_OAUTH_CLIENT_ID` / `_SECRET`
-   - An IAM policy so the Freeze runtime can read those parameters
+   - An IAM policy so the Vanteg runtime can read those parameters
    - The Microsoft Entra (Azure AD) application, including Graph scopes and a client secret
    - Google APIs required by the Google OAuth scopes
 3. Client IDs and secrets never ship in the browser. The Integrations page uses `/integrations/oauth/<app>/callback`.
@@ -27,8 +27,8 @@ terraform apply \
 Microsoft credentials are created by Terraform and stored in SSM. For other providers, Terraform still creates the SSM parameters; set the values once with:
 
 ```bash
-aws ssm put-parameter --name /freeze/dev/oauth/slack/client_id --type SecureString --value "$SLACK_CLIENT_ID" --overwrite
-aws ssm put-parameter --name /freeze/dev/oauth/slack/client_secret --type SecureString --value "$SLACK_CLIENT_SECRET" --overwrite
+aws ssm put-parameter --name /vanteg/dev/oauth/slack/client_id --type SecureString --value "$SLACK_CLIENT_ID" --overwrite
+aws ssm put-parameter --name /vanteg/dev/oauth/slack/client_secret --type SecureString --value "$SLACK_CLIENT_SECRET" --overwrite
 ```
 
 `lifecycle.ignore_changes` on the parameter values keeps later applies from clobbering those secrets.

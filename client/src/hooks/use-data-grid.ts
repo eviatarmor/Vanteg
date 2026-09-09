@@ -2290,6 +2290,11 @@ function useDataGrid<TData>({
     tableRef.current = table;
   }
 
+  const leafColumnIds = table
+    .getAllLeafColumns()
+    .map((column) => column.id)
+    .join("|");
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: columnSizingInfo and columnSizing are used for calculating the column size vars
   const columnSizeVars = React.useMemo(() => {
     const headers = table.getFlatHeaders();
@@ -2299,7 +2304,11 @@ function useDataGrid<TData>({
       colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
     }
     return colSizes;
-  }, [table.getState().columnSizingInfo, table.getState().columnSizing]);
+  }, [
+    table.getState().columnSizingInfo,
+    table.getState().columnSizing,
+    leafColumnIds,
+  ]);
 
   const isFirefox = React.useSyncExternalStore(
     React.useCallback(() => () => {}, []),

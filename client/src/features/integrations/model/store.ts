@@ -89,7 +89,7 @@ function sampleDataRow(connector: Connector): SheetRow {
   const row = emptyFromFields(connector.dataFields)
   if (connector.id === "google-sheets") {
     row.name = "Ada Lovelace"
-    row.email = "ada@freeze.dev"
+    row.email = "ada@vanteg.dev"
     row.company = "Analytical Engines"
     row.status = "active"
   }

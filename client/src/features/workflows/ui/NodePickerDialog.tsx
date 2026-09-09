@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
+import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 import {
   Dialog,
   DialogContent,
@@ -149,7 +150,10 @@ export function NodePickerDialog({
                 {sections.map((section) => (
                   <TabsContent key={section.id} value={section.id}>
                     {section.id === "connectors" ? (
-                      <div className="grid max-h-[24rem] gap-2 overflow-auto sm:grid-cols-2">
+                      <ScrollFade
+                        className="max-h-[24rem]"
+                        viewportClassName="grid gap-2 sm:grid-cols-2"
+                      >
                         {apps.map((app) => (
                           <button
                             key={app.id}
@@ -178,13 +182,16 @@ export function NodePickerDialog({
                             </p>
                           </button>
                         ))}
-                      </div>
+                      </ScrollFade>
                     ) : (
-                      <div className="grid max-h-[24rem] gap-2 overflow-auto sm:grid-cols-2">
+                      <ScrollFade
+                        className="max-h-[24rem]"
+                        viewportClassName="grid gap-2 sm:grid-cols-2"
+                      >
                         {section.nodes.map((node) => (
                           <NodeCard key={node.id} node={node} onChoose={choose} />
                         ))}
-                      </div>
+                      </ScrollFade>
                     )}
                   </TabsContent>
                 ))}
@@ -215,7 +222,10 @@ export function NodePickerDialog({
                       ))}
                     </TabsList>
                   </Tabs>
-                  <div className="grid max-h-[24rem] gap-2 overflow-auto sm:grid-cols-2">
+                  <ScrollFade
+                    className="max-h-[24rem]"
+                    viewportClassName="grid gap-2 sm:grid-cols-2"
+                  >
                     {methods.length === 0 ? (
                       <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
                         No methods in this filter.
@@ -225,7 +235,7 @@ export function NodePickerDialog({
                         <NodeCard key={node.id} node={node} onChoose={choose} />
                       ))
                     )}
-                  </div>
+                  </ScrollFade>
                 </>
               ) : null}
             </div>
