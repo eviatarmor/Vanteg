@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router"
 
+import { LoginPage } from "@/features/auth/LoginPage"
+import { SignUpPage } from "@/features/auth/SignUpPage"
 import { AgentsPage } from "@/features/agents/AgentsPage"
 import { TeamsPage } from "@/features/teams/TeamsPage"
 import { ApiKeysPage } from "@/features/api-keys/ApiKeysPage"
@@ -17,6 +19,16 @@ import { WorkflowEditorPage } from "@/features/workflows/WorkflowEditorPage"
 import { WorkflowsPage } from "@/features/workflows/WorkflowsPage"
 
 export const router = createBrowserRouter([
+  {
+    path: "/login",
+    Component: LoginPage,
+    errorElement: <RouteErrorPage />,
+  },
+  {
+    path: "/sign-up",
+    Component: SignUpPage,
+    errorElement: <RouteErrorPage />,
+  },
   {
     path: "/",
     Component: AppShell,
