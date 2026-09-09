@@ -22,6 +22,7 @@ describe("AssistantPanel", () => {
     expect(screen.getByRole("complementary", { name: "Assistant" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "New" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "History" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Open full" })).toHaveAttribute("href", "/assistant")
     expect(screen.getByRole("button", { name: "What can I do on this page?" })).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "History" }))
@@ -42,5 +43,19 @@ describe("AssistantPanel", () => {
 
     expect(screen.getByText("New conversation")).toBeInTheDocument()
     expect(screen.getByText("0 messages")).toBeInTheDocument()
+  })
+
+  it("deep-links Open full to the active conversation", async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <AssistantPanel />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole("button", { name: "New" }))
+    const link = screen.getByRole("link", { name: "Open full" })
+    expect(link.getAttribute("href")).toMatch(/^\/assistant\/.+$/)
+    expect(link).not.toHaveAttribute("href", "/assistant")
   })
 })

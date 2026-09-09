@@ -15,7 +15,11 @@ describe("AskVantegButton", () => {
 
   it("toggles the assistant sidebar instead of opening a dialog", async () => {
     const user = userEvent.setup()
-    render(<AskVantegButton />)
+    render(
+      <MemoryRouter>
+        <AskVantegButton />
+      </MemoryRouter>
+    )
 
     const button = screen.getByRole("button", { name: "Ask Vanteg" })
     expect(button).toHaveAttribute("aria-pressed", "false")
@@ -39,7 +43,11 @@ describe("AskVantegButton", () => {
 
   it("keeps Ask Vanteg readable on the dark top bar when pressed", async () => {
     const user = userEvent.setup()
-    render(<AskVantegButton />)
+    render(
+      <MemoryRouter>
+        <AskVantegButton />
+      </MemoryRouter>
+    )
 
     const button = screen.getByRole("button", { name: "Ask Vanteg" })
     expect(button).toHaveClass("text-sidebar-foreground/85")

@@ -33,6 +33,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByText("Hudson Plumbing")).not.toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /inbox/i })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Assistant" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Workflows" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Agents" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Teams" })).toBeInTheDocument()

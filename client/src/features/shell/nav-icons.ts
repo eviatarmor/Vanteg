@@ -7,6 +7,7 @@ import {
   Inbox,
   KeyRound,
   Plug,
+  Sparkles,
   Users,
   Workflow,
   type LucideIcon,
@@ -17,6 +18,7 @@ import type { NavIconId } from "./model/types"
 export const navIcons: Record<NavIconId, LucideIcon> = {
   home: Home,
   inbox: Inbox,
+  assistant: Sparkles,
   workflows: Workflow,
   agents: Bot,
   teams: Users,
