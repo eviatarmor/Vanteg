@@ -58,6 +58,8 @@ export type NodeVar = {
   id: string
   key: string
   value: string
+  /** Secret-sensitive I/O variable. */
+  secret?: boolean
 }
 
 export type VantegNodeData = {

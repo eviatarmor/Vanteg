@@ -1,16 +1,25 @@
 import type { ExplorerNode } from "@/features/data/ui/ExplorerTree"
+import { SECRET_MASK } from "@/features/data/model/mask-secret"
 
+import { isSecretNodeVar } from "../model/node-io"
 import type { VantegEdge, VantegNode, NodeVar } from "../model/types"
 
-function varLeaves(vars: NodeVar[], prefix: string, hintFor?: (item: NodeVar) => string | undefined): ExplorerNode[] {
+function varLeaves(
+  vars: NodeVar[],
+  prefix: string,
+  hintFor?: (item: NodeVar) => string | undefined
+): ExplorerNode[] {
   return vars
     .filter((item) => item.key)
-    .map((item) => ({
-      id: `${prefix}:${item.id}`,
-      label: item.key,
-      icon: "variable" as const,
-      hint: hintFor?.(item) ?? (item.value || undefined),
-    }))
+    .map((item) => {
+      const secret = isSecretNodeVar(item)
+      return {
+        id: `${prefix}:${item.id}`,
+        label: item.key,
+        icon: secret ? ("secret" as const) : ("variable" as const),
+        hint: hintFor?.(item) ?? (secret ? SECRET_MASK : item.value || undefined),
+      }
+    })
 }
 
 export function outExplorerNodes(node: VantegNode): ExplorerNode[] {
