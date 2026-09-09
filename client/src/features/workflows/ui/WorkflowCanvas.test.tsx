@@ -41,7 +41,7 @@ describe("WorkflowCanvas", () => {
     expect(screen.getByRole("button", { name: "Lock canvas" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Test" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Deploy" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument()
 
     openPaneMenu()
 
@@ -114,7 +114,7 @@ describe("WorkflowCanvas", () => {
     const user = userEvent.setup()
     const workflow = renderCanvas()
 
-    await user.click(screen.getByRole("button", { name: "Deploy" }))
+    await user.click(screen.getByRole("button", { name: "Publish" }))
 
     expect(getWorkflow(workflow.id)?.status).toBe("prod")
   })
