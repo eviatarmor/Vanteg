@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
-import { History, Plus, Sparkles, X } from "lucide-react"
-import { useLocation } from "react-router"
+import { History, Maximize2, Plus, Sparkles, X } from "lucide-react"
+import { Link, useLocation } from "react-router"
 
 import {
   Conversation,
@@ -100,6 +100,15 @@ export function AssistantPanel() {
         >
           <History />
           History
+        </Button>
+        <Button type="button" variant="ghost" size="icon-sm" asChild>
+          <Link
+            to={activeId ? `/assistant/${activeId}` : "/assistant"}
+            aria-label="Open full"
+            onClick={() => setAssistantOpen(false)}
+          >
+            <Maximize2 />
+          </Link>
         </Button>
         <Button
           type="button"
