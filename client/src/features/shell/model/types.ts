@@ -35,6 +35,7 @@ export interface WorkspaceIdentity {
 
 export interface CurrentUser {
   displayName: string
+  email: string
   role: string
   initials: string
 }
