@@ -1,6 +1,7 @@
+import { resolveCurrentUser } from "../../auth/model/session"
+
 import { matchActivePath } from "./match-path"
 import type {
-  CurrentUser,
   NavItem,
   NavSection,
   UserMenuItem,
@@ -10,12 +11,6 @@ import type {
 const workspaceIdentity: WorkspaceIdentity = {
   productName: "Vanteg",
   assistantActionLabel: "Ask Vanteg",
-}
-
-const currentUser: CurrentUser = {
-  displayName: "Darren",
-  role: "Owner",
-  initials: "DH",
 }
 
 const navSections: NavSection[] = [
@@ -71,8 +66,8 @@ export function getWorkspaceIdentity(): WorkspaceIdentity {
   return workspaceIdentity
 }
 
-export function getCurrentUser(): CurrentUser {
-  return currentUser
+export function getCurrentUser() {
+  return resolveCurrentUser()
 }
 
 export function getNavSections(): NavSection[] {
