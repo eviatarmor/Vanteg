@@ -11,7 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider.tsx"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="system">
       <TooltipProvider>
         <RouterProvider router={router} />
         <Toaster richColors position="bottom-right" />
