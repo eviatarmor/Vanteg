@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it } from "vitest"
 
 import {
   addDataRow,
+  completeOAuthCallback,
   connectConnector,
   createCustomCredential,
   deleteCustomCredential,
   getIntegrationsSnapshot,
   insertDataRows,
   resetIntegrationsStore,
+  startManagedOAuthConnect,
   updateCustomCredential,
 } from "./store"
 
@@ -119,4 +121,37 @@ describe("integrations store", () => {
     expect(deleted.ok).toBe(true)
     expect(getIntegrationsSnapshot().customCredentials).toHaveLength(0)
   })
+
+  it("starts managed OAuth and completes via callback into the store", async () => {
+    const started = await startManagedOAuthConnect("slack")
+    expect(started.ok).toBe(true)
+    if (!started.ok) {
+      return
+    }
+    expect(started.data.authorizeUrl).toContain("/integrations/oauth/callback")
+    expect(getIntegrationsSnapshot().connections).toHaveLength(0)
+
+    const params = new URL(started.data.authorizeUrl, "http://localhost")
+    const completed = await completeOAuthCallback({
+      code: params.searchParams.get("code") ?? undefined,
+      state: params.searchParams.get("state") ?? undefined,
+      provider: params.searchParams.get("provider") ?? undefined,
+    })
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) {
+      return
+    }
+    expect(completed.data.connectorId).toBe("slack")
+    expect(getIntegrationsSnapshot().connections).toHaveLength(1)
+    expect(getIntegrationsSnapshot().credentials[0]?.managed).toBe(true)
+  })
+
+  it("rejects completing OAuth when state is missing", async () => {
+    const result = await completeOAuthCallback({ code: "mock-code" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.code).toBe("validation")
+    }
+  })
+
 })
