@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router"
 import { toast } from "sonner"
 
 import { Button } from "@workspace/ui/components/button"
@@ -21,7 +22,7 @@ import {
   credentialFieldsFor,
   isManagedOAuth,
 } from "../model/credential-fields"
-import { connectConnector } from "../model/store"
+import { connectConnector, startManagedOAuthConnect } from "../model/store"
 import type { Connector } from "../model/types"
 import { BrandIcon } from "./BrandIcon"
 
@@ -36,6 +37,7 @@ export function ConnectConnectorDialog({
   onOpenChange: (open: boolean) => void
   onConnected?: () => void
 }) {
+  const navigate = useNavigate()
   const [values, setValues] = useState<Record<string, string>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [pending, setPending] = useState(false)
@@ -55,6 +57,19 @@ export function ConnectConnectorDialog({
     setPending(true)
     setFieldErrors({})
     try {
+      if (managed) {
+        const started = await startManagedOAuthConnect(connector.id)
+        if (!started.ok) {
+          toast.error(started.error.message)
+          return
+        }
+        setValues({})
+        setFieldErrors({})
+        onOpenChange(false)
+        navigate(started.data.authorizeUrl)
+        return
+      }
+
       const result = await connectConnector(connector.id, values)
       if (!result.ok) {
         if (result.error.fields) {
@@ -148,7 +163,7 @@ export function ConnectConnectorDialog({
             Cancel
           </Button>
           <Button type="button" disabled={pending} onClick={() => void submit()}>
-            {pending ? "Connecting…" : actionLabel}
+            {pending ? (managed ? "Redirecting…" : "Connecting…") : actionLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
