@@ -24,6 +24,7 @@ describe("shared connector templates field controls", () => {
     expect(fieldById(templates.email.in, "from")?.description).toMatch(/email/i)
     expect(fieldById(templates.email.in, "to")?.description).toMatch(/email/i)
     expect(fieldById(templates.email.data, "to")?.description).toMatch(/email/i)
+    expect(fieldById(templates.email.data, "cc")?.description).toMatch(/cc|comma-separated/i)
   })
 
   it("uses long-text for issue body and comment", () => {
@@ -47,9 +48,27 @@ describe("shared connector templates field controls", () => {
     const dataCurrency = fieldById(templates.payment.data, "currency")
     expect(inCurrency?.variant).toBe("select")
     expect(dataCurrency?.variant).toBe("select")
-    expect(inCurrency?.options?.map((option) => option.value)).toEqual(
-      expect.arrayContaining(["usd", "eur", "gbp", "aud", "cad"])
-    )
+    expect(inCurrency?.options?.map((option) => option.value)).toEqual([
+      "usd",
+      "eur",
+      "gbp",
+      "aud",
+      "cad",
+    ])
+    expect(inCurrency?.options?.map((option) => option.label)).toEqual([
+      "USD",
+      "EUR",
+      "GBP",
+      "AUD",
+      "CAD",
+    ])
+    expect(dataCurrency?.options?.map((option) => option.label)).toEqual([
+      "USD",
+      "EUR",
+      "GBP",
+      "AUD",
+      "CAD",
+    ])
     expect(inCurrency?.defaultValue).toBe("usd")
   })
 

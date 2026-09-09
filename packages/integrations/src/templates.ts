@@ -16,6 +16,14 @@ function select(id: string, name: string, options: string[], extra: Partial<Shee
   })
 }
 
+const CURRENCY_SELECT_OPTIONS = [
+  { label: "USD", value: "usd" },
+  { label: "EUR", value: "eur" },
+  { label: "GBP", value: "gbp" },
+  { label: "AUD", value: "aud" },
+  { label: "CAD", value: "cad" },
+]
+
 export const templates: Record<TemplateName, { in: SheetField[]; data: SheetField[]; out: SheetField[] }> = {
   sheet: {
     in: [
@@ -186,6 +194,7 @@ export const templates: Record<TemplateName, { in: SheetField[]; data: SheetFiel
       field("customerId", "Customer ID"),
       select("currency", "Currency", ["usd", "eur", "gbp", "aud", "cad"], {
         defaultValue: "usd",
+        options: CURRENCY_SELECT_OPTIONS,
       }),
       select("operation", "Operation", ["create", "capture", "refund"], { defaultValue: "create" }),
     ],
@@ -194,6 +203,7 @@ export const templates: Record<TemplateName, { in: SheetField[]; data: SheetFiel
       field("amount", "Amount", "number", { required: true }),
       select("currency", "Currency", ["usd", "eur", "gbp", "aud", "cad"], {
         defaultValue: "usd",
+        options: CURRENCY_SELECT_OPTIONS,
       }),
       field("description", "Description"),
     ],
