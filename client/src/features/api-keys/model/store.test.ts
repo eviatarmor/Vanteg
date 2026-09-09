@@ -10,6 +10,7 @@ import {
   resetApiKeysStore,
   retryApiKeysLoad,
   revokeApiKey,
+  setApiKeysLoading,
   getApiKeysSnapshot,
 } from "./store"
 
@@ -62,6 +63,17 @@ describe("api keys store", () => {
     const recovered = retryApiKeysLoad()
     expect(recovered.loadState).toBe("ready")
     expect(recovered.keys).toHaveLength(0)
+  })
+
+  it("does not wipe persisted keys when creating while the store is still loading", () => {
+    createApiKey({ kind: "private-keys", name: "Keep me", scopes: [] })
+    setApiKeysLoading()
+    createApiKey({ kind: "private-keys", name: "Second", scopes: [] })
+
+    const names = getApiKeysSnapshot().keys.map((item) => item.name).sort()
+    expect(names).toEqual(["Keep me", "Second"])
+    expect(localStorage.getItem(API_KEYS_STORAGE_KEY)).toContain("Keep me")
+    expect(localStorage.getItem(API_KEYS_STORAGE_KEY)).toContain("Second")
   })
 
   it("keeps list previews non-revealing relative to SECRET_MASK helpers", () => {

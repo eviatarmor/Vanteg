@@ -157,7 +157,14 @@ export function setApiKeysLoading() {
   emit()
 }
 
+function ensureHydrated() {
+  if (snapshot.loadState === "loading") {
+    hydrateApiKeys()
+  }
+}
+
 export function createApiKey(input: CreateApiKeyInput): CreatedApiKey {
+  ensureHydrated()
   const name = input.name.trim()
   if (!name) {
     throw new Error("Name is required")
@@ -181,6 +188,7 @@ export function createApiKey(input: CreateApiKeyInput): CreatedApiKey {
 }
 
 export function revokeApiKey(id: string): ApiKey | null {
+  ensureHydrated()
   const existing = snapshot.keys.find((item) => item.id === id)
   if (!existing || existing.status === "revoked") {
     return null
@@ -195,6 +203,7 @@ export function revokeApiKey(id: string): ApiKey | null {
 }
 
 export function deleteApiKey(id: string): boolean {
+  ensureHydrated()
   const next = snapshot.keys.filter((item) => item.id !== id)
   if (next.length === snapshot.keys.length) {
     return false
