@@ -19,6 +19,7 @@ import {
 import { workflowTabs } from "./tabs"
 import { EmptyWorkflows } from "./ui/EmptyWorkflows"
 import { WorkflowList } from "./ui/WorkflowList"
+import { WorkflowRunsPanel } from "./ui/WorkflowRunsPanel"
 import { WorkflowsSkeleton } from "./ui/WorkflowsSkeleton"
 
 export function WorkflowsPage() {
@@ -64,6 +65,9 @@ export function WorkflowsPage() {
         defaultTab={searchParams.get("tab") ?? undefined}
         onNew={createAndOpen}
         renderPanel={(tab) => {
+          if (tab.id === "runs") {
+            return <WorkflowRunsPanel />
+          }
           if (status === "loading" || status === "idle") {
             return <WorkflowsSkeleton />
           }
@@ -79,14 +83,6 @@ export function WorkflowsPage() {
                   Retry
                 </Button>
               </div>
-            )
-          }
-          if (tab.id === "runs") {
-            return (
-              <EmptyWorkflows
-                title="No runs yet"
-                description="Runs will show up here after a workflow executes."
-              />
             )
           }
 
