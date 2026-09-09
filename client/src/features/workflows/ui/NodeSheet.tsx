@@ -23,6 +23,7 @@ import { getNodeTypeForEditor } from "../model/auth-fields"
 import { getNodePorts, portColorValue } from "../model/node-ports"
 import type { VantegEdge, VantegNode, VantegNodePatch } from "../model/types"
 import { NodeConfigFields } from "./NodeConfigFields"
+import { WebhookTestPanel } from "./WebhookTestPanel"
 import { NodeIcon } from "./node-icons"
 import { explorerGroupIds, inExplorerNodes, outExplorerNodes } from "./node-io-tree"
 
@@ -178,6 +179,12 @@ export function NodeSheet({
                       node={node}
                       catalog={catalog}
                       onChange={onChange}
+                    />
+                  ) : null}
+                  {node.data.catalogId === "webhook" ? (
+                    <WebhookTestPanel
+                      path={node.data.config.path}
+                      method={node.data.config.method}
                     />
                   ) : null}
                   <section className="grid gap-2">
