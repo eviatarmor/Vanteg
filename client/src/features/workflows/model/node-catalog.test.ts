@@ -492,4 +492,24 @@ describe("workflow node catalog", () => {
     expect(table?.control ?? "input").toBe("input")
     expect(table?.placeholder).toBe("jobs")
   })
+
+  it("marks payment/CRM amounts as number and calendar/delay times as datetime", () => {
+    const deal = getNodeType("hubspot-create-deal")
+    expect(deal?.fields.find((field) => field.key === "amount")?.control).toBe("number")
+
+    const charge = getNodeType("stripe-create-charge")
+    expect(charge?.fields.find((field) => field.key === "amount")?.control).toBe("number")
+
+    const invoice = getNodeType("stripe-create-invoice")
+    expect(invoice?.fields.find((field) => field.key === "amount")?.control).toBe("number")
+
+    const event = getNodeType("google-calendar-create-event")
+    expect(event?.fields.find((field) => field.key === "start")?.control).toBe("datetime")
+
+    const delay = getNodeType("delay")
+    expect(delay?.fields.find((field) => field.key === "until")?.control).toBe("datetime")
+
+    const calUntil = event?.fields.find((field) => field.key === "until")
+    expect(calUntil?.control).toBe("datetime")
+  })
 })
