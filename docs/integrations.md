@@ -4,7 +4,7 @@ There are two catalogs.
 
 The **Integrations page** has **152 connectable apps**. Each app is assigned a capability template, and that template’s **operations** are the actions you can run. Those apps do **not** have per-app trigger lists.
 
-The **workflow editor** has **12 first-class connector apps** with named **triggers** and **actions**. Everything else in the 152-app catalog is meant to be reached from the generic **App event** trigger (`app` + `event`).
+The **workflow editor** has **13 first-class connector apps** with named **triggers** and **actions**. Everything else in the 152-app catalog is meant to be reached from the generic **App event** trigger (`app` + `event`).
 
 Sources:
 
@@ -17,7 +17,7 @@ Sources:
 
 ### Slack
 
-Channel fields use Setup `control: "resource"` with `resourceType: "slack.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`. Related kinds: `github.repo`, `sheets.sheet`, `discord.channel`, `notion.page`, `calendar.calendar`, `forms.form`.
+Channel fields use Setup `control: "resource"` with `resourceType: "slack.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`. Related kinds: `github.repo`, `sheets.sheet`, `discord.channel`, `notion.page`, `calendar.calendar`, `forms.form`, `teams.team`, `teams.channel`.
 
 **Triggers:** New message · New reaction · New channel · App mentioned
 
@@ -52,6 +52,14 @@ Channel fields use Setup `control: "resource"` with `resourceType: "slack.channe
 **Triggers:** New message · New reaction · Member joined
 
 **Actions:** Send message · Update message · Add reaction
+
+### Microsoft Teams
+
+Team and channel fields use Setup `control: "resource"` with `resourceType: "teams.team"` / `"teams.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`.
+
+**Triggers:** Message received · Channel created · Member added
+
+**Actions:** Post message · Reply in thread · Update message · List channels · Create channel
 
 ### HTTP
 
