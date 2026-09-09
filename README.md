@@ -23,6 +23,7 @@ Product code lives under `client/src/features/`. Add a page by creating a featur
 ## Conventions
 
 - UI: see [`docs/ui-conventions.md`](docs/ui-conventions.md) (secret fields must use `SecretInput`, never native password inputs).
+- Frontend PR wave merge order: see [`docs/pr-merge-order.md`](docs/pr-merge-order.md).
 
 ```bash
 npm install
