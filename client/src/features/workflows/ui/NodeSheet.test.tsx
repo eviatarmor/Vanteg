@@ -126,6 +126,16 @@ describe("NodeSheet", () => {
     )
   })
 
+  it("renders Microsoft Teams message as a textarea", () => {
+    const node = createVantegNode("microsoft-teams", { x: 0, y: 0 })
+
+    renderSheet(node)
+
+    expect(screen.getByLabelText("Message").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Team")).toBeInTheDocument()
+    expect(screen.getByLabelText("Channel")).toBeInTheDocument()
+  })
+
   it("renders emoji as a select for Slack reactions", async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
