@@ -42,6 +42,7 @@ import {
 } from "./model/load"
 import { getHomeStats, type HomeStat } from "./model/stats"
 import { homeSuggestions } from "./model/suggestions"
+import { OnboardingChecklist } from "./ui/OnboardingChecklist"
 
 const trendIcon = {
   up: ArrowUp,
@@ -134,6 +135,8 @@ export function HomePage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title={title} subtitle={subtitle} icon={Home} />
       <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-auto px-6 py-6">
+        <OnboardingChecklist />
+
         <section className="grid gap-3" aria-label="Quick actions">
           <div>
             <h2 className="text-sm font-medium">Quick actions</h2>

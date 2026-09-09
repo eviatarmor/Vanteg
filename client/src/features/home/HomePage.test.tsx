@@ -8,12 +8,15 @@ import { resetInbox } from "@/features/inbox/model/store"
 
 import { HomePage } from "./HomePage"
 import { failNextHomeLoad, resetHomeLoadFlags } from "./model/load"
+import { dismissOnboarding, resetOnboarding } from "./model/onboarding-store"
 
 describe("HomePage", () => {
   beforeEach(() => {
     resetAgents()
     resetInbox()
     resetHomeLoadFlags()
+    resetOnboarding()
+    window.localStorage.clear()
   })
 
   it("shows quick action CTAs to templates, assistant, workflows, and agents", async () => {
@@ -45,7 +48,7 @@ describe("HomePage", () => {
     )
   })
 
-  it("shows a stats skeleton then workspace stats and automation suggestions", async () => {
+  it("shows a stats skeleton then workspace stats, suggestions, and the onboarding checklist", async () => {
     render(
       <MemoryRouter>
         <HomePage />
@@ -53,6 +56,7 @@ describe("HomePage", () => {
     )
 
     expect(screen.getByTestId("home-stats-skeleton")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Getting started" })).toBeInTheDocument()
 
     await waitFor(() => {
       expect(screen.getByText("Overview")).toBeInTheDocument()
@@ -70,10 +74,11 @@ describe("HomePage", () => {
       "href",
       "/agents/agent-support"
     )
-    expect(screen.getByRole("link", { name: /Browse templates/i })).toHaveAttribute(
-      "href",
-      "/templates"
-    )
+    const templateLinks = screen.getAllByRole("link", { name: /Browse templates/i })
+    expect(templateLinks.length).toBeGreaterThanOrEqual(1)
+    for (const link of templateLinks) {
+      expect(link).toHaveAttribute("href", "/templates")
+    }
     expect(
       screen.queryByRole("heading", { name: "Nothing on the dashboard yet" })
     ).not.toBeInTheDocument()
@@ -100,5 +105,15 @@ describe("HomePage", () => {
     await waitFor(() => {
       expect(screen.getByText("Waiting on you")).toBeInTheDocument()
     })
+  })
+
+  it("hides the checklist after it was dismissed", () => {
+    dismissOnboarding()
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    )
+    expect(screen.queryByRole("heading", { name: "Getting started" })).not.toBeInTheDocument()
   })
 })
