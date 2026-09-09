@@ -49,6 +49,20 @@ const CALENDARS: readonly ResourceOption[] = [
   { value: "support", label: "Support on-call" },
 ]
 
+const TEAMS_TEAMS: readonly ResourceOption[] = [
+  { value: "acme-ops", label: "Acme Ops" },
+  { value: "engineering", label: "Engineering" },
+  { value: "sales", label: "Sales" },
+  { value: "support", label: "Support" },
+]
+
+const TEAMS_CHANNELS: readonly ResourceOption[] = [
+  { value: "General", label: "General" },
+  { value: "incidents", label: "incidents" },
+  { value: "deals", label: "deals" },
+  { value: "standup", label: "standup" },
+]
+
 const FORMS: readonly ResourceOption[] = [
   { value: "contact-form", label: "Contact form" },
   { value: "nps", label: "NPS survey" },
@@ -64,6 +78,8 @@ const CATALOG: Record<string, readonly ResourceOption[]> = {
   "notion.page": NOTION_PAGES,
   "calendar.calendar": CALENDARS,
   "forms.form": FORMS,
+  "teams.team": TEAMS_TEAMS,
+  "teams.channel": TEAMS_CHANNELS,
 }
 
 /** Synchronous mock catalog used by the workflow Setup resource picker. */

@@ -1,4 +1,21 @@
 import { field, integrationApp, method, oauth } from "../define.ts"
+import type { MethodField } from "../types.ts"
+
+function teamField(placeholder = "Acme Ops"): MethodField {
+  return field("team", "Team", placeholder, {
+    control: "resource",
+    resourceType: "teams.team",
+    help: "Pick a Microsoft Teams team from the connected account, or enter a custom team id.",
+  })
+}
+
+function channelField(placeholder = "General"): MethodField {
+  return field("channel", "Channel", placeholder, {
+    control: "resource",
+    resourceType: "teams.channel",
+    help: "Pick a Microsoft Teams channel from the connected team, or enter a custom channel id.",
+  })
+}
 
 export const microsoftTeams = integrationApp({
   id: "microsoft-teams",
@@ -22,37 +39,21 @@ export const microsoftTeams = integrationApp({
       "trigger",
       "Message received",
       "Start when a Microsoft Teams channel or chat message is posted.",
-      [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
-        field("channel", "Channel", "General", {
-          help: "Channel id or display name (resource select later).",
-        }),
-      ]
+      [teamField(), channelField()]
     ),
     method(
       "microsoft-teams-channel-created",
       "trigger",
       "Channel created",
       "Start when a channel is created in a Microsoft Teams team.",
-      [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
-        field("name", "Name contains", "incidents"),
-      ]
+      [teamField(), field("name", "Name contains", "incidents")]
     ),
     method(
       "microsoft-teams-member-added",
       "trigger",
       "Member added",
       "Start when a member is added to a Microsoft Teams team.",
-      [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
-      ]
+      [teamField()]
     ),
     method(
       "microsoft-teams",
@@ -60,12 +61,8 @@ export const microsoftTeams = integrationApp({
       "Post message",
       "Post a message to a Microsoft Teams channel.",
       [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
-        field("channel", "Channel", "General", {
-          help: "Channel id or display name (resource select later).",
-        }),
+        teamField(),
+        channelField(),
         field("message", "Message", "Workflow finished", { control: "textarea" }),
         field("mentions", "Mentions (optional)", "@ada,@ops", {
           help: "Comma-separated user or tag mentions.",
@@ -78,12 +75,8 @@ export const microsoftTeams = integrationApp({
       "Reply in thread",
       "Reply to an existing Microsoft Teams channel message thread.",
       [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
-        field("channel", "Channel", "General", {
-          help: "Channel id or display name (resource select later).",
-        }),
+        teamField(),
+        channelField(),
         field("replyTo", "Reply to message ID", "{{Webhook.messageId}}"),
         field("message", "Message", "Following up", { control: "textarea" }),
         field("mentions", "Mentions (optional)", "@ada"),
@@ -95,12 +88,8 @@ export const microsoftTeams = integrationApp({
       "Update message",
       "Edit an existing Microsoft Teams channel message.",
       [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
-        field("channel", "Channel", "General", {
-          help: "Channel id or display name (resource select later).",
-        }),
+        teamField(),
+        channelField(),
         field("messageId", "Message ID", "{{Webhook.messageId}}"),
         field("message", "Message", "Updated text", { control: "textarea" }),
       ]
@@ -110,11 +99,7 @@ export const microsoftTeams = integrationApp({
       "action",
       "List channels",
       "List channels in a Microsoft Teams team.",
-      [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
-      ]
+      [teamField()]
     ),
     method(
       "microsoft-teams-create-channel",
@@ -122,9 +107,7 @@ export const microsoftTeams = integrationApp({
       "Create channel",
       "Create a channel in a Microsoft Teams team.",
       [
-        field("team", "Team", "Acme Ops", {
-          help: "Team id or display name (resource select later).",
-        }),
+        teamField(),
         field("name", "Name", "deal-acme"),
         field("description", "Description", "Acme renewal"),
       ]

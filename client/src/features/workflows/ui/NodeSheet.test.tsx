@@ -148,14 +148,16 @@ describe("NodeSheet", () => {
     )
   })
 
-  it("renders Microsoft Teams message as a textarea", () => {
+  it("renders Microsoft Teams message as a textarea", async () => {
     const node = createVantegNode("microsoft-teams", { x: 0, y: 0 })
 
     renderSheet(node)
 
     expect(screen.getByLabelText("Message").tagName).toBe("TEXTAREA")
-    expect(screen.getByLabelText("Team")).toBeInTheDocument()
-    expect(screen.getByLabelText("Channel")).toBeInTheDocument()
+    expect(await screen.findByRole("combobox", { name: "Team" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Channel" })).toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "Team" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "Channel" })).not.toBeInTheDocument()
   })
 
   it("renders emoji as a select for Slack reactions", async () => {

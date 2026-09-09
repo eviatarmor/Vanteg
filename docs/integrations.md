@@ -17,7 +17,7 @@ Sources:
 
 ### Slack
 
-Channel fields use Setup `control: "resource"` with `resourceType: "slack.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`. Related kinds: `github.repo`, `sheets.sheet`, `discord.channel`, `notion.page`, `calendar.calendar`, `forms.form`.
+Channel fields use Setup `control: "resource"` with `resourceType: "slack.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`. Related kinds: `github.repo`, `sheets.sheet`, `discord.channel`, `notion.page`, `calendar.calendar`, `forms.form`, `teams.team`, `teams.channel`.
 
 **Triggers:** New message · New reaction · New channel · App mentioned
 
@@ -54,6 +54,8 @@ Channel fields use Setup `control: "resource"` with `resourceType: "slack.channe
 **Actions:** Send message · Update message · Add reaction
 
 ### Microsoft Teams
+
+Team and channel fields use Setup `control: "resource"` with `resourceType: "teams.team"` / `"teams.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`.
 
 **Triggers:** Message received · Channel created · Member added
 
