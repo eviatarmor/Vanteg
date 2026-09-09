@@ -51,4 +51,22 @@ export type {
   VerifyWebhookInput,
 } from "./runtime.ts"
 
+export type {
+  CreateCustomCredentialInput,
+  CustomAuthKind,
+  CustomCredential,
+  CustomCredentialFieldDef,
+  UpdateCustomCredentialInput,
+} from "./custom-credentials.ts"
+export {
+  CUSTOM_AUTH_KINDS,
+  applyCustomCredentialDefaults,
+  customAuthKindLabel,
+  customCredentialFieldsFor,
+  mergeCustomCredentialFields,
+  primarySecretPreview,
+  secretFieldIdsFor,
+  validateCustomCredentialInput,
+} from "./custom-credentials.ts"
+
 export { createMockIntegrationsAdapter } from "./mock-adapter.ts"

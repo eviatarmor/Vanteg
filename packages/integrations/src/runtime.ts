@@ -1,3 +1,8 @@
+import type {
+  CreateCustomCredentialInput,
+  CustomCredential,
+  UpdateCustomCredentialInput,
+} from "./custom-credentials.ts"
 import type { Result } from "./errors.ts"
 import type { AuthKind } from "./types.ts"
 
@@ -71,4 +76,8 @@ export interface IntegrationsAdapter {
   verifyWebhook?(input: VerifyWebhookInput): Promise<Result<{ accepted: boolean; eventId?: string }>>
   /** Convenience for UI: managed oauth2 simulates complete; secrets use createConnection. */
   connectApp(input: ConnectAppInput): Promise<Result<Connection>>
+  listCustomCredentials(): Promise<Result<CustomCredential[]>>
+  createCustomCredential(input: CreateCustomCredentialInput): Promise<Result<CustomCredential>>
+  updateCustomCredential(input: UpdateCustomCredentialInput): Promise<Result<CustomCredential>>
+  deleteCustomCredential(id: string): Promise<Result<{ id: string }>>
 }
