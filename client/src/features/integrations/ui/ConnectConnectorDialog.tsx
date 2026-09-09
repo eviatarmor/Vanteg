@@ -26,6 +26,13 @@ import { connectConnector, startManagedOAuthConnect } from "../model/store"
 import type { Connector } from "../model/types"
 import { BrandIcon } from "./BrandIcon"
 
+function fieldsComplete(
+  fields: ReturnType<typeof credentialFieldsFor>,
+  values: Record<string, string>
+): boolean {
+  return fields.every((field) => (values[field.id] ?? "").trim().length > 0)
+}
+
 export function ConnectConnectorDialog({
   connector,
   open,
@@ -49,6 +56,7 @@ export function ConnectConnectorDialog({
   const fields = credentialFieldsFor(connector)
   const managed = isManagedOAuth(connector)
   const actionLabel = connectActionLabel(connector)
+  const canSubmit = managed || fieldsComplete(fields, values)
 
   async function submit() {
     if (!connector || pending) {
@@ -162,7 +170,7 @@ export function ConnectConnectorDialog({
           >
             Cancel
           </Button>
-          <Button type="button" disabled={pending} onClick={() => void submit()}>
+          <Button type="button" disabled={pending || !canSubmit} onClick={() => void submit()}>
             {pending ? (managed ? "Redirecting…" : "Connecting…") : actionLabel}
           </Button>
         </DialogFooter>

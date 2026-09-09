@@ -43,39 +43,45 @@ export function ConnectorCatalog({
         />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto pt-3">
-        <div
-          data-slot="connector-catalog-grid"
-          className="grid grid-cols-1 gap-2 pr-1 @min-[28rem]:grid-cols-2 @min-[42rem]:grid-cols-3 @min-[56rem]:grid-cols-4"
-        >
-          {visible.map((connector) => {
-            const connected = connectedIds.has(connector.id)
-            return (
-              <button
-                key={connector.id}
-                type="button"
-                aria-label={connector.name}
-                className="rounded-xl border border-border bg-card px-3 py-3 text-left hover:bg-muted/60"
-                onClick={() => onPick(connector)}
-              >
-                <div className="flex items-start gap-2.5">
-                  <BrandIconCard slug={connector.iconSlug} name={connector.name} />
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-2 text-sm font-medium">
-                      <span className="min-w-0 flex-1 truncate">{connector.name}</span>
-                      {connected ? <Badge variant="secondary">Connected</Badge> : null}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                      {connector.description}
-                    </p>
+        {visible.length === 0 ? (
+          <p className="px-1 py-6 text-center text-sm text-muted-foreground">
+            No connectors match "{query.trim()}".
+          </p>
+        ) : (
+          <div
+            data-slot="connector-catalog-grid"
+            className="grid grid-cols-1 gap-2 pr-1 @min-[28rem]:grid-cols-2 @min-[42rem]:grid-cols-3 @min-[56rem]:grid-cols-4"
+          >
+            {visible.map((connector) => {
+              const connected = connectedIds.has(connector.id)
+              return (
+                <button
+                  key={connector.id}
+                  type="button"
+                  aria-label={connector.name}
+                  className="rounded-xl border border-border bg-card px-3 py-3 text-left hover:bg-muted/60"
+                  onClick={() => onPick(connector)}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <BrandIconCard slug={connector.iconSlug} name={connector.name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-2 text-sm font-medium">
+                        <span className="min-w-0 flex-1 truncate">{connector.name}</span>
+                        {connected ? <Badge variant="secondary">Connected</Badge> : null}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        {connector.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <Badge variant="outline" className="mt-2.5 uppercase">
-                  {authKindLabel(connector.auth.kind)}
-                </Badge>
-              </button>
-            )
-          })}
-        </div>
+                  <Badge variant="outline" className="mt-2.5 uppercase">
+                    {authKindLabel(connector.auth.kind)}
+                  </Badge>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

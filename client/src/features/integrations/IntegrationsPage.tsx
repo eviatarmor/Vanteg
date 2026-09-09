@@ -1,7 +1,8 @@
-import { useState } from "react"
-import { Plug } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { AlertCircle, Plug } from "lucide-react"
 
 import type { CustomCredential } from "@workspace/integrations"
+import { Button } from "@workspace/ui/components/button"
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,11 @@ import {
 import { PageTabs } from "@/features/page-tabs/PageTabs"
 import { getPageCopy } from "@/features/shell/model/catalog"
 
+import {
+  humanizeIntegrationsLoadError,
+  loadIntegrationsList,
+  type IntegrationsLoadStatus,
+} from "./model/load"
 import { useIntegrationsStore } from "./model/store"
 import type { Connector } from "./model/types"
 import { integrationTabs } from "./tabs"
@@ -22,6 +28,7 @@ import { ConnectorCatalog } from "./ui/ConnectorCatalog"
 import { CustomCredentialDialog } from "./ui/CustomCredentialDialog"
 import { CustomCredentials } from "./ui/CustomCredentials"
 import { DeleteCustomCredentialDialog } from "./ui/DeleteCustomCredentialDialog"
+import { IntegrationsSkeleton } from "./ui/IntegrationsSkeleton"
 
 export function IntegrationsPage() {
   const { title, subtitle } = getPageCopy("/integrations")
@@ -31,6 +38,25 @@ export function IntegrationsPage() {
   const [credentialOpen, setCredentialOpen] = useState(false)
   const [editingCredential, setEditingCredential] = useState<CustomCredential | null>(null)
   const [deletingCredential, setDeletingCredential] = useState<CustomCredential | null>(null)
+  const [status, setStatus] = useState<IntegrationsLoadStatus>("loading")
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    setStatus("loading")
+    setErrorMessage(null)
+    void loadIntegrationsList()
+      .then(() => {
+        setStatus("ready")
+      })
+      .catch((error: unknown) => {
+        setStatus("error")
+        setErrorMessage(humanizeIntegrationsLoadError(error))
+      })
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   function openPicker() {
     setPickerOpen(true)
@@ -53,6 +79,30 @@ export function IntegrationsPage() {
       return
     }
     setPending(connector)
+  }
+
+  function renderConnectorsPanel() {
+    if (status === "loading") {
+      return <IntegrationsSkeleton />
+    }
+    if (status === "error") {
+      return (
+        <div
+          role="alert"
+          className="flex min-h-[20rem] flex-col items-center justify-center px-6 py-10 text-center"
+        >
+          <AlertCircle className="size-8 text-destructive" aria-hidden />
+          <p className="mt-3 text-sm font-medium">Could not load connectors</p>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            {errorMessage ?? humanizeIntegrationsLoadError(null)}
+          </p>
+          <Button type="button" className="mt-4" variant="outline" onClick={load}>
+            Try again
+          </Button>
+        </div>
+      )
+    }
+    return <ConfiguredConnectors onAdd={openPicker} />
   }
 
   return (
@@ -79,7 +129,7 @@ export function IntegrationsPage() {
               />
             )
           }
-          return <ConfiguredConnectors onAdd={openPicker} />
+          return renderConnectorsPanel()
         }}
       />
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
