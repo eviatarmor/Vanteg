@@ -27,6 +27,8 @@ export interface KnowledgeDocument {
   uploadedAt: number
 }
 
+export type MemoryLoadState = "loading" | "ready" | "error"
+
 export interface MemorySnapshot {
   bases: MemoryBase[]
   memories: MemoryEntry[]
@@ -34,4 +36,6 @@ export interface MemorySnapshot {
   documents: KnowledgeDocument[]
   selectedMemoryBaseId: string
   selectedKnowledgeBaseId: string
+  loadState: MemoryLoadState
+  loadError: string | null
 }

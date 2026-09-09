@@ -6,8 +6,12 @@ import {
   createMemory,
   createMemoryBase,
   getMemorySnapshot,
+  hydrateMemoryStore,
   resetMemoryStore,
+  retryMemoryLoad,
   selectMemoryBase,
+  setMemoryLoadError,
+  setMemoryLoading,
 } from "./store"
 
 describe("memory store", () => {
@@ -51,5 +55,17 @@ describe("memory store", () => {
     expect(
       getMemorySnapshot().documents.some((document) => document.name === "guide.md")
     ).toBe(true)
+  })
+
+  it("hydrates only while loading and retries from error", () => {
+    setMemoryLoading()
+    expect(getMemorySnapshot().loadState).toBe("loading")
+    hydrateMemoryStore()
+    expect(getMemorySnapshot().loadState).toBe("ready")
+
+    setMemoryLoadError("boom")
+    expect(getMemorySnapshot().loadState).toBe("error")
+    retryMemoryLoad()
+    expect(getMemorySnapshot().loadState).toBe("ready")
   })
 })

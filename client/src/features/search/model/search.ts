@@ -4,7 +4,7 @@ import { dataTabs } from "@/features/data/tabs"
 import { listPendingInbox } from "@/features/inbox/model/store"
 import { integrationTabs } from "@/features/integrations/tabs"
 import { memoryTabs } from "@/features/memory/tabs"
-import { getMemorySnapshot } from "@/features/memory/model/store"
+import { getMemorySnapshot, hydrateMemoryStore } from "@/features/memory/model/store"
 import { getAllNavItems, getUserMenuItems } from "@/features/shell/model/catalog"
 import type { Workflow } from "@/features/workflows/model/types"
 
@@ -90,6 +90,7 @@ export function buildSearchIndex(workflows: readonly Workflow[]): SearchHit[] {
     path: `/integrations?tab=${tab.id}`,
   }))
 
+  hydrateMemoryStore()
   const memory = getMemorySnapshot()
   const memoryHits: SearchHit[] = [
     ...memoryTabs.map((tab) => ({

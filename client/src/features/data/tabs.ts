@@ -4,7 +4,8 @@ export const dataTabs = [
   {
     id: "database",
     label: "Database",
-    description: "Browse databases and tables.",
+    description: "Create a table to browse rows in the data grid.",
+    emptyTitle: "No tables yet",
     newAction: {
       label: "New table",
       placeholder: "Table name",
@@ -13,7 +14,8 @@ export const dataTabs = [
   {
     id: "variables",
     label: "Variables",
-    description: "Workspace variables grouped by environment.",
+    description: "Add a workspace variable to share config across workflows and agents.",
+    emptyTitle: "No variables yet",
     newAction: {
       label: "New variable",
       placeholder: "KEY_NAME",
@@ -25,7 +27,8 @@ export const dataTabs = [
   {
     id: "secrets",
     label: "Secrets",
-    description: "Workspace secrets grouped by environment.",
+    description: "Store API tokens and credentials securely. Values stay masked in the grid.",
+    emptyTitle: "No secrets yet",
     newAction: {
       label: "New secret",
       placeholder: "KEY_NAME",

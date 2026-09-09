@@ -6,7 +6,13 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { MemoryPage } from "./MemoryPage"
-import { getMemorySnapshot, resetMemoryStore } from "./model/store"
+import {
+  getMemorySnapshot,
+  resetMemoryStore,
+  setMemoryEmptyReady,
+  setMemoryLoadError,
+  setMemoryLoading,
+} from "./model/store"
 
 function renderMemory(path = "/memory") {
   const router = createMemoryRouter([{ path: "/memory", Component: MemoryPage }], {
@@ -80,5 +86,49 @@ describe("MemoryPage", () => {
       "aria-rowcount",
       "3"
     )
+  })
+
+  it("shows a loading skeleton for memory bases", () => {
+    setMemoryLoading()
+    renderMemory()
+    expect(screen.getByRole("status", { name: "Loading memory bases" })).toBeInTheDocument()
+  })
+
+  it("shows an error with retry on memory bases", async () => {
+    const user = userEvent.setup()
+    setMemoryLoadError("Mock memory failure")
+    renderMemory()
+
+    expect(screen.getByText("Could not load memory bases")).toBeInTheDocument()
+    expect(screen.getByText("Mock memory failure")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Retry" }))
+    expect(screen.getByRole("tree", { name: "Memory bases" })).toBeInTheDocument()
+  })
+
+  it("shows empty CTAs when there are no bases", async () => {
+    const user = userEvent.setup()
+    setMemoryEmptyReady()
+    renderMemory()
+
+    expect(screen.getByRole("heading", { name: "No memory bases yet" })).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "New memory base" }).length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole("tab", { name: "Knowledge bases" }))
+    expect(screen.getByRole("heading", { name: "No knowledge bases yet" })).toBeInTheDocument()
+    expect(
+      screen.getAllByRole("button", { name: "New knowledge base" }).length
+    ).toBeGreaterThan(0)
+  })
+
+  it("shows a useful empty state for a memory base with no entries", async () => {
+    const user = userEvent.setup()
+    renderMemory()
+
+    await user.click(screen.getByRole("button", { name: "New memory base" }))
+    await user.type(screen.getByLabelText("Name"), "Empty base")
+    await user.click(screen.getByRole("button", { name: "Create" }))
+
+    expect(screen.getByRole("heading", { name: "No memories yet" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Add memory" })).toBeInTheDocument()
   })
 })

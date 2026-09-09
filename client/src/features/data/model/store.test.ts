@@ -10,10 +10,15 @@ import {
   deleteTableRows,
   findTable,
   getDataSnapshot,
+  hydrateDataStore,
   reorderTableColumn,
   resetDataStore,
+  retryDataLoad,
   selectDatabaseNode,
   selectVariableGroup,
+  setDataEmptyReady,
+  setDataLoadError,
+  setDataLoading,
   shiftTableColumn,
   updateTableColumn,
   updateTableRows,
@@ -272,5 +277,36 @@ describe("data store", () => {
     expect(table?.columns.map((column) => column.id)).toEqual(
       expect.arrayContaining(["createdAt", "updatedAt"])
     )
+  })
+
+  it("hydrates only while loading and retries from error", () => {
+    setDataLoading()
+    expect(getDataSnapshot().loadState).toBe("loading")
+    hydrateDataStore()
+    expect(getDataSnapshot().loadState).toBe("ready")
+    expect(getDataSnapshot().databases.length).toBeGreaterThan(0)
+
+    setDataLoadError("boom")
+    expect(getDataSnapshot().loadState).toBe("error")
+    retryDataLoad()
+    expect(getDataSnapshot().loadState).toBe("ready")
+  })
+
+  it("bootstraps a workspace database when creating the first table", () => {
+    setDataEmptyReady()
+    const table = createTable("sessions")
+    expect(table?.name).toBe("sessions")
+    expect(getDataSnapshot().databases[0]?.name).toBe("workspace")
+    expect(getDataSnapshot().selectedTableId).toBe(table?.id)
+  })
+
+  it("bootstraps a Global group when creating the first variable or secret", () => {
+    setDataEmptyReady()
+    expect(createVariable("APP_URL", "https://vanteg.dev")?.key).toBe("APP_URL")
+    expect(getDataSnapshot().variableGroups[0]?.name).toBe("Global")
+
+    setDataEmptyReady()
+    expect(createSecret("API_TOKEN", "secret")?.key).toBe("API_TOKEN")
+    expect(getDataSnapshot().secretGroups[0]?.name).toBe("Global")
   })
 })

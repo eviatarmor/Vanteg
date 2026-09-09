@@ -88,10 +88,28 @@ function createSeed(): MemorySnapshot {
     ],
     selectedMemoryBaseId: "base-workspace",
     selectedKnowledgeBaseId: "kb-product",
+    loadState: "ready",
+    loadError: null,
   }
 }
 
-let snapshot: MemorySnapshot = createSeed()
+function emptyMemorySnapshot(
+  loadState: MemorySnapshot["loadState"] = "ready"
+): MemorySnapshot {
+  return {
+    bases: [],
+    memories: [],
+    knowledgeBases: [],
+    documents: [],
+    selectedMemoryBaseId: "",
+    selectedKnowledgeBaseId: "",
+    loadState,
+    loadError: null,
+  }
+}
+
+/** Start loading so the first paint can show skeletons before hydration. */
+let snapshot: MemorySnapshot = emptyMemorySnapshot("loading")
 
 export function subscribeMemory(listener: () => void): () => void {
   listeners.add(listener)
@@ -108,9 +126,44 @@ export function useMemoryStore(): MemorySnapshot {
   return useSyncExternalStore(subscribeMemory, getMemorySnapshot, getMemorySnapshot)
 }
 
+/** Test helper — seed + ready immediately (skips the loading frame). */
 export function resetMemoryStore(): void {
   snapshot = createSeed()
   emit()
+}
+
+export function setMemoryLoading(): void {
+  snapshot = emptyMemorySnapshot("loading")
+  emit()
+}
+
+export function setMemoryLoadError(message: string): void {
+  snapshot = {
+    ...emptyMemorySnapshot("error"),
+    loadError: message,
+  }
+  emit()
+}
+
+export function setMemoryEmptyReady(): void {
+  snapshot = emptyMemorySnapshot("ready")
+  emit()
+}
+
+/** Apply seed memory data. Only runs while loadState is loading (retry / first paint). */
+export function hydrateMemoryStore(): MemorySnapshot {
+  if (snapshot.loadState !== "loading") {
+    return snapshot
+  }
+  snapshot = createSeed()
+  emit()
+  return snapshot
+}
+
+export function retryMemoryLoad(): MemorySnapshot {
+  snapshot = emptyMemorySnapshot("loading")
+  emit()
+  return hydrateMemoryStore()
 }
 
 export function selectMemoryBase(id: string): void {

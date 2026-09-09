@@ -6,7 +6,12 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { DataPage } from "./DataPage"
-import { resetDataStore } from "./model/store"
+import {
+  resetDataStore,
+  setDataEmptyReady,
+  setDataLoadError,
+  setDataLoading,
+} from "./model/store"
 
 function renderData(path = "/data") {
   const router = createMemoryRouter([{ path: "/data", Component: DataPage }], {
@@ -282,5 +287,38 @@ describe("DataPage", () => {
     expect(screen.getByRole("dialog", { name: "New variable" })).toBeInTheDocument()
     expect(screen.getByLabelText("Key")).toBeInTheDocument()
     expect(screen.getByLabelText("Value")).toBeInTheDocument()
+  })
+
+  it("shows a loading skeleton for the database tab", () => {
+    setDataLoading()
+    renderData()
+    expect(screen.getByRole("status", { name: "Loading databases" })).toBeInTheDocument()
+  })
+
+  it("shows an error with retry on the database tab", async () => {
+    const user = userEvent.setup()
+    setDataLoadError("Mock data failure")
+    renderData()
+
+    expect(screen.getByText("Could not load databases")).toBeInTheDocument()
+    expect(screen.getByText("Mock data failure")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Retry" }))
+    expect(screen.getByRole("tree", { name: "Databases" })).toBeInTheDocument()
+  })
+
+  it("shows empty CTAs when there is no data", async () => {
+    const user = userEvent.setup()
+    setDataEmptyReady()
+    renderData()
+
+    expect(screen.getByRole("heading", { name: "No tables yet" })).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "New table" }).length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole("tab", { name: "Variables" }))
+    expect(screen.getByRole("heading", { name: "No variables yet" })).toBeInTheDocument()
+
+    await user.click(screen.getByRole("tab", { name: "Secrets" }))
+    expect(screen.getByRole("heading", { name: "No secrets yet" })).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "New secret" }).length).toBeGreaterThan(0)
   })
 })

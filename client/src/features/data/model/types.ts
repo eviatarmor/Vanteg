@@ -64,6 +64,8 @@ export interface KeyValueGroup {
   items: KeyValueItem[]
 }
 
+export type DataLoadState = "loading" | "ready" | "error"
+
 export interface DataSnapshot {
   databases: Database[]
   variableGroups: KeyValueGroup[]
@@ -72,4 +74,6 @@ export interface DataSnapshot {
   selectedSchemaId: string
   selectedVariableGroupId: string
   selectedSecretGroupId: string
+  loadState: DataLoadState
+  loadError: string | null
 }

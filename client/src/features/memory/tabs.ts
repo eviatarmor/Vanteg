@@ -4,7 +4,8 @@ export const memoryTabs = [
   {
     id: "memory-bases",
     label: "Memory bases",
-    description: "Shared memory collections that agents can attach to.",
+    description: "Create a memory base so agents can share lasting facts.",
+    emptyTitle: "No memory bases yet",
     newAction: {
       label: "New memory base",
       placeholder: "Memory base name",
@@ -13,7 +14,8 @@ export const memoryTabs = [
   {
     id: "knowledge-bases",
     label: "Knowledge bases",
-    description: "Uploaded files used for retrieval.",
+    description: "Create a knowledge base, then upload files for retrieval.",
+    emptyTitle: "No knowledge bases yet",
     newAction: {
       label: "New knowledge base",
       placeholder: "Knowledge base name",
