@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { resetWorkflowRuns } from "./model/run-store"
 import {
   createDraft,
   holdNextWorkflowsLoad,
@@ -43,6 +44,11 @@ function renderWorkflows(path = "/workflows") {
 describe("WorkflowsPage", () => {
   beforeEach(() => {
     resetWorkflows()
+    resetWorkflowRuns({ seed: true })
+  })
+
+  afterEach(() => {
+    resetWorkflowRuns()
   })
 
   it("shows a loading skeleton then an empty card with create and browse templates", async () => {
@@ -135,5 +141,17 @@ describe("WorkflowsPage", () => {
       expect(screen.getByText("Lead alerts")).toBeInTheDocument()
       expect(screen.queryByText("Onboarding")).not.toBeInTheDocument()
     })
+  })
+
+  it("shows seeded run history on the Runs tab", async () => {
+    const user = userEvent.setup()
+    renderWorkflows("/workflows?tab=runs")
+
+    expect(await screen.findByRole("list", { name: "Workflow runs" })).toBeInTheDocument()
+    expect(screen.getByText("Lead alerts")).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "No runs yet" })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /Lead alerts/i }))
+    expect(screen.getByText(/Triggered by Webhook/)).toBeInTheDocument()
   })
 })
