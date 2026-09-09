@@ -1,49 +1,54 @@
 import { useMemo, useState } from "react"
 import { Settings } from "lucide-react"
+import { useSearchParams } from "react-router"
 import { toast } from "sonner"
 
 import { Button } from "@workspace/ui/components/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select"
-import { Switch } from "@workspace/ui/components/switch"
+import { cn } from "@workspace/ui/lib/utils"
 
-import { useTheme } from "@/components/theme-provider"
 import { setSession } from "@/features/auth/model/session"
 import { PageHeader } from "@/features/page-header/PageHeader"
 import { getCurrentUser, getPageCopy } from "@/features/shell/model/catalog"
 
 import {
+  loadCompliance,
+  saveCompliance,
+  type ComplianceState,
+} from "./model/compliance"
+import {
   defaultProfile,
   loadPreferences,
   savePreferences,
-  type NotificationPreferences,
   type ProfileDraft,
   type SettingsPreferences,
   validateProfile,
   validateWorkspaceName,
 } from "./model/preferences"
-
-type ThemeChoice = "light" | "dark" | "system"
+import {
+  isSettingsSectionId,
+  SETTINGS_SECTIONS,
+  type SettingsSectionId,
+} from "./model/sections"
+import {
+  AppearancePanel,
+  BillingPanel,
+  CompliancePanel,
+  NotificationsPanel,
+  PrivacyPanel,
+  ProfilePanel,
+  SecurityPanel,
+  WorkspacePanel,
+} from "./ui/SettingsPanels"
 
 export function SettingsPage() {
   const { title, subtitle } = getPageCopy("/settings")
   const catalogUser = getCurrentUser()
-  const { theme, setTheme } = useTheme()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const sectionParam = searchParams.get("section")
+  const activeSection: SettingsSectionId = isSettingsSectionId(sectionParam)
+    ? sectionParam
+    : "profile"
 
   const [profile, setProfile] = useState<ProfileDraft>(() => defaultProfile())
   const [profileErrors, setProfileErrors] = useState<{
@@ -61,8 +66,21 @@ export function SettingsPage() {
   const [workspaceDraft, setWorkspaceDraft] = useState(
     () => loadPreferences().displayName
   )
+  const [compliance, setCompliance] = useState<ComplianceState>(() =>
+    loadCompliance()
+  )
 
   const roleLabel = useMemo(() => catalogUser.role, [catalogUser.role])
+
+  function selectSection(section: SettingsSectionId) {
+    const next = new URLSearchParams(searchParams)
+    if (section === "profile") {
+      next.delete("section")
+    } else {
+      next.set("section", section)
+    }
+    setSearchParams(next, { replace: true })
+  }
 
   function handleSaveProfile() {
     const errors = validateProfile(profile)
@@ -84,25 +102,17 @@ export function SettingsPage() {
     toast.success("Profile saved.")
   }
 
-  function handleThemeChange(value: string) {
-    if (value === "light" || value === "dark" || value === "system") {
-      setTheme(value)
-      toast.success(
-        value === "system"
-          ? "Theme follows your system preference."
-          : `Theme set to ${value}.`
-      )
-    }
-  }
-
-  function persistNotifications(next: NotificationPreferences) {
+  function patchPreferences(
+    patch: Partial<SettingsPreferences>,
+    message: string
+  ) {
     const merged: SettingsPreferences = {
       ...preferences,
-      ...next,
+      ...patch,
     }
     setPreferences(merged)
     savePreferences(merged)
-    toast.success("Notification preferences saved.")
+    toast.success(message)
   }
 
   function handleSaveWorkspace() {
@@ -123,179 +133,105 @@ export function SettingsPage() {
     toast.success("Workspace settings saved.")
   }
 
+  function persistCompliance(next: ComplianceState, message?: string) {
+    setCompliance(next)
+    saveCompliance(next)
+    if (message) {
+      toast.success(message)
+    }
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title={title} subtitle={subtitle} icon={Settings} />
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>
-                Name and email for your Vanteg account ({roleLabel}).
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 pt-(--card-spacing)">
-              <div className="grid gap-2">
-                <Label htmlFor="settings-profile-name">Name</Label>
-                <Input
-                  id="settings-profile-name"
-                  value={profile.displayName}
-                  onChange={(event) =>
-                    setProfile((current) => ({
-                      ...current,
-                      displayName: event.target.value,
-                    }))
-                  }
-                  aria-invalid={Boolean(profileErrors.displayName)}
-                  autoComplete="name"
-                />
-                {profileErrors.displayName ? (
-                  <p className="text-sm text-destructive" role="alert">
-                    {profileErrors.displayName}
-                  </p>
-                ) : null}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="settings-profile-email">Email</Label>
-                <Input
-                  id="settings-profile-email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(event) =>
-                    setProfile((current) => ({
-                      ...current,
-                      email: event.target.value,
-                    }))
-                  }
-                  aria-invalid={Boolean(profileErrors.email)}
-                  autoComplete="email"
-                />
-                {profileErrors.email ? (
-                  <p className="text-sm text-destructive" role="alert">
-                    {profileErrors.email}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Signed in as {savedProfile.email}
-                  </p>
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 lg:flex-row lg:items-start sm:px-6">
+          <nav
+            aria-label="Settings sections"
+            className="flex shrink-0 flex-row gap-1 overflow-x-auto lg:w-48 lg:flex-col lg:overflow-visible"
+          >
+            {SETTINGS_SECTIONS.map((section) => (
+              <Button
+                key={section.id}
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "justify-start whitespace-nowrap",
+                  activeSection === section.id && "bg-muted font-medium"
                 )}
-              </div>
-            </CardContent>
-            <CardFooter className="justify-end">
-              <Button type="button" onClick={handleSaveProfile}>
-                Save profile
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>
-                Choose light, dark, or match the system theme.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-2 pt-(--card-spacing)">
-              <Label htmlFor="settings-theme">Theme</Label>
-              <Select
-                value={(theme as ThemeChoice) ?? "system"}
-                onValueChange={handleThemeChange}
+                aria-current={activeSection === section.id ? "page" : undefined}
+                onClick={() => selectSection(section.id)}
               >
-                <SelectTrigger id="settings-theme" className="w-full sm:w-56">
-                  <SelectValue placeholder="Select theme" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle>Notifications</CardTitle>
-              <CardDescription>
-                Control email and inbox alerts for this browser.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 pt-(--card-spacing)">
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="settings-email-notifications">
-                    Email notifications
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Summaries and approval requests by email.
-                  </p>
-                </div>
-                <Switch
-                  id="settings-email-notifications"
-                  checked={preferences.emailNotifications}
-                  onCheckedChange={(checked) =>
-                    persistNotifications({
-                      emailNotifications: checked,
-                      inboxNotifications: preferences.inboxNotifications,
-                    })
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="settings-inbox-notifications">
-                    Inbox notifications
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Badge and toast alerts for the Inbox queue.
-                  </p>
-                </div>
-                <Switch
-                  id="settings-inbox-notifications"
-                  checked={preferences.inboxNotifications}
-                  onCheckedChange={(checked) =>
-                    persistNotifications({
-                      emailNotifications: preferences.emailNotifications,
-                      inboxNotifications: checked,
-                    })
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle>Workspace</CardTitle>
-              <CardDescription>
-                Display name shown in the shell for this workspace.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-2 pt-(--card-spacing)">
-              <Label htmlFor="settings-workspace-name">Display name</Label>
-              <Input
-                id="settings-workspace-name"
-                value={workspaceDraft}
-                onChange={(event) => setWorkspaceDraft(event.target.value)}
-                aria-invalid={Boolean(workspaceError)}
-                autoComplete="organization"
-              />
-              {workspaceError ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {workspaceError}
-                </p>
-              ) : null}
-            </CardContent>
-            <CardFooter className="justify-end">
-              <Button type="button" onClick={handleSaveWorkspace}>
-                Save workspace
+                {section.label}
               </Button>
-            </CardFooter>
-          </Card>
+            ))}
+          </nav>
+
+          <div className="min-w-0 flex-1">
+            {activeSection === "profile" ? (
+              <ProfilePanel
+                profile={profile}
+                profileErrors={profileErrors}
+                savedEmail={savedProfile.email}
+                roleLabel={roleLabel}
+                onChange={setProfile}
+                onSave={handleSaveProfile}
+              />
+            ) : null}
+            {activeSection === "appearance" ? (
+              <AppearancePanel
+                preferences={preferences}
+                onPatch={patchPreferences}
+              />
+            ) : null}
+            {activeSection === "notifications" ? (
+              <NotificationsPanel
+                preferences={preferences}
+                onPatch={patchPreferences}
+              />
+            ) : null}
+            {activeSection === "billing" ? (
+              <BillingPanel
+                compliance={compliance}
+                onCompliance={persistCompliance}
+              />
+            ) : null}
+            {activeSection === "privacy" ? (
+              <PrivacyPanel
+                preferences={preferences}
+                compliance={compliance}
+                onPatch={patchPreferences}
+                onCompliance={persistCompliance}
+              />
+            ) : null}
+            {activeSection === "security" ? (
+              <SecurityPanel
+                preferences={preferences}
+                compliance={compliance}
+                onPatch={patchPreferences}
+                onCompliance={persistCompliance}
+              />
+            ) : null}
+            {activeSection === "workspace" ? (
+              <WorkspacePanel
+                preferences={preferences}
+                workspaceDraft={workspaceDraft}
+                workspaceError={workspaceError}
+                onWorkspaceDraft={setWorkspaceDraft}
+                onSaveWorkspace={handleSaveWorkspace}
+                onPatch={patchPreferences}
+              />
+            ) : null}
+            {activeSection === "compliance" ? (
+              <CompliancePanel
+                compliance={compliance}
+                onCompliance={persistCompliance}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
   )
 }
-
