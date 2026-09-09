@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react"
-import { Link, Navigate, useNavigate } from "react-router"
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router"
 
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
@@ -9,7 +9,11 @@ import { Spinner } from "@workspace/ui/components/spinner"
 
 import { SecretInput } from "@/components/secret-input"
 
-import { hasMockSession, setSession } from "./model/session"
+import {
+  hasMockSession,
+  resolvePostAuthPath,
+  setSession,
+} from "./model/session"
 import { validateSignUp, type FieldErrors } from "./model/validation"
 import { AuthLayout } from "./ui/AuthLayout"
 
@@ -17,6 +21,13 @@ const MOCK_DELAY_MS = 400
 
 export function SignUpPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const postAuthPath = resolvePostAuthPath(searchParams.get("next"))
+  const loginHref =
+    postAuthPath === "/"
+      ? "/login"
+      : `/login?next=${encodeURIComponent(postAuthPath)}`
+
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -26,7 +37,7 @@ export function SignUpPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   if (hasMockSession()) {
-    return <Navigate to="/" replace />
+    return <Navigate to={postAuthPath} replace />
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -48,7 +59,7 @@ export function SignUpPage() {
         email: email.trim(),
         name: name.trim(),
       })
-      navigate("/", { replace: true })
+      navigate(postAuthPath, { replace: true })
     } catch {
       setFormError("Something went wrong. Try again.")
     } finally {
@@ -64,7 +75,7 @@ export function SignUpPage() {
         <p>
           Already have an account?{" "}
           <Link
-            to="/login"
+            to={loginHref}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Log in

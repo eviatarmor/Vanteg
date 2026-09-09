@@ -9,6 +9,12 @@ import { AppSidebar } from "./AppSidebar"
 import { AppTopbar } from "./AppTopbar"
 import { getPageTitle } from "./model/catalog"
 
+function loginRedirectTo(pathname: string, search: string): string {
+  const returnTo = `${pathname}${search}`
+  if (!returnTo || returnTo === "/") return "/login"
+  return `/login?next=${encodeURIComponent(returnTo)}`
+}
+
 export function AppShell() {
   const location = useLocation()
   const title = getPageTitle(location.pathname)
@@ -16,9 +22,8 @@ export function AppShell() {
   if (!isAuthenticated()) {
     return (
       <Navigate
-        to="/login"
+        to={loginRedirectTo(location.pathname, location.search)}
         replace
-        state={{ from: location.pathname + location.search }}
       />
     )
   }

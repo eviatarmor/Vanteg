@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react"
-import { Link, Navigate, useNavigate } from "react-router"
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router"
 
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
@@ -9,7 +9,11 @@ import { Spinner } from "@workspace/ui/components/spinner"
 
 import { SecretInput } from "@/components/secret-input"
 
-import { hasMockSession, setSession } from "./model/session"
+import {
+  hasMockSession,
+  resolvePostAuthPath,
+  setSession,
+} from "./model/session"
 import { validateLogin, type FieldErrors } from "./model/validation"
 import { AuthLayout } from "./ui/AuthLayout"
 
@@ -17,6 +21,13 @@ const MOCK_DELAY_MS = 400
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const postAuthPath = resolvePostAuthPath(searchParams.get("next"))
+  const signUpHref =
+    postAuthPath === "/"
+      ? "/sign-up"
+      : `/sign-up?next=${encodeURIComponent(postAuthPath)}`
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -24,7 +35,7 @@ export function LoginPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   if (hasMockSession()) {
-    return <Navigate to="/" replace />
+    return <Navigate to={postAuthPath} replace />
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -42,7 +53,7 @@ export function LoginPage() {
         email: trimmed,
         name: trimmed.split("@")[0] || trimmed,
       })
-      navigate("/", { replace: true })
+      navigate(postAuthPath, { replace: true })
     } catch {
       setFormError("Something went wrong. Try again.")
     } finally {
@@ -58,7 +69,7 @@ export function LoginPage() {
         <p>
           New here?{" "}
           <Link
-            to="/sign-up"
+            to={signUpHref}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Create an account

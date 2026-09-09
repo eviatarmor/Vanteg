@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   AUTH_STORAGE_KEY,
@@ -7,12 +7,14 @@ import {
   isAuthenticated,
   resetAuthSession,
   resolveCurrentUser,
+  resolvePostAuthPath,
   setSession,
 } from "./session"
 
 describe("mock auth session", () => {
   afterEach(() => {
     resetAuthSession()
+    vi.unstubAllEnvs()
   })
 
   it("defaults to authenticated in test/DEV when storage is empty", () => {
@@ -39,5 +41,33 @@ describe("mock auth session", () => {
     expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBe("logged-out")
     expect(isAuthenticated()).toBe(false)
     expect(getSession()).toBeNull()
+  })
+
+  it("treats missing key as logged out when VITE_REQUIRE_AUTH=true", () => {
+    vi.stubEnv("VITE_REQUIRE_AUTH", "true")
+    resetAuthSession()
+    expect(isAuthenticated()).toBe(false)
+
+    setSession({ email: "alex@vanteg.test", name: "Alex" })
+    expect(isAuthenticated()).toBe(true)
+
+    clearSession()
+    expect(isAuthenticated()).toBe(false)
+  })
+})
+
+describe("resolvePostAuthPath", () => {
+  it("defaults to home and rejects open redirects", () => {
+    expect(resolvePostAuthPath(null)).toBe("/")
+    expect(resolvePostAuthPath("")).toBe("/")
+    expect(resolvePostAuthPath("https://evil.example")).toBe("/")
+    expect(resolvePostAuthPath("//evil.example")).toBe("/")
+    expect(resolvePostAuthPath("/login")).toBe("/")
+    expect(resolvePostAuthPath("/sign-up")).toBe("/")
+  })
+
+  it("accepts same-app deep links", () => {
+    expect(resolvePostAuthPath("/workflows")).toBe("/workflows")
+    expect(resolvePostAuthPath("/inbox?tab=all")).toBe("/inbox?tab=all")
   })
 })

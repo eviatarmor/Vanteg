@@ -18,6 +18,7 @@ function renderLogin(path = "/login") {
       { path: "/login", Component: LoginPage },
       { path: "/sign-up", Component: SignUpPage },
       { path: "/", element: <div>Home</div> },
+      { path: "/workflows", element: <div>Workflows</div> },
     ],
     { initialEntries: [path] }
   )
@@ -89,9 +90,36 @@ describe("LoginPage", () => {
     })
   })
 
+  it("honors ?next= deep link after mock login", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    const { router } = renderLogin(
+      `/login?next=${encodeURIComponent("/workflows")}`
+    )
+
+    expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute(
+      "href",
+      `/sign-up?next=${encodeURIComponent("/workflows")}`
+    )
+
+    await user.type(screen.getByLabelText("Email"), "alex@vanteg.test")
+    await user.type(screen.getByLabelText("Password"), "secret")
+    await user.click(screen.getByRole("button", { name: "Log in" }))
+
+    await waitFor(() => {
+      expect(hasMockSession()).toBe(true)
+      expect(router.state.location.pathname).toBe("/workflows")
+    })
+  })
+
   it("redirects to home when already logged in", () => {
     setSession({ email: "alex@vanteg.test", name: "Alex" })
     renderLogin()
     expect(screen.getByText("Home")).toBeInTheDocument()
+  })
+
+  it("redirects to ?next= when already logged in", () => {
+    setSession({ email: "alex@vanteg.test", name: "Alex" })
+    renderLogin(`/login?next=${encodeURIComponent("/workflows")}`)
+    expect(screen.getByText("Workflows")).toBeInTheDocument()
   })
 })

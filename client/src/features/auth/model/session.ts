@@ -33,20 +33,35 @@ function clearRaw(): void {
   }
 }
 
+function requireAuthStrict(): boolean {
+  return String(import.meta.env.VITE_REQUIRE_AUTH ?? "").toLowerCase() === "true"
+}
+
+function softDevDefault(): boolean {
+  return import.meta.env.DEV || import.meta.env.MODE === "test"
+}
+
 /** Explicit mock session written by login / sign-up (not the DEV soft default). */
 export function hasMockSession(): boolean {
   return getSession() != null
 }
 
 /**
- * Soft gate: true when a mock session exists, or when DEV/test has not
- * explicitly logged out (so existing demos keep working without login).
+ * Soft gate for AppShell routes.
+ *
+ * - Explicit mock session → authenticated
+ * - Storage value `logged-out` (set by logout) → not authenticated → /login
+ * - Missing key in DEV/test → still authenticated so demos keep working
+ * - Optional `VITE_REQUIRE_AUTH=true` disables the DEV soft default (strict mode)
+ *
+ * `/login` and `/sign-up` stay public (outside AppShell).
  */
 export function isAuthenticated(): boolean {
   const raw = readRaw()
   if (raw === LOGGED_OUT) return false
   if (getSession()) return true
-  return import.meta.env.DEV || import.meta.env.MODE === "test"
+  if (requireAuthStrict()) return false
+  return softDevDefault()
 }
 
 export function getSession(): MockAuthSession | null {
@@ -73,6 +88,7 @@ export function setSession(session: MockAuthSession): void {
   )
 }
 
+/** Explicit logout: writes the logged-out marker so DEV soft-default does not auto-auth. */
 export function clearSession(): void {
   writeRaw(LOGGED_OUT)
 }
@@ -80,6 +96,21 @@ export function clearSession(): void {
 /** Reset storage for tests (no logged-out marker). */
 export function resetAuthSession(): void {
   clearRaw()
+}
+
+/**
+ * Safe in-app return path after mock login / sign-up.
+ * Accepts only same-app relative paths (`/…`); rejects open redirects.
+ */
+export function resolvePostAuthPath(next: string | null | undefined): string {
+  if (!next) return "/"
+  const trimmed = next.trim()
+  if (!trimmed.startsWith("/")) return "/"
+  if (trimmed.startsWith("//")) return "/"
+  if (trimmed.includes("://")) return "/"
+  if (trimmed === "/login" || trimmed.startsWith("/login?")) return "/"
+  if (trimmed === "/sign-up" || trimmed.startsWith("/sign-up?")) return "/"
+  return trimmed
 }
 
 export function initialsFromName(name: string): string {

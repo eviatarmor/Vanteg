@@ -20,16 +20,22 @@ function renderShell(path = "/") {
       {
         path: "/",
         Component: AppShell,
-        children: [{ index: true, element: <div>Home body</div> }],
+        children: [
+          { index: true, element: <div>Home body</div> },
+          { path: "workflows", element: <div>Workflows body</div> },
+        ],
       },
     ],
     { initialEntries: [path] }
   )
-  return render(
-    <TooltipProvider>
-      <RouterProvider router={router} />
-    </TooltipProvider>
-  )
+  return {
+    ...render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>
+    ),
+    router,
+  }
 }
 
 describe("AppShell soft gate", () => {
@@ -50,9 +56,20 @@ describe("AppShell soft gate", () => {
 
   it("redirects to /login when explicitly logged out", () => {
     clearSession()
-    renderShell()
+    const { router } = renderShell()
     expect(screen.getByText("Login shell")).toBeInTheDocument()
     expect(screen.queryByText("Home body")).not.toBeInTheDocument()
+    expect(router.state.location.pathname).toBe("/login")
+  })
+
+  it("redirects to /login?next= for deep links when logged out", () => {
+    clearSession()
+    const { router } = renderShell("/workflows")
+    expect(screen.getByText("Login shell")).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe("/login")
+    expect(router.state.location.search).toBe(
+      `?next=${encodeURIComponent("/workflows")}`
+    )
   })
 
   it("allows access after mock login", () => {
