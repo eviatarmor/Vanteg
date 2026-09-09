@@ -1,57 +1,84 @@
 # Integrations: actions and triggers
 
-There are two catalogs.
+Canonical connector catalog lives in `@workspace/integrations` (`packages/integrations`).
 
-The **Integrations page** has **152 connectable apps**. Each app is assigned a capability template, and that template’s **operations** are the actions you can run. Those apps do **not** have per-app trigger lists.
+`listApps()` returns **173** unique connectable apps (featured merged over long-tail). Of those:
 
-The **workflow editor** has **13 first-class connector apps** with named **triggers** and **actions**. Everything else in the 152-app catalog is meant to be reached from the generic **App event** trigger (`app` + `event`).
+| Slice | Count | How |
+|---|---|---|
+| **Featured** (`app.featured === true`) | **26** | Named triggers/actions for the workflow picker (`listFeaturedMethods` / `listPickerConnectorApps` → **24** picker groups; Google Sheets/Drive/Docs share the `google` group) |
+| **Long-tail only** (`featured === false`) | **147** | Integrations-page connectors with template **operations** only — reached from the generic **App event** trigger (`app` + `event`) |
 
 Sources:
 
-- `client/src/features/integrations/model/catalog.ts`
-- `client/src/features/workflows/model/node-catalog.ts`
+- `packages/integrations/src/registry.ts` (`listApps`, `listFeaturedMethods`, `listPickerConnectorApps`)
+- `packages/integrations/src/apps/` (featured definitions)
+- `packages/integrations/src/long-tail.ts` (full Integrations-page set)
+- `client/src/features/workflows/model/node-catalog.ts` (platform nodes + featured methods)
+
+Credential and secret fields in connect / Setup UIs use **`SecretInput`** — see [UI conventions](./ui-conventions.md).
 
 ---
 
-## Workflow connectors (named triggers and actions)
+## Method field controls
+
+Featured (and polished) method Setup fields use `MethodField.control` in `@workspace/integrations`:
+
+| Control | Role |
+|---|---|
+| `select` | Fixed options (`options` on the field) |
+| `textarea` | Multi-line text (bodies, content, values) |
+| `resource` | Connection-scoped searchable picker (`resourceType`, e.g. `slack.channel`, `teams.team`, `teams.channel`) via `listResources` |
+| `number` | Numeric amounts, counts, temperatures |
+| `datetime` | Date-time values (calendar starts, delays, etc.) |
+
+Also used: `input` (default short text), `code` (JS/JSON), and `boolean` on some platform nodes. Sheet templates separately use `FieldVariant` (`short-text`, `long-text`, `number`, `select`, `checkbox`, `date`, `url`).
+
+---
+
+## Featured workflow connectors
+
+These **26** apps ship named **triggers** and **actions** (`featured: true`). Platform nodes (HTTP, Email, Database, AI, File, Notification, logic, etc.) sit beside them in `node-catalog.ts`.
 
 ### Slack
 
 Channel fields use Setup `control: "resource"` with `resourceType: "slack.channel"` (searchable picker + custom value). See `listResources` in `@workspace/integrations`. Related kinds: `github.repo`, `sheets.sheet`, `discord.channel`, `notion.page`, `calendar.calendar`, `forms.form`, `teams.team`, `teams.channel`.
 
-**Triggers:** New message · New reaction · New channel · App mentioned
+**Triggers:** New message · New reaction · New channel · App mentioned · User joined workspace
 
-**Actions:** Send message · Update message · Upload file · Add reaction
+**Actions:** Send message · Update message · Upload file · Add reaction · Create channel · Remove reaction · Invite user to channel
 
 ### GitHub
 
-**Triggers:** New issue · Pull request opened · New commit · Release published
+**Triggers:** New issue · Pull request opened · Pull request merged · Pull request closed · Issue closed · New commit · Release published
 
-**Actions:** Create issue · Create comment · Create pull request · Add label
+**Actions:** Create issue · Create comment · Create pull request · Add label · Close issue · Merge pull request · Create release
 
-### Google (Sheets + Drive)
+### Google (Sheets + Drive + Docs)
 
-**Triggers:** New spreadsheet row · Updated spreadsheet row · New Drive file
+**Sheets — Triggers:** New row · Updated row · **Actions:** Update row · Create row · Delete row
 
-**Actions:** Update row · Create row · Upload Drive file
+**Drive — Triggers:** New Drive file · New Drive folder · **Actions:** Upload Drive file
+
+**Docs — Triggers:** New Google Doc · **Actions:** Create Google Doc
 
 ### Notion
 
 **Triggers:** Page updated · New page · New database item
 
-**Actions:** Create page · Update page · Create database item
+**Actions:** Create page · Update page · Create database item · Update database item · Archive page
 
 ### Airtable
 
-**Triggers:** New record · Record updated
+**Triggers:** New record · Record updated · Record deleted
 
-**Actions:** Create record · Update record · Find records
+**Actions:** Create record · Update record · Find records · Delete record
 
 ### Discord
 
-**Triggers:** New message · New reaction · Member joined
+**Triggers:** New message · New reaction · Member joined · Member left
 
-**Actions:** Send message · Update message · Add reaction
+**Actions:** Send message · Update message · Add reaction · Delete message · Create channel
 
 ### Microsoft Teams
 
@@ -61,41 +88,49 @@ Team and channel fields use Setup `control: "resource"` with `resourceType: "tea
 
 **Actions:** Post message · Reply in thread · Update message · List channels · Create channel
 
-### HTTP
+### CRM (HubSpot · Salesforce · Pipedrive · Zoho CRM · Attio)
 
-**Triggers:** Webhook · Poll URL
+**Triggers:** New contact · New deal · Deal stage changed · Contact property updated · New company
 
-**Actions:** HTTP Request · Respond to webhook · Download file
+**Actions:** Create contact · Update contact · Create deal · Update deal stage · Find contact by email
 
-### Email
+### Payments (Stripe · PayPal · Square)
 
-**Triggers:** Email received · New attachment
+**Triggers:** New charge · Payment failed · New subscription · Subscription cancelled · Refund issued · Invoice paid
 
-**Actions:** Send email · Reply to email
+**Actions:** Create charge · Issue refund · Create customer · Create invoice · Cancel subscription
 
-### Database
+### Calendars (Google Calendar · Outlook Calendar)
 
-**Triggers:** New row · Row updated
+**Triggers:** New event created · Event starting soon · Event updated · Event cancelled
 
-**Actions:** Query rows · Update row · Delete row
+**Actions:** Create event · Update event · Add attendee · Delete event
 
-### AI
+### Forms (Typeform · Google Forms · SurveyMonkey)
 
-**Triggers:** Chat message received · Generation finished
+**Triggers:** New submission · Form updated
 
-**Actions:** AI (prompt) · Classify · Extract
+**Actions:** List responses · Get form · Notify respondent
 
-### File
+### Tickets (Zendesk · Intercom · Help Scout · Front)
 
-**Triggers:** File created · File updated
+**Triggers:** New ticket · Ticket status changed · New reply on ticket · Ticket assigned
 
-**Actions:** File (read/write) · Delete file · Copy file
+**Actions:** Create ticket · Update ticket status · Add reply · Assign ticket
 
-### Notification
+### Platform nodes (not `IntegrationApp` featured rows)
 
-**Triggers:** Notification received · Notification clicked
+**HTTP — Triggers:** Webhook · Poll URL · **Actions:** HTTP Request · Respond to webhook · Download file
 
-**Actions:** Notification · Broadcast
+**Email — Triggers:** Email received · New attachment · **Actions:** Send email · Reply to email
+
+**Database — Triggers:** New row · Row updated · **Actions:** Query rows · Update row · Delete row
+
+**AI — Triggers:** Chat message received · Generation finished · **Actions:** AI (prompt) · Classify · Extract
+
+**File — Triggers:** File created · File updated · **Actions:** File (read/write) · Delete file · Copy file
+
+**Notification — Triggers:** Notification received · Notification clicked · **Actions:** Notification · Broadcast
 
 ### Platform triggers (not tied to one app)
 
@@ -103,9 +138,9 @@ Manual · Schedule · Form submitted · App event · RSS · Inbound call · Outb
 
 ---
 
-## All 152 Integrations-page apps
+## All 173 Integrations-page apps
 
-Actions below are the template **operations**. There are no per-app triggers in this catalog.
+Actions below are the template **operations**. Long-tail apps have no per-app trigger lists in this catalog; featured apps also expose the named methods above.
 
 ### Operation sets (by template)
 
@@ -131,7 +166,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | **deploy** | deploy, promote, rollback |
 | **search** | upsert, search, delete |
 
-### Google
+### Google (15)
 
 | App | Actions |
 |---|---|
@@ -151,7 +186,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Cloud Storage | file |
 | Google Forms | form |
 
-### Microsoft
+### Microsoft (10)
 
 | App | Actions |
 |---|---|
@@ -166,7 +201,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Dynamics 365 | crm |
 | Azure DevOps | issue |
 
-### Communication
+### Communication (7)
 
 | App | Actions |
 |---|---|
@@ -178,7 +213,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Zoom | event |
 | Aircall | sms |
 
-### Support
+### Support (10)
 
 | App | Actions |
 |---|---|
@@ -186,11 +221,14 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Front | ticket |
 | Help Scout | ticket |
 | Zendesk | ticket |
+| Freshdesk | ticket |
 | Calendly | event |
+| Acuity Scheduling | event |
+| Cal.com | event |
 | Typeform | form |
 | SurveyMonkey | form |
 
-### CRM
+### CRM (5)
 
 | App | Actions |
 |---|---|
@@ -200,7 +238,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Zoho CRM | crm |
 | Attio | crm |
 
-### Developer
+### Developer (5)
 
 | App | Actions |
 |---|---|
@@ -210,7 +248,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | CircleCI | deploy |
 | Jenkins | deploy |
 
-### Project
+### Project (12)
 
 | App | Actions |
 |---|---|
@@ -227,7 +265,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Coda | sheet |
 | Todoist | issue |
 
-### Payments
+### Payments (6)
 
 | App | Actions |
 |---|---|
@@ -238,7 +276,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Braintree | payment |
 | Adyen | payment |
 
-### Marketing
+### Marketing (12)
 
 | App | Actions |
 |---|---|
@@ -250,8 +288,12 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Brevo | email |
 | Customer.io | analytics |
 | Braze | analytics |
+| Klaviyo | analytics |
+| ActiveCampaign | crm |
+| Segment | analytics |
+| Iterable | analytics |
 
-### Storage
+### Storage (4)
 
 | App | Actions |
 |---|---|
@@ -260,7 +302,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Box | file |
 | Amazon S3 | file |
 
-### Databases
+### Databases (13)
 
 | App | Actions |
 |---|---|
@@ -274,8 +316,11 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | PlanetScale | db |
 | Elasticsearch | search |
 | Databricks | db |
+| Microsoft SQL Server | db |
+| Oracle DB | db |
+| SQLite | db |
 
-### AI
+### AI (11)
 
 | App | Actions |
 |---|---|
@@ -291,7 +336,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | xAI | ai |
 | Pinecone | search |
 
-### Social
+### Social (11)
 
 | App | Actions |
 |---|---|
@@ -304,8 +349,10 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | TikTok | file |
 | Buffer | chat |
 | Spotify | file |
+| Threads | chat |
+| Bluesky | chat |
 
-### Commerce
+### Commerce (6)
 
 | App | Actions |
 |---|---|
@@ -316,7 +363,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | BigCommerce | commerce |
 | Magento | commerce |
 
-### Analytics
+### Analytics (5)
 
 | App | Actions |
 |---|---|
@@ -326,7 +373,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Heap | analytics |
 | Algolia | search |
 
-### HR
+### HR (7)
 
 | App | Actions |
 |---|---|
@@ -336,8 +383,9 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Rippling | identity |
 | Personio | identity |
 | ADP | identity |
+| BambooHR | identity |
 
-### Finance
+### Finance (5)
 
 | App | Actions |
 |---|---|
@@ -345,8 +393,9 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | QuickBooks | payment |
 | Xero | payment |
 | Plaid | identity |
+| PandaDoc | file |
 
-### Infra
+### Infra (16)
 
 | App | Actions |
 |---|---|
@@ -359,8 +408,15 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | Heroku | deploy |
 | DigitalOcean | deploy |
 | Airbyte | deploy |
+| New Relic | analytics |
+| Grafana | analytics |
+| Prometheus | analytics |
+| AWS Lambda | deploy |
+| AWS SNS | sms |
+| AWS SQS | event |
+| AWS EventBridge | event |
 
-### Design
+### Design (9)
 
 | App | Actions |
 |---|---|
@@ -374,7 +430,7 @@ Actions below are the template **operations**. There are no per-app triggers in 
 | WordPress | file |
 | Ghost | file |
 
-### Auth
+### Auth (4)
 
 | App | Actions |
 |---|---|
@@ -385,4 +441,4 @@ Actions below are the template **operations**. There are no per-app triggers in 
 
 ---
 
-Slack in the workflow picker has eight named methods. Slack on the Integrations page is a **chat** connector, so its operations are **post / update / react**. Same product, two different catalogs.
+Slack in the workflow picker has named methods from the featured app. Slack on the Integrations page is also a **chat** connector (operations **post / update / react**). Same product, two surfaces — featured methods vs template operations.
