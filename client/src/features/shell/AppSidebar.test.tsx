@@ -37,6 +37,7 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Workflows" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Agents" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Teams" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Templates" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Data" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Memory" })).toBeInTheDocument()
     expect(screen.getByText("Manage")).toBeInTheDocument()
