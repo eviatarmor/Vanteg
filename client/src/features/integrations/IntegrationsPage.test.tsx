@@ -7,10 +7,14 @@ import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { IntegrationsPage } from "./IntegrationsPage"
 import { getIntegrationsSnapshot, resetIntegrationsStore } from "./model/store"
+import { OAuthCallbackPage } from "./ui/OAuthCallbackPage"
 
 function renderIntegrations(path = "/integrations") {
   const router = createMemoryRouter(
-    [{ path: "/integrations", Component: IntegrationsPage }],
+    [
+      { path: "/integrations", Component: IntegrationsPage },
+      { path: "/integrations/oauth/callback", Component: OAuthCallbackPage },
+    ],
     { initialEntries: [path] }
   )
 
@@ -107,7 +111,7 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     expect(grid?.className).toMatch(/grid-cols-3|@min-/)
   })
 
-  it("connects Google Sheets and lists it without In / Data / Out", async () => {
+  it("connects Google Sheets via OAuth callback and lists it without In / Data / Out", async () => {
     const user = userEvent.setup()
     renderIntegrations()
 
@@ -121,13 +125,19 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     await user.click(screen.getByRole("button", { name: "Connect with Google" }))
 
     await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Connected" })).toBeInTheDocument()
+    })
+    expect(getIntegrationsSnapshot().connections).toHaveLength(1)
+
+    await user.click(screen.getByRole("button", { name: "Back to Integrations" }))
+
+    await waitFor(() => {
       expect(screen.getByText("Google Sheets")).toBeInTheDocument()
     })
     expect(screen.queryByRole("tab", { name: "In" })).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Data" })).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Out" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Insert rows" })).not.toBeInTheDocument()
-    expect(getIntegrationsSnapshot().connections).toHaveLength(1)
   })
 
   it("asks for an API key when connecting Stripe", async () => {
