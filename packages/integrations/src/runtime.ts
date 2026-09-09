@@ -37,12 +37,24 @@ export interface CreateConnectionInput {
 export interface StartOAuthInput {
   provider: string
   redirectUri?: string
+  /** App / connector id to attach when the OAuth session completes. */
+  appId?: string
+  name?: string
 }
 
 export interface CompleteOAuthInput {
   provider: string
   code: string
   state: string
+}
+
+/** Query params from the OAuth redirect / local demo callback. */
+export interface CompleteOAuthCallbackInput {
+  code?: string
+  state?: string
+  error?: string
+  errorDescription?: string
+  provider?: string
 }
 
 export interface ExecuteMethodInput {
@@ -71,6 +83,8 @@ export interface IntegrationsAdapter {
   createConnection(input: CreateConnectionInput): Promise<Result<Connection>>
   startOAuth(input: StartOAuthInput): Promise<Result<{ authorizeUrl: string; state: string }>>
   completeOAuth(input: CompleteOAuthInput): Promise<Result<Connection>>
+  /** Finish a redirect/callback: validate state, apply IdP error query, or complete with code. */
+  completeOAuthCallback(input: CompleteOAuthCallbackInput): Promise<Result<Connection>>
   deleteConnection(id: string): Promise<Result<{ id: string }>>
   executeMethod(input: ExecuteMethodInput): Promise<Result<Record<string, unknown>>>
   verifyWebhook?(input: VerifyWebhookInput): Promise<Result<{ accepted: boolean; eventId?: string }>>

@@ -39,6 +39,7 @@ export type { IntegrationError, IntegrationErrorCode, Result } from "./errors.ts
 export { err, isIntegrationError, ok } from "./errors.ts"
 
 export type {
+  CompleteOAuthCallbackInput,
   CompleteOAuthInput,
   ConnectAppInput,
   Connection,
