@@ -42,7 +42,9 @@ describe("createMockIntegrationsAdapter", () => {
     if (!started.ok) {
       return
     }
-    expect(started.data.authorizeUrl).toContain("https://example.invalid/oauth/slack")
+    expect(started.data.authorizeUrl).toContain("/integrations/oauth/callback")
+    expect(started.data.authorizeUrl).toContain("code=mock-code")
+    expect(started.data.authorizeUrl).toContain(`state=${encodeURIComponent(started.data.state)}`)
     expect(started.data.state).toBeTruthy()
 
     const completed = await adapter.completeOAuth({
@@ -136,4 +138,86 @@ describe("createMockIntegrationsAdapter", () => {
     const listed = await adapter.listConnections()
     expect(listed.ok && listed.data).toHaveLength(0)
   })
+
+  it("completeOAuthCallback connects the pending appId on the happy path", async () => {
+    const started = await adapter.startOAuth({
+      provider: "google",
+      appId: "gmail",
+      name: "Gmail",
+    })
+    expect(started.ok).toBe(true)
+    if (!started.ok) {
+      return
+    }
+
+    const completed = await adapter.completeOAuthCallback({
+      code: "mock-code",
+      state: started.data.state,
+      provider: "google",
+    })
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) {
+      return
+    }
+    expect(completed.data.appId).toBe("gmail")
+    expect(completed.data.name).toBe("Gmail")
+    expect(completed.data.status).toBe("connected")
+  })
+
+  it("completeOAuthCallback rejects missing state or code", async () => {
+    const missingState = await adapter.completeOAuthCallback({ code: "mock-code" })
+    expect(missingState.ok).toBe(false)
+    if (!missingState.ok) {
+      expect(missingState.error.code).toBe("validation")
+      expect(missingState.error.fields?.state).toBe("Required")
+    }
+
+    const started = await adapter.startOAuth({ provider: "slack", appId: "slack" })
+    expect(started.ok).toBe(true)
+    if (!started.ok) {
+      return
+    }
+    const missingCode = await adapter.completeOAuthCallback({
+      state: started.data.state,
+      provider: "slack",
+    })
+    expect(missingCode.ok).toBe(false)
+    if (!missingCode.ok) {
+      expect(missingCode.error.code).toBe("validation")
+      expect(missingCode.error.fields?.code).toBe("Required")
+    }
+  })
+
+  it("completeOAuthCallback surfaces IdP error query params", async () => {
+    const started = await adapter.startOAuth({ provider: "github", appId: "github" })
+    expect(started.ok).toBe(true)
+    if (!started.ok) {
+      return
+    }
+    const denied = await adapter.completeOAuthCallback({
+      state: started.data.state,
+      provider: "github",
+      error: "access_denied",
+      errorDescription: "The user denied the request",
+    })
+    expect(denied.ok).toBe(false)
+    if (!denied.ok) {
+      expect(denied.error.code).toBe("unauthorized")
+      expect(denied.error.message).toBe("The user denied the request")
+    }
+  })
+
+  it("completeOAuthCallback rejects unknown state", async () => {
+    const result = await adapter.completeOAuthCallback({
+      code: "mock-code",
+      state: "not-a-real-state",
+      provider: "slack",
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.code).toBe("unauthorized")
+    }
+  })
+
+
 })
