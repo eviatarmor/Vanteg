@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { getNodeTypeForEditor } from "./auth-fields"
 import {
   getNodeType,
   listCommonIntegrations,
@@ -189,6 +190,17 @@ describe("workflow node catalog", () => {
     const download = getNodeType("http-download")
     expect(download?.fields.map((field) => field.key)).toEqual(["url", "headers", "path"])
     expect(download?.fields.find((field) => field.key === "headers")?.control).toBe("code")
+
+    expect(getNodeTypeForEditor("http")?.fields.map((field) => field.key)).toEqual([
+      "method",
+      "url",
+      "query",
+      "headers",
+      "body",
+      "timeout",
+      "credentialId",
+      "token",
+    ])
   })
 
   it("covers CRM, payments, and the missing database insert action", () => {
