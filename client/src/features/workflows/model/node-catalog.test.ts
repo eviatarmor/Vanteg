@@ -53,6 +53,14 @@ describe("workflow node catalog", () => {
     expect(getNodeType("missing")).toBeUndefined()
   })
 
+  it("wires custom credential fields onto HTTP auth nodes", () => {
+    for (const id of ["http", "http-poll", "http-download", "webhook"] as const) {
+      const keys = getNodeType(id)?.fields.map((field) => field.key) ?? []
+      expect(keys).toContain("credentialId")
+      expect(keys).toContain("token")
+    }
+  })
+
   it("lists common triggers, all logic gates, and common integrations", () => {
     expect(listCommonTriggers().map((node) => node.id)).toEqual([
       "manual",
