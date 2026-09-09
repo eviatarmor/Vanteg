@@ -16,6 +16,14 @@ function select(id: string, name: string, options: string[], extra: Partial<Shee
   })
 }
 
+const CURRENCY_SELECT_OPTIONS = [
+  { label: "USD", value: "usd" },
+  { label: "EUR", value: "eur" },
+  { label: "GBP", value: "gbp" },
+  { label: "AUD", value: "aud" },
+  { label: "CAD", value: "cad" },
+]
+
 export const templates: Record<TemplateName, { in: SheetField[]; data: SheetField[]; out: SheetField[] }> = {
   sheet: {
     in: [
@@ -46,17 +54,27 @@ export const templates: Record<TemplateName, { in: SheetField[]; data: SheetFiel
   },
   email: {
     in: [
-      field("from", "From"),
-      field("to", "To", "short-text", { required: true }),
+      field("from", "From", "short-text", {
+        description: "Sender email address (name@example.com).",
+      }),
+      field("to", "To", "short-text", {
+        required: true,
+        description: "Recipient email address (name@example.com).",
+      }),
       field("subject", "Subject", "short-text", { required: true }),
       field("body", "Body", "long-text", { required: true }),
       select("operation", "Operation", ["send", "reply", "draft"], { defaultValue: "send" }),
     ],
     data: [
-      field("to", "To", "short-text", { required: true }),
+      field("to", "To", "short-text", {
+        required: true,
+        description: "Recipient email address (name@example.com).",
+      }),
       field("subject", "Subject", "short-text", { required: true }),
       field("body", "Body", "long-text", { required: true }),
-      field("cc", "Cc"),
+      field("cc", "Cc", "short-text", {
+        description: "Optional CC addresses, comma-separated emails.",
+      }),
     ],
     out: [
       field("messageId", "Message ID"),
@@ -67,14 +85,20 @@ export const templates: Record<TemplateName, { in: SheetField[]; data: SheetFiel
   },
   chat: {
     in: [
-      field("channel", "Channel", "short-text", { required: true }),
-      field("text", "Text", "long-text", { required: true }),
+      field("channel", "Channel ID or name", "short-text", {
+        required: true,
+        description: "Channel ID (C…) or #name where the message is posted.",
+      }),
+      field("text", "Message", "long-text", { required: true }),
       field("threadTs", "Thread ts"),
       select("operation", "Operation", ["post", "update", "react"], { defaultValue: "post" }),
     ],
     data: [
-      field("channel", "Channel", "short-text", { required: true }),
-      field("text", "Text", "long-text", { required: true }),
+      field("channel", "Channel ID or name", "short-text", {
+        required: true,
+        description: "Channel ID (C…) or #name.",
+      }),
+      field("text", "Message", "long-text", { required: true }),
       field("username", "Username"),
     ],
     out: [
@@ -112,6 +136,9 @@ export const templates: Record<TemplateName, { in: SheetField[]; data: SheetFiel
     data: [
       field("title", "Title", "short-text", { required: true }),
       field("body", "Body", "long-text"),
+      field("comment", "Comment", "long-text", {
+        description: "Comment body when operation is comment.",
+      }),
       field("assignee", "Assignee"),
       field("labels", "Labels"),
       select("status", "Status", ["open", "in_progress", "done"], { defaultValue: "open" }),
@@ -165,13 +192,19 @@ export const templates: Record<TemplateName, { in: SheetField[]; data: SheetFiel
   payment: {
     in: [
       field("customerId", "Customer ID"),
-      field("currency", "Currency", "short-text", { defaultValue: "usd" }),
+      select("currency", "Currency", ["usd", "eur", "gbp", "aud", "cad"], {
+        defaultValue: "usd",
+        options: CURRENCY_SELECT_OPTIONS,
+      }),
       select("operation", "Operation", ["create", "capture", "refund"], { defaultValue: "create" }),
     ],
     data: [
       field("email", "Email", "short-text", { required: true }),
       field("amount", "Amount", "number", { required: true }),
-      field("currency", "Currency", "short-text", { defaultValue: "usd" }),
+      select("currency", "Currency", ["usd", "eur", "gbp", "aud", "cad"], {
+        defaultValue: "usd",
+        options: CURRENCY_SELECT_OPTIONS,
+      }),
       field("description", "Description"),
     ],
     out: [
@@ -182,7 +215,12 @@ export const templates: Record<TemplateName, { in: SheetField[]; data: SheetFiel
   },
   ai: {
     in: [
-      field("model", "Model", "short-text", { required: true }),
+      select(
+        "model",
+        "Model",
+        ["gpt-4o", "gpt-4o-mini", "claude-sonnet-4", "gemini-2.0-flash", "mistral-large"],
+        { required: true, defaultValue: "gpt-4o-mini" }
+      ),
       field("temperature", "Temperature", "number", { defaultValue: 0.2 }),
       select("operation", "Operation", ["generate", "embed", "moderate"], { defaultValue: "generate" }),
     ],
