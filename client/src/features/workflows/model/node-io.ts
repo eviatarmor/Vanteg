@@ -1,6 +1,7 @@
 import { getNodeType } from "./node-catalog"
 import type { VantegNode, VantegNodeData, NodeKind, NodeField, NodeVar } from "./types"
 
+/** Keys (and header names) treated as secret-sensitive workflow I/O. */
 const SECRET_KEY_TOKENS = new Set([
   "token",
   "password",
@@ -10,6 +11,7 @@ const SECRET_KEY_TOKENS = new Set([
   "clientsecret",
   "accesskey",
   "privatekey",
+  "credentialid",
   "authorization",
   "bearertoken",
   "accesstoken",
@@ -32,6 +34,7 @@ function splitKeyTokens(key: string): string[] {
     .map((part) => part.toLowerCase())
 }
 
+/** True when a var/config key name looks secret-sensitive. */
 export function isSecretIoKey(key: string): boolean {
   const compact = compactKey(key)
   if (!compact) {
@@ -53,7 +56,7 @@ export function isSecretIoKey(key: string): boolean {
     if (SECRET_KEY_TOKENS.has(part)) {
       return true
     }
-    if (i > 0 && SECRET_KEY_TOKENS.has(`${parts[i - 1]}${part}`)) {
+    if (i > 0 && SECRET_KEY_TOKENS.has(parts[i - 1] + part)) {
       return true
     }
   }
@@ -71,7 +74,7 @@ export function isSecretNodeVar(
 }
 
 export function sanitizeIoVarValue(secret: boolean, value: string): string {
-  if (secret && value && !(value.includes("{{") && value.includes("}}"))) {
+  if (secret && value && !(value.includes('{{') && value.includes('}}'))) {
     return ""
   }
   return value
@@ -168,7 +171,7 @@ export function mapUpstreamOutputs(
   const mapped = source.data.outVars
     .filter((item) => item.key && !existing.has(item.key))
     .map((item) =>
-      makeVar(item.key, `{{${source.data.label}.${item.key}}}`, {
+      makeVar(item.key, '{{' + source.data.label + '.' + item.key + '}}', {
         secret: isSecretNodeVar(item),
       })
     )
