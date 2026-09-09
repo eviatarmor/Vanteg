@@ -21,6 +21,16 @@ describe("integrations registry", () => {
     expect(CONNECTORS.length).toBe(apps.length)
   })
 
+  it("matches documented catalog counts in docs/integrations.md", () => {
+    const apps = listApps()
+    const featured = apps.filter((app) => app.featured)
+    expect(apps.length).toBe(173)
+    expect(featured.length).toBe(26)
+    expect(apps.length - featured.length).toBe(147)
+    expect(listPickerConnectorApps().length).toBe(24)
+    expect(featured.map((app) => app.id)).toEqual(expect.arrayContaining(["microsoft-teams", "slack"]))
+  })
+
   it("gives every app an icon, auth, and In / Data / Out sheets", () => {
     for (const connector of CONNECTORS) {
       expect(connector.iconSlug.length, connector.id).toBeGreaterThan(0)
