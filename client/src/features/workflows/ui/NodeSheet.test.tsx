@@ -148,7 +148,6 @@ describe("NodeSheet", () => {
     )
   })
 
-<<<<<<< HEAD
   it("renders Microsoft Teams message as a textarea", () => {
     const node = createVantegNode("microsoft-teams", { x: 0, y: 0 })
 

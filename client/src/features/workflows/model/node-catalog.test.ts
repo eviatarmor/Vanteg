@@ -308,6 +308,57 @@ describe("workflow node catalog", () => {
     expect(concurrency?.help).toMatch(/parallel|blank/i)
   })
 
+  it("exposes Setup fields on Schedule, Webhook, Poll URL, RSS, and Manual triggers", () => {
+    const schedule = getNodeType("schedule")
+    expect(schedule?.fields.map((field) => field.key)).toEqual(["cron", "timezone"])
+    expect(schedule?.fields.find((field) => field.key === "cron")?.control).toBe("textarea")
+    expect(schedule?.fields.find((field) => field.key === "timezone")).toMatchObject({
+      control: "select",
+    })
+    expect(
+      schedule?.fields.find((field) => field.key === "timezone")?.options?.map((o) => o.value)
+    ).toEqual(
+      expect.arrayContaining([
+        "UTC",
+        "America/New_York",
+        "Europe/London",
+        "Australia/Sydney",
+      ])
+    )
+
+    const webhook = getNodeType("webhook")
+    expect(webhook?.fields.map((field) => field.key)).toEqual([
+      "path",
+      "method",
+      "secret",
+    ])
+    expect(webhook?.fields.find((field) => field.key === "method")?.control).toBe("select")
+    expect(webhook?.fields.find((field) => field.key === "secret")?.secret).toBe(true)
+
+    const poll = getNodeType("http-poll")
+    expect(poll?.fields.map((field) => field.key)).toEqual([
+      "method",
+      "url",
+      "query",
+      "headers",
+      "interval",
+    ])
+    expect(poll?.fields.find((field) => field.key === "interval")?.control).toBe("select")
+    expect(
+      poll?.fields.find((field) => field.key === "interval")?.options?.map((o) => o.value)
+    ).toEqual(expect.arrayContaining(["1m", "5m", "1h", "1d"]))
+
+    const rss = getNodeType("rss")
+    expect(rss?.fields.map((field) => field.key)).toEqual(["url", "interval"])
+    expect(rss?.fields.find((field) => field.key === "interval")?.control).toBe("select")
+    expect(rss?.fields.find((field) => field.key === "url")?.label).toBe("Feed URL")
+
+    const manual = getNodeType("manual")
+    expect(manual?.fields).toEqual([])
+    expect(manual?.label).toBe("Manual")
+    expect(manual?.description).toMatch(/by hand/i)
+  })
+
   it("covers CRM, payments, and the missing database insert action", () => {
     const hubspot = listConnectorApps().find((app) => app.id === "hubspot")
     const stripe = listConnectorApps().find((app) => app.id === "stripe")
