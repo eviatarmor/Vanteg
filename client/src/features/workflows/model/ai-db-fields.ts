@@ -34,6 +34,7 @@ function aiTemperatureField(): NodeField {
     key: "temperature",
     label: "Temperature",
     placeholder: "0.7",
+    control: "number",
     help: "Sampling temperature from 0 (deterministic) to 2 (more random).",
   }
 }

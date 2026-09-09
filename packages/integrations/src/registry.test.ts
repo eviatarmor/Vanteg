@@ -320,7 +320,7 @@ describe("integrations registry", () => {
 
       const createDeal = app!.methods.find((method) => method.id === `${id}-create-deal`)
       const amount = createDeal?.fields.find((field) => field.key === "amount")
-      expect(amount?.control ?? "input", id).toBe("input")
+      expect(amount?.control, id).toBe("number")
       expect(amount?.help, id).toMatch(/numeric|number|digits/i)
 
       const updateStage = app!.methods.find((method) => method.id === `${id}-update-deal-stage`)
@@ -340,8 +340,10 @@ describe("integrations registry", () => {
       const description = create?.fields.find((field) => field.key === "description")
 
       expect(calendar?.control ?? "input", id).toBe("input")
+      expect(start?.control, id).toBe("datetime")
       expect(start?.help, id).toMatch(/start/i)
       expect(until?.key, id).toBe("until")
+      expect(until?.control, id).toBe("datetime")
       expect(until?.help, id).toMatch(/end/i)
       expect(description?.control, id).toBe("textarea")
 
@@ -436,6 +438,11 @@ describe("integrations registry", () => {
       calendar?.methods
         .find((method) => method.id === "google-calendar-create-event")
         ?.fields.find((field) => field.key === "start")?.control
+    ).toBe("datetime")
+    expect(
+      calendar?.methods
+        .find((method) => method.id === "google-calendar-create-event")
+        ?.fields.find((field) => field.key === "until")?.control
     ).toBe("datetime")
   })
 })
