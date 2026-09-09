@@ -30,6 +30,7 @@ import {
   scheduleFields,
   webhookFields,
 } from "./trigger-fields"
+import { notifyFileNodes } from "./notify-file-nodes"
 
 function method(
   id: string,
@@ -158,40 +159,7 @@ export const platformNodes: WorkflowNodeType[] = [
       emailBodyField("Thanks, we got it."),
     ],
   },
-  {
-    id: "notification",
-    label: "Notification",
-    description: "Send a push or in-app notification.",
-    kind: "action",
-    category: "Actions",
-    fields: [{ key: "title", label: "Title", placeholder: "Done" }],
-  },
-  {
-    id: "file",
-    label: "File",
-    description: "Read or write a file.",
-    kind: "action",
-    category: "Actions",
-    fields: [{ key: "path", label: "Path", placeholder: "/tmp/export.csv" }],
-  },
-  {
-    id: "respond-webhook",
-    label: "Respond to webhook",
-    description: "Return an HTTP response to the caller.",
-    kind: "action",
-    category: "Actions",
-    fields: [
-      { key: "status", label: "Status", placeholder: "200" },
-      {
-        key: "body",
-        label: "Body",
-        placeholder: '{ "ok": true }',
-        control: "code",
-        language: "json",
-        help: "JSON payload returned to the caller.",
-      },
-    ],
-  },
+  ...notifyFileNodes,
   {
     id: "ai",
     label: "AI",

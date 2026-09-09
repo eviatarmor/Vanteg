@@ -372,4 +372,27 @@ describe("NodeSheet", () => {
     expect(screen.getByText(/no extra settings/i)).toBeInTheDocument()
     expect(screen.queryByText("Configuration")).not.toBeInTheDocument()
   })
+
+  it("renders Notification/File/Respond-webhook Setup field controls", () => {
+    const notification = createVantegNode("notification", { x: 0, y: 0 })
+    const { unmount: unmountNotification } = renderSheet(notification)
+    expect(screen.getByLabelText("Channel")).toBeInTheDocument()
+    expect(screen.getByLabelText("Title")).toBeInTheDocument()
+    expect(screen.getByLabelText("Message").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Severity")).toHaveTextContent("Info")
+    unmountNotification()
+
+    const file = createVantegNode("file", { x: 0, y: 0 })
+    const { unmount: unmountFile } = renderSheet(file)
+    expect(screen.getByLabelText("Path")).toBeInTheDocument()
+    expect(screen.getByLabelText("Operation")).toHaveTextContent("Read")
+    expect(screen.getByLabelText("Content").tagName).toBe("TEXTAREA")
+    unmountFile()
+
+    const respond = createVantegNode("respond-webhook", { x: 0, y: 0 })
+    renderSheet(respond)
+    expect(screen.getByLabelText("Status")).toHaveTextContent("200 OK")
+    expect(screen.getByRole("textbox", { name: "Body" }).tagName).toBe("TEXTAREA")
+    expect(screen.getByRole("textbox", { name: "Headers" }).tagName).toBe("TEXTAREA")
+  })
 })

@@ -30,4 +30,10 @@ describe("createVantegNode", () => {
     expect(createVantegNode("code", { x: 0, y: 0 }).data.config.language).toBe("javascript")
     expect(createVantegNode("merge", { x: 0, y: 0 }).data.config.mode).toBe("append")
   })
+
+  it("defaults Notification severity, File operation, and webhook status from selects", () => {
+    expect(createVantegNode("notification", { x: 0, y: 0 }).data.config.severity).toBe("info")
+    expect(createVantegNode("file", { x: 0, y: 0 }).data.config.operation).toBe("read")
+    expect(createVantegNode("respond-webhook", { x: 0, y: 0 }).data.config.status).toBe("200")
+  })
 })
