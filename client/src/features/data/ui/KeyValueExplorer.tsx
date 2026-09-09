@@ -4,9 +4,11 @@ import { Braces, Lock } from "lucide-react"
 
 import { EmptyState } from "@/features/empty-state/EmptyState"
 import { ResizableSidebar } from "@/features/layout/ResizableSidebar"
+import { ExplorerSkeleton, ResourceError } from "@/features/load-state/ResourceStatus"
 
 import {
   addKeyedRow,
+  retryDataLoad,
   selectSecretGroup,
   selectVariableGroup,
   setSecretItems,
@@ -18,27 +20,20 @@ import type { ExplorerNode } from "./ExplorerTree"
 import { ExplorerTree } from "./ExplorerTree"
 import { FillDataGrid } from "./FillDataGrid"
 
-export function KeyValueExplorer({ kind }: { kind: "variables" | "secrets" }) {
+function KeyValueReadyPanel({
+  kind,
+  onCreate,
+}: {
+  kind: "variables" | "secrets"
+  onCreate?: () => void
+}) {
   const snapshot = useDataStore()
-  const groups = kind === "variables" ? snapshot.variableGroups : snapshot.secretGroups
-  const selectedId =
-    kind === "variables" ? snapshot.selectedVariableGroupId : snapshot.selectedSecretGroupId
-  const group = groups.find((item) => item.id === selectedId) ?? groups[0]
   const isSecret = kind === "secrets"
-
-  const nodes: ExplorerNode[] = groups.map((item) => ({
-    id: item.id,
-    label: item.name,
-    icon: isSecret ? "secret" : "variable",
-  }))
-
-  function onSelect(id: string) {
-    if (kind === "variables") {
-      selectVariableGroup(id)
-      return
-    }
-    selectSecretGroup(id)
-  }
+  const groups = isSecret ? snapshot.secretGroups : snapshot.variableGroups
+  const selectedId = isSecret
+    ? snapshot.selectedSecretGroupId
+    : snapshot.selectedVariableGroupId
+  const group = groups.find((item) => item.id === selectedId) ?? groups[0]
 
   const columns = useMemo<ColumnDef<KeyValueItem>[]>(
     () => [
@@ -64,6 +59,37 @@ export function KeyValueExplorer({ kind }: { kind: "variables" | "secrets" }) {
     ],
     [isSecret]
   )
+
+  if (groups.length === 0) {
+    return (
+      <EmptyState
+        icon={isSecret ? Lock : Braces}
+        title={isSecret ? "No secrets yet" : "No variables yet"}
+        description={
+          isSecret
+            ? "Store API tokens and credentials securely. Values stay masked in the grid."
+            : "Add a workspace variable to share config across workflows and agents."
+        }
+        actionLabel={isSecret ? "New secret" : "New variable"}
+        onCreate={onCreate}
+        className="min-h-0 flex-1"
+      />
+    )
+  }
+
+  const nodes: ExplorerNode[] = groups.map((item) => ({
+    id: item.id,
+    label: item.name,
+    icon: isSecret ? "secret" : "variable",
+  }))
+
+  function onSelect(id: string) {
+    if (kind === "variables") {
+      selectVariableGroup(id)
+      return
+    }
+    selectSecretGroup(id)
+  }
 
   function persist(items: KeyValueItem[]) {
     if (!group) {
@@ -128,4 +154,33 @@ export function KeyValueExplorer({ kind }: { kind: "variables" | "secrets" }) {
       )}
     </ResizableSidebar>
   )
+}
+
+export function KeyValueExplorer({
+  kind,
+  onCreate,
+}: {
+  kind: "variables" | "secrets"
+  onCreate?: () => void
+}) {
+  const snapshot = useDataStore()
+  const isSecret = kind === "secrets"
+
+  if (snapshot.loadState === "loading") {
+    return (
+      <ExplorerSkeleton label={isSecret ? "Loading secrets" : "Loading variables"} />
+    )
+  }
+
+  if (snapshot.loadState === "error") {
+    return (
+      <ResourceError
+        title={isSecret ? "Could not load secrets" : "Could not load variables"}
+        message={snapshot.loadError ?? "Something went wrong while loading data."}
+        onRetry={() => retryDataLoad()}
+      />
+    )
+  }
+
+  return <KeyValueReadyPanel kind={kind} onCreate={onCreate} />
 }
