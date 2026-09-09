@@ -41,7 +41,7 @@ export function PageTabs({
   tabs: readonly PageTab[]
   onNew?: (tab: PageTab) => void
   onCreate?: (tab: PageTab, name: string, value?: string) => void
-  renderPanel?: (tab: PageTab) => ReactNode
+  renderPanel?: (tab: PageTab, helpers: { openCreate: () => void }) => ReactNode
   defaultTab?: string
   title?: string
   subtitle?: string
@@ -158,7 +158,7 @@ export function PageTabs({
           className={cn("min-h-0 min-w-0 flex-1 overflow-auto px-6 py-6", panelClassName)}
         >
           {renderPanel ? (
-            renderPanel(tab)
+            renderPanel(tab, { openCreate: handleNew })
           ) : (
             <EmptyState
               icon={SquareDashed}
