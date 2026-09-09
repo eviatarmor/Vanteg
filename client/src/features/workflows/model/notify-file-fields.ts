@@ -111,8 +111,9 @@ export function respondWebhookBodyField(
     key: "body",
     label: "Body",
     placeholder,
-    control: "textarea",
-    help: "Response body returned to the caller.",
+    control: "code",
+    language: "json",
+    help: "JSON payload returned to the caller.",
   }
 }
 
