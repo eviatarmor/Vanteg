@@ -22,6 +22,7 @@ describe("AssistantPanel", () => {
     expect(screen.getByRole("complementary", { name: "Assistant" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "New" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "History" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Open full" })).toHaveAttribute("href", "/assistant")
     expect(screen.getByRole("button", { name: "What can I do on this page?" })).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "History" }))
