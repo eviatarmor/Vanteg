@@ -184,7 +184,7 @@ export function ThreadHistory({
     <aside className="flex h-full min-h-0 w-full flex-col" aria-label="Chat history">
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
         <p className="min-w-0 flex-1 truncate text-sm font-medium">History</p>
-        <Button type="button" size="sm" variant="ghost" onClick={onCreate}>
+        <Button type="button" variant="ghost" size="sm" onClick={onCreate}>
           <Plus />
           New chat
         </Button>
