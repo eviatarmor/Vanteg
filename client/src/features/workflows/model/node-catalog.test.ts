@@ -155,6 +155,42 @@ describe("workflow node catalog", () => {
     )
   })
 
+  it("exposes Setup fields on HTTP Request and related HTTP nodes", () => {
+    const http = getNodeType("http")
+    expect(http?.fields.map((field) => field.key)).toEqual([
+      "method",
+      "url",
+      "query",
+      "headers",
+      "body",
+      "timeout",
+    ])
+    expect(http?.fields.find((field) => field.key === "method")?.control).toBe("select")
+    expect(http?.fields.find((field) => field.key === "method")?.options?.map((o) => o.value)).toEqual(
+      expect.arrayContaining(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"])
+    )
+    expect(http?.fields.find((field) => field.key === "query")?.control).toBe("textarea")
+    expect(http?.fields.find((field) => field.key === "headers")).toMatchObject({
+      control: "code",
+      language: "json",
+    })
+    expect(http?.fields.find((field) => field.key === "body")?.control).toBe("textarea")
+    expect(http?.fields.find((field) => field.key === "timeout")?.placeholder).toBe("30000")
+
+    const poll = getNodeType("http-poll")
+    expect(poll?.fields.map((field) => field.key)).toEqual([
+      "method",
+      "url",
+      "query",
+      "headers",
+    ])
+    expect(poll?.fields.find((field) => field.key === "headers")?.control).toBe("code")
+
+    const download = getNodeType("http-download")
+    expect(download?.fields.map((field) => field.key)).toEqual(["url", "headers", "path"])
+    expect(download?.fields.find((field) => field.key === "headers")?.control).toBe("code")
+  })
+
   it("covers CRM, payments, and the missing database insert action", () => {
     const hubspot = listConnectorApps().find((app) => app.id === "hubspot")
     const stripe = listConnectorApps().find((app) => app.id === "stripe")
