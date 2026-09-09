@@ -14,6 +14,7 @@ const workspaceIdentity: WorkspaceIdentity = {
 
 const currentUser: CurrentUser = {
   displayName: "Darren",
+  email: "darren@vanteg.app",
   role: "Owner",
   initials: "DH",
 }
