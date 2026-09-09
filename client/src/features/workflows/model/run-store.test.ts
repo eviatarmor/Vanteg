@@ -8,6 +8,7 @@ import {
   hydrateWorkflowRuns,
   listWorkflowRuns,
   resetWorkflowRuns,
+  retryWorkflowRunsLoad,
   startMockRun,
   updateWorkflowRun,
 } from "./run-store"
@@ -100,5 +101,18 @@ describe("workflow run store", () => {
     hydrateWorkflowRuns()
     expect(getRunsLoadState()).toBe("error")
     expect(listWorkflowRuns()).toEqual([])
+  })
+
+  it("retries hydration after storage is repaired", () => {
+    localStorage.setItem(WORKFLOW_RUNS_STORAGE_KEY, "{not-json")
+    resetWorkflowRuns()
+    localStorage.setItem(WORKFLOW_RUNS_STORAGE_KEY, "{not-json")
+    hydrateWorkflowRuns()
+    expect(getRunsLoadState()).toBe("error")
+
+    localStorage.removeItem(WORKFLOW_RUNS_STORAGE_KEY)
+    retryWorkflowRunsLoad()
+    expect(getRunsLoadState()).toBe("ready")
+    expect(listWorkflowRuns().length).toBeGreaterThanOrEqual(3)
   })
 })

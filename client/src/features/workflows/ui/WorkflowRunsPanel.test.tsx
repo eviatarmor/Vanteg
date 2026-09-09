@@ -48,6 +48,22 @@ describe("WorkflowRunsPanel", () => {
     })
     rerender(<WorkflowRunsPanel />)
     expect(screen.getByRole("heading", { name: "Couldn't load runs" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument()
+  })
+
+  it("retries after a corrupt storage error", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    localStorage.setItem("vanteg.workflow-runs", "{not-json")
+    resetWorkflowRuns()
+    localStorage.setItem("vanteg.workflow-runs", "{not-json")
+
+    render(<WorkflowRunsPanel />)
+    expect(screen.getByRole("heading", { name: "Couldn't load runs" })).toBeInTheDocument()
+
+    localStorage.removeItem("vanteg.workflow-runs")
+    await user.click(screen.getByRole("button", { name: "Try again" }))
+    expect(screen.getByRole("list", { name: "Workflow runs" })).toBeInTheDocument()
+    expect(screen.getByText("Lead alerts")).toBeInTheDocument()
   })
 
   it("shows empty state for a workflow with no runs and can run now", async () => {

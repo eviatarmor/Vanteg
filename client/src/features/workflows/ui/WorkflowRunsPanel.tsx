@@ -8,6 +8,7 @@ import { EmptyState } from "@/features/empty-state/EmptyState"
 import {
   getWorkflowRun,
   listWorkflowRuns,
+  retryWorkflowRunsLoad,
   startMockRun,
   useRunsLoadState,
   useWorkflowRuns,
@@ -52,6 +53,8 @@ export function WorkflowRunsPanel({
         icon={History}
         title="Couldn't load runs"
         description="Run history could not be read from local storage. Try again after clearing corrupted data."
+        actionLabel="Try again"
+        onCreate={() => retryWorkflowRunsLoad()}
         className="min-h-[16rem]"
       />
     )

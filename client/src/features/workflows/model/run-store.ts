@@ -91,6 +91,14 @@ function createSeedRuns(): WorkflowRun[] {
   ]
 }
 
+export function retryWorkflowRunsLoad(): void {
+  hydrated = false
+  loadState = "loading"
+  emit()
+  hydrateWorkflowRuns()
+  emit()
+}
+
 export function hydrateWorkflowRuns(): void {
   if (hydrated) {
     return

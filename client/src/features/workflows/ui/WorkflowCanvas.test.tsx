@@ -41,6 +41,7 @@ describe("WorkflowCanvas", () => {
     expect(screen.getByRole("button", { name: "Lock canvas" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Test" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "History" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument()
 
     openPaneMenu()
