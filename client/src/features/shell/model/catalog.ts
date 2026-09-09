@@ -19,6 +19,7 @@ const navSections: NavSection[] = [
     label: "Work",
     items: [
       { id: "home", label: "Home", path: "/", icon: "home" },
+      { id: "assistant", label: "Assistant", path: "/assistant", icon: "assistant" },
       { id: "inbox", label: "Inbox", path: "/inbox", icon: "inbox", badgeCount: 3 },
     ],
   },
@@ -88,6 +89,7 @@ export function getAllNavItems(): NavItem[] {
 
 const pageSubtitles: Record<string, string> = {
   "/": "Your workspace at a glance.",
+  "/assistant": "Full-page chat with Vanteg and your conversation history.",
   "/inbox": "Approve, deny, or always allow work from agents and workflows.",
   "/workflows": "Build, draft, and run automations.",
   "/agents": "Personalize agents and assign shared memory and knowledge.",
