@@ -105,6 +105,31 @@ describe("integrations registry", () => {
     }
   })
 
+  it("marks featured app MethodFields as resource-select", () => {
+    const cases: Array<{ appId: string; key: string; resourceType: string; min: number }> = [
+      { appId: "github", key: "repo", resourceType: "github.repo", min: 10 },
+      { appId: "google-sheets", key: "sheet", resourceType: "sheets.sheet", min: 4 },
+      { appId: "discord", key: "channel", resourceType: "discord.channel", min: 5 },
+      { appId: "notion", key: "page", resourceType: "notion.page", min: 4 },
+      { appId: "google-calendar", key: "calendar", resourceType: "calendar.calendar", min: 4 },
+      { appId: "outlook-calendar", key: "calendar", resourceType: "calendar.calendar", min: 4 },
+      { appId: "google-forms", key: "formId", resourceType: "forms.form", min: 3 },
+      { appId: "typeform", key: "formId", resourceType: "forms.form", min: 3 },
+      { appId: "surveymonkey", key: "formId", resourceType: "forms.form", min: 3 },
+    ]
+    for (const { appId, key, resourceType, min } of cases) {
+      const app = getApp(appId)
+      const fields = (app?.methods ?? []).flatMap((method) =>
+        method.fields.filter((field) => field.key === key)
+      )
+      expect(fields.length, appId).toBeGreaterThanOrEqual(min)
+      for (const field of fields) {
+        expect(field.control, `${appId}.${key}`).toBe("resource")
+        expect(field.resourceType, `${appId}.${key}`).toBe(resourceType)
+      }
+    }
+  })
+
   it("groups Google Sheets, Drive, and Docs into one picker app", () => {
     const google = listPickerConnectorApps().find((app) => app.id === "google")
     expect(getApp("google-sheets")?.pickerGroup).toBe("google")
@@ -179,22 +204,24 @@ describe("integrations registry", () => {
     }
   })
 
-  it("keeps formId as input with clearer help and message as textarea", () => {
+  it("marks formId as resource-select and keeps message as textarea", () => {
     for (const id of ["typeform", "google-forms", "surveymonkey"] as const) {
       const app = getApp(id)
       expect(app, id).toBeDefined()
 
       const submission = app!.methods.find((method) => method.id === `${id}-new-submission`)
       const formId = submission?.fields.find((field) => field.key === "formId")
-      expect(formId?.control ?? "input", id).toBe("input")
+      expect(formId?.control, id).toBe("resource")
+      expect(formId?.resourceType, id).toBe("forms.form")
       expect(formId?.label, id).toBe("Form ID")
-      expect(formId?.help, id).toMatch(/form id|settings|title/i)
+      expect(formId?.help, id).toMatch(/pick a form/i)
 
       const notify = app!.methods.find((method) => method.id === `${id}-notify-respondent`)
       const message = notify?.fields.find((field) => field.key === "message")
       expect(message?.control, id).toBe("textarea")
-      expect(notify?.fields.find((field) => field.key === "formId")?.control ?? "input", id).toBe(
-        "input"
+      expect(notify?.fields.find((field) => field.key === "formId")?.control, id).toBe("resource")
+      expect(notify?.fields.find((field) => field.key === "formId")?.resourceType, id).toBe(
+        "forms.form"
       )
     }
   })
@@ -328,7 +355,7 @@ describe("integrations registry", () => {
     }
   })
 
-  it("clarifies calendar start/until fields and keeps calendar id as input", () => {
+  it("clarifies calendar start/until fields and uses resource-select for calendar id", () => {
     for (const id of ["google-calendar", "outlook-calendar"] as const) {
       const app = getApp(id)
       expect(app, id).toBeDefined()
@@ -339,7 +366,8 @@ describe("integrations registry", () => {
       const until = create?.fields.find((field) => field.key === "until")
       const description = create?.fields.find((field) => field.key === "description")
 
-      expect(calendar?.control ?? "input", id).toBe("input")
+      expect(calendar?.control, id).toBe("resource")
+      expect(calendar?.resourceType, id).toBe("calendar.calendar")
       expect(start?.control, id).toBe("datetime")
       expect(start?.help, id).toMatch(/start/i)
       expect(until?.key, id).toBe("until")
@@ -360,11 +388,13 @@ describe("integrations registry", () => {
     const createRow = sheets?.methods.find((method) => method.id === "spreadsheet-create-row")
     const updateRow = sheets?.methods.find((method) => method.id === "spreadsheet")
     const sheet = createRow?.fields.find((field) => field.key === "sheet")
-    expect(sheet?.control ?? "input").toBe("input")
-    expect(sheet?.label).toBe("Sheet ID")
-    expect(sheet?.help).toMatch(/resource select later/i)
+    expect(sheet?.control).toBe("resource")
+    expect(sheet?.resourceType).toBe("sheets.sheet")
+    expect(sheet?.label).toBe("Sheet")
+    expect(sheet?.help).toMatch(/pick a spreadsheet/i)
     expect(createRow?.fields.find((field) => field.key === "values")?.control).toBe("textarea")
     expect(updateRow?.fields.find((field) => field.key === "values")?.control).toBe("textarea")
+    expect(updateRow?.fields.find((field) => field.key === "row")?.key).toBe("row")
 
     const drive = getApp("google-drive")
     const folder = drive?.methods
@@ -381,8 +411,9 @@ describe("integrations registry", () => {
     const notion = getApp("notion")
     const createPage = notion?.methods.find((method) => method.id === "notion")
     const page = createPage?.fields.find((field) => field.key === "page")
-    expect(page?.control ?? "input").toBe("input")
-    expect(page?.help).toMatch(/resource select later/i)
+    expect(page?.control).toBe("resource")
+    expect(page?.resourceType).toBe("notion.page")
+    expect(page?.help).toMatch(/pick a notion page/i)
     expect(createPage?.fields.find((field) => field.key === "properties")).toMatchObject({
       control: "code",
       language: "json",
