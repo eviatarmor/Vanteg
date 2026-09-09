@@ -183,8 +183,9 @@ export function NodeSheet({
                   ) : null}
                   {node.data.catalogId === "webhook" ? (
                     <WebhookTestPanel
-                      path={node.data.config.path}
-                      method={node.data.config.method}
+                      path={node.data.config.path || "/hooks/vanteg"}
+                      method={node.data.config.method || "POST"}
+                      secret={node.data.config.secret}
                     />
                   ) : null}
                   <section className="grid gap-2">

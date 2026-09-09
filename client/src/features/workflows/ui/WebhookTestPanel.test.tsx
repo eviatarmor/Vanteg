@@ -30,6 +30,13 @@ describe("WebhookTestPanel", () => {
     expect(screen.getByText(/"path": "\/hooks\/demo"/)).toBeInTheDocument()
   })
 
+  it("falls back to POST /hooks/vanteg and seeds the signing secret", () => {
+    render(<WebhookTestPanel secret="whsec_abc" />)
+
+    expect(screen.getByText("POST /hooks/vanteg")).toBeInTheDocument()
+    expect(screen.getByLabelText("Signing secret")).toHaveValue("********c")
+  })
+
   it("shows an error state for invalid JSON", async () => {
     const user = userEvent.setup()
     render(<WebhookTestPanel />)

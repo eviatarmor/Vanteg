@@ -455,6 +455,7 @@ describe("NodeSheet", () => {
     expect(screen.getByRole("heading", { name: "Test webhook" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Send test" })).toBeInTheDocument()
     expect(screen.getByLabelText("Signing secret")).toBeInTheDocument()
+    expect(screen.getByText("POST /hooks/vanteg")).toBeInTheDocument()
   })
 
   it("hides the Test webhook panel for non-webhook nodes", () => {

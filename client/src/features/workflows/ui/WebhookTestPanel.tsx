@@ -19,15 +19,19 @@ import { CodeField } from "./CodeField"
 export function WebhookTestPanel({
   path,
   method,
+  secret: initialSecret,
 }: {
   path?: string
   method?: string
+  secret?: string
 }) {
   const [payload, setPayload] = useState(DEFAULT_WEBHOOK_SAMPLE_PAYLOAD)
   const [headersText, setHeadersText] = useState("")
-  const [secret, setSecret] = useState("")
+  const [secret, setSecret] = useState(initialSecret ?? "")
   const [phase, setPhase] = useState<WebhookTestPhase>("idle")
   const [result, setResult] = useState<WebhookTestResult | null>(null)
+  const resolvedPath = path?.trim() || "/hooks/vanteg"
+  const resolvedMethod = (method || "POST").toUpperCase()
 
   async function onSend() {
     setPhase("loading")
@@ -37,8 +41,8 @@ export function WebhookTestPanel({
         payloadText: payload,
         headersText,
         secret,
-        path,
-        method,
+        path: resolvedPath,
+        method: resolvedMethod,
       })
       setResult(next)
       setPhase(next.ok ? "success" : "error")
@@ -121,11 +125,9 @@ export function WebhookTestPanel({
             "Send test"
           )}
         </Button>
-        {path ? (
-          <p className="truncate text-xs text-muted-foreground">
-            {(method || "POST").toUpperCase()} {path}
-          </p>
-        ) : null}
+        <p className="truncate text-xs text-muted-foreground">
+          {resolvedMethod} {resolvedPath}
+        </p>
       </div>
 
       {phase === "idle" && !result ? (
