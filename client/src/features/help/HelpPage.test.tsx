@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router"
 import { describe, expect, it, vi } from "vitest"
 
 import { HelpPage } from "./HelpPage"
-import { HELP_DOC_LINKS, HELP_FAQ } from "./model/faq"
+import { HELP_DOC_LINKS, HELP_FAQ, HELP_STATUS_HREF } from "./model/faq"
 
 vi.mock("sonner", () => ({
   toast: {
@@ -23,7 +23,7 @@ function renderHelp() {
 }
 
 describe("HelpPage", () => {
-  it("renders search, FAQ accordion, docs links, and support CTA", () => {
+  it("renders search, FAQ accordion, docs links, support CTA, and status stub", () => {
     renderHelp()
 
     expect(screen.getByRole("heading", { name: "Help" })).toBeInTheDocument()
@@ -42,17 +42,36 @@ describe("HelpPage", () => {
     }
 
     expect(screen.getByRole("button", { name: /Contact support/i })).toBeInTheDocument()
+    const status = screen.getByRole("link", { name: /Status page/i })
+    expect(status).toHaveAttribute("href", HELP_STATUS_HREF)
   })
 
-  it("filters FAQ results and shows empty state when nothing matches", async () => {
+  it("filters FAQ results including compliance topics", async () => {
     const user = userEvent.setup()
     renderHelp()
 
-    await user.type(screen.getByLabelText("Search help"), "secretinput")
-    expect(screen.getByRole("button", { name: /secrets and tokens/i })).toBeInTheDocument()
+    await user.type(screen.getByLabelText("Search help"), "gdpr")
+    expect(
+      screen.getByRole("button", { name: /export my data/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /delete my account/i })
+    ).toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: "What is Vanteg?" })
     ).not.toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText("Search help"))
+    await user.type(screen.getByLabelText("Search help"), "billing")
+    expect(
+      screen.getByRole("button", { name: /billing and upgrading/i })
+    ).toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText("Search help"))
+    await user.type(screen.getByLabelText("Search help"), "dpa")
+    expect(
+      screen.getByRole("button", { name: /Data Processing Agreement/i })
+    ).toBeInTheDocument()
 
     await user.clear(screen.getByLabelText("Search help"))
     await user.type(screen.getByLabelText("Search help"), "zzzz-no-match")
