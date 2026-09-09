@@ -14,6 +14,10 @@ React monorepo for the Vanteg app shell.
 
 Product code lives under `client/src/features/`. Add a page by creating a feature folder and registering it in `client/src/features/shell/model/catalog.ts` plus `client/src/app/router.tsx`. The sidebar reads the catalog; it does not import page components.
 
+## Conventions
+
+- UI: see [`docs/ui-conventions.md`](docs/ui-conventions.md) (secret fields must use `SecretInput`, never native password inputs).
+
 ```bash
 npm install
 npm run dev      # Vite on http://127.0.0.1:5173
