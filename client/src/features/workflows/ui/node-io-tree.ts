@@ -1,16 +1,38 @@
 import type { ExplorerNode } from "@/features/data/ui/ExplorerTree"
+import { maskSecretLast, SECRET_MASK } from "@/features/data/model/mask-secret"
 
+import { isSecretNodeVar } from "../model/node-io"
 import type { VantegEdge, VantegNode, NodeVar } from "../model/types"
 
-function varLeaves(vars: NodeVar[], prefix: string, hintFor?: (item: NodeVar) => string | undefined): ExplorerNode[] {
+function secretHint(item: NodeVar): string {
+  const value = item.value?.trim() ?? ""
+  if (!value) {
+    return SECRET_MASK
+  }
+  // Template paths are not secret material; still avoid leaking length of live secrets.
+  if (value.includes("{{") && value.includes("}}")) {
+    return SECRET_MASK
+  }
+  // Credential ids and other opaque values: mask without revealing raw content.
+  return maskSecretLast(value) || SECRET_MASK
+}
+
+function varLeaves(
+  vars: NodeVar[],
+  prefix: string,
+  hintFor?: (item: NodeVar) => string | undefined
+): ExplorerNode[] {
   return vars
     .filter((item) => item.key)
-    .map((item) => ({
-      id: `${prefix}:${item.id}`,
-      label: item.key,
-      icon: "variable" as const,
-      hint: hintFor?.(item) ?? (item.value || undefined),
-    }))
+    .map((item) => {
+      const secret = isSecretNodeVar(item)
+      return {
+        id: `${prefix}:${item.id}`,
+        label: item.key,
+        icon: secret ? ("secret" as const) : ("variable" as const),
+        hint: secret ? secretHint(item) : (hintFor?.(item) ?? (item.value || undefined)),
+      }
+    })
 }
 
 export function outExplorerNodes(node: VantegNode): ExplorerNode[] {
