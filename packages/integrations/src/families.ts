@@ -106,6 +106,26 @@ function amountField(placeholder = "12000"): MethodField {
   })
 }
 
+function calendarField(placeholder = "primary"): MethodField {
+  return field("calendar", "Calendar", placeholder, {
+    control: "resource",
+    resourceType: "calendar.calendar",
+    help: "Pick a calendar from the connected account, or enter a custom calendar id.",
+  })
+}
+
+function formField(placeholder = "contact-form"): MethodField {
+  return field("formId", "Form ID", placeholder, {
+    control: "resource",
+    resourceType: "forms.form",
+    help: "Pick a form from the connected account, or enter a custom form id.",
+  })
+}
+
+function formMessageField(placeholder: string): MethodField {
+  return field("message", "Message", placeholder, { control: "textarea" })
+}
+
 function crmFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-contact`, "trigger", "New contact", `Start when a ${name} contact is created.`, [
@@ -200,30 +220,20 @@ function paymentFamily(prefix: string, name: string): Method[] {
 function calendarFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-event`, "trigger", "New event created", `Start when a ${name} event is created.`, [
-      field("calendar", "Calendar", "primary", {
-        help: "Calendar ID. Use primary for the default calendar.",
-      }),
+      calendarField(),
     ]),
     method(`${prefix}-event-starting-soon`, "trigger", "Event starting soon", `Start a set time before a ${name} event.`, [
-      field("calendar", "Calendar", "primary", {
-        help: "Calendar ID. Use primary for the default calendar.",
-      }),
+      calendarField(),
       field("lead", "Lead time", "15m"),
     ]),
     method(`${prefix}-event-updated`, "trigger", "Event updated", `Start when a ${name} event changes.`, [
-      field("calendar", "Calendar", "primary", {
-        help: "Calendar ID. Use primary for the default calendar.",
-      }),
+      calendarField(),
     ]),
     method(`${prefix}-event-cancelled`, "trigger", "Event cancelled", `Start when a ${name} event is cancelled.`, [
-      field("calendar", "Calendar", "primary", {
-        help: "Calendar ID. Use primary for the default calendar.",
-      }),
+      calendarField(),
     ]),
     method(`${prefix}-create-event`, "action", "Create event", `Create a ${name} event.`, [
-      field("calendar", "Calendar", "primary", {
-        help: "Calendar ID. Use primary for the default calendar.",
-      }),
+      calendarField(),
       field("title", "Title", "Kickoff"),
       field("start", "Start", "2026-09-08T09:00", {
         control: "datetime",
@@ -258,32 +268,22 @@ function calendarFamily(prefix: string, name: string): Method[] {
   ]
 }
 
-function formIdField(name: string): MethodField {
-  return field("formId", "Form ID", "contact-form", {
-    help: `${name} form ID from the form URL or settings (not the form title).`,
-  })
-}
-
-function formMessageField(placeholder: string): MethodField {
-  return field("message", "Message", placeholder, { control: "textarea" })
-}
-
 function formFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-submission`, "trigger", "New submission", `Start when a ${name} form is submitted.`, [
-      formIdField(name),
+      formField(),
     ]),
     method(`${prefix}-form-updated`, "trigger", "Form updated", `Start when a ${name} form definition changes.`, [
-      formIdField(name),
+      formField(),
     ]),
     method(`${prefix}-list-responses`, "action", "List responses", `List ${name} responses.`, [
-      formIdField(name),
+      formField(),
     ]),
     method(`${prefix}-get-form`, "action", "Get form", `Read a ${name} form and its questions.`, [
-      formIdField(name),
+      formField(),
     ]),
     method(`${prefix}-notify-respondent`, "action", "Notify respondent", `Send a follow-up message to a ${name} respondent.`, [
-      formIdField(name),
+      formField(),
       formMessageField("Thanks for your response."),
     ]),
   ]
