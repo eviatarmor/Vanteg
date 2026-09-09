@@ -9,6 +9,7 @@ export type ConversationStoreStatus = "loading" | "ready" | "error"
 let conversations: AssistantConversation[] = []
 let status: ConversationStoreStatus = "ready"
 let errorMessage: string | null = null
+let saveWarning: string | null = null
 let hydrated = false
 const listeners = new Set<() => void>()
 
@@ -74,13 +75,14 @@ function persist(next: AssistantConversation[]): void {
   conversations = next
   try {
     writeStorage(next)
-    if (status === "error" && errorMessage?.includes("save")) {
-      errorMessage = null
+    saveWarning = null
+    status = "ready"
+    errorMessage = null
+  } catch {
+    saveWarning = "Could not save conversation history."
+    if (conversations.length > 0) {
       status = "ready"
     }
-  } catch {
-    errorMessage = "Could not save conversation history."
-    status = "error"
   }
   emit()
 }
@@ -93,10 +95,12 @@ export function hydrateConversations(options?: { force?: boolean }): void {
     conversations = readStorage()
     status = "ready"
     errorMessage = null
+    saveWarning = null
   } catch {
     conversations = []
     status = "error"
     errorMessage = "Could not load conversation history."
+    saveWarning = null
   }
   hydrated = true
   emit()
@@ -118,6 +122,11 @@ export function getConversationStoreError(): string | null {
   return errorMessage
 }
 
+export function getConversationSaveWarning(): string | null {
+  ensureConversationsHydrated()
+  return saveWarning
+}
+
 export function markConversationsLoading(): void {
   status = "loading"
   errorMessage = null
@@ -125,6 +134,10 @@ export function markConversationsLoading(): void {
 }
 
 export function retryConversationStore(): void {
+  if (saveWarning && conversations.length > 0) {
+    persist(conversations)
+    return
+  }
   markConversationsLoading()
   hydrateConversations({ force: true })
 }
@@ -170,7 +183,7 @@ export function listConversations(): AssistantConversation[] {
 
 export function saveConversation(
   id: string,
-  patch: Partial<Pick<AssistantConversation, "title" | "messages">>
+  patch: Partial<Pick<AssistantConversation, "title" | "messages" | "titleLocked">>
 ): AssistantConversation | undefined {
   ensureConversationsHydrated()
   const current = conversations.find((conversation) => conversation.id === id)
@@ -189,7 +202,7 @@ export function renameConversation(id: string, title: string): AssistantConversa
   if (!trimmed) {
     return undefined
   }
-  return saveConversation(id, { title: trimmed })
+  return saveConversation(id, { title: trimmed, titleLocked: true })
 }
 
 export function deleteConversation(id: string): boolean {
@@ -247,10 +260,19 @@ export function useConversationStoreError(): string | null {
   )
 }
 
+export function useConversationSaveWarning(): string | null {
+  return useSyncExternalStore(
+    subscribeConversations,
+    getConversationSaveWarning,
+    getConversationSaveWarning
+  )
+}
+
 export function resetConversations(): void {
   conversations = []
   status = "ready"
   errorMessage = null
+  saveWarning = null
   hydrated = true
   try {
     if (typeof localStorage !== "undefined") {

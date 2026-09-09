@@ -44,4 +44,18 @@ describe("AssistantPanel", () => {
     expect(screen.getByText("New conversation")).toBeInTheDocument()
     expect(screen.getByText("0 messages")).toBeInTheDocument()
   })
+
+  it("deep-links Open full to the active conversation", async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <AssistantPanel />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole("button", { name: "New" }))
+    const link = screen.getByRole("link", { name: "Open full" })
+    expect(link.getAttribute("href")).toMatch(/^\/assistant\/.+$/)
+    expect(link).not.toHaveAttribute("href", "/assistant")
+  })
 })

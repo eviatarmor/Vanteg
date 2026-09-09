@@ -26,7 +26,7 @@ import {
 import { Suggestion } from "@/components/ai-elements/suggestion"
 
 import { suggestionsForPath } from "../model/chat-context"
-import { saveConversation, titleFromMessages } from "../model/store"
+import { getConversation, saveConversation, titleFromMessages } from "../model/store"
 import type {
   AssistantChatContext,
   AssistantConversation,
@@ -53,20 +53,24 @@ function fromUIMessages(messages: UIMessage[]): AssistantMessage[] {
 
 function persist(conversationId: string, messages: UIMessage[]) {
   const stored = fromUIMessages(messages)
-  saveConversation(conversationId, {
-    messages: stored,
-    title: titleFromMessages(stored),
-  })
+  const current = getConversation(conversationId)
+  const patch: { messages: AssistantMessage[]; title?: string } = { messages: stored }
+  if (!current?.titleLocked) {
+    patch.title = titleFromMessages(stored)
+  }
+  saveConversation(conversationId, patch)
 }
 
 export function ChatThread({
   conversation,
   context,
   initialPrompt,
+  onInitialPromptConsumed,
 }: {
   conversation: AssistantConversation
   context: AssistantChatContext
   initialPrompt?: string
+  onInitialPromptConsumed?: () => void
 }) {
   const [input, setInput] = useState("")
   const suggestions = suggestionsForPath(context.path)
@@ -98,16 +102,13 @@ export function ChatThread({
   }
 
   useEffect(() => {
-    persist(conversation.id, messages)
-  }, [conversation.id, messages])
-
-  useEffect(() => {
     if (!initialPrompt || sentInitial.current) {
       return
     }
     sentInitial.current = true
+    onInitialPromptConsumed?.()
     void sendMessage({ text: initialPrompt })
-  }, [initialPrompt, sendMessage])
+  }, [initialPrompt, sendMessage, onInitialPromptConsumed])
 
   function onSubmit(message: PromptInputMessage) {
     void submit(message.text)

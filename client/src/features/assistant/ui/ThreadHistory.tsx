@@ -32,6 +32,7 @@ import {
   deleteConversation,
   renameConversation,
   retryConversationStore,
+  useConversationSaveWarning,
   useConversationStoreError,
   useConversationStoreStatus,
   useConversations,
@@ -165,6 +166,7 @@ export function ThreadHistory({
   const conversations = useConversations()
   const status = useConversationStoreStatus()
   const error = useConversationStoreError()
+  const saveWarning = useConversationSaveWarning()
   const navigate = useNavigate()
   const [pendingDelete, setPendingDelete] = useState<AssistantConversation | null>(null)
 
@@ -190,6 +192,14 @@ export function ThreadHistory({
         </Button>
       </div>
 
+      {saveWarning && conversations.length > 0 ? (
+        <div className="border-b border-border px-3 py-2 text-sm text-destructive" role="status">
+          {saveWarning}
+          <Button type="button" size="sm" variant="outline" className="ml-2" onClick={() => retryConversationStore()}>
+            Retry
+          </Button>
+        </div>
+      ) : null}
       {status === "loading" ? (
         <div className="flex min-h-0 flex-1 flex-col gap-2 p-3" role="status" aria-label="Loading history">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

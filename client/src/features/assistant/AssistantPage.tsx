@@ -123,6 +123,7 @@ export function AssistantPage() {
                 initialPrompt={
                   pending && selected.id === pending.id ? pending.prompt : undefined
                 }
+                onInitialPromptConsumed={() => setPending(null)}
               />
             ) : threadId ? (
               <EmptyState

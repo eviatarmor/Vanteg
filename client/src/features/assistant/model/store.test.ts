@@ -1,16 +1,18 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   CONVERSATION_STORAGE_KEY,
   createConversation,
   deleteConversation,
   getConversation,
+  getConversationSaveWarning,
   getConversationStoreError,
   getConversationStoreStatus,
   hydrateConversations,
   listConversations,
   renameConversation,
   resetConversations,
+  retryConversationStore,
   saveConversation,
   titleFromMessages,
 } from "./store"
@@ -19,6 +21,10 @@ describe("assistant conversation store", () => {
   beforeEach(() => {
     resetConversations()
     localStorage.removeItem(CONVERSATION_STORAGE_KEY)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it("persists created conversations in localStorage", () => {
@@ -74,5 +80,31 @@ describe("assistant conversation store", () => {
       title: "Hi",
     })
     expect(getConversation(conversation.id)?.messages).toHaveLength(1)
+  })
+
+  it("keeps a renamed title locked against later message saves", () => {
+    const conversation = createConversation()
+    renameConversation(conversation.id, "Custom name")
+    saveConversation(conversation.id, {
+      messages: [{ id: "1", role: "user", content: "First user line" }],
+    })
+    expect(getConversation(conversation.id)?.title).toBe("Custom name")
+    expect(getConversation(conversation.id)?.titleLocked).toBe(true)
+  })
+
+  it("keeps in-memory chats when localStorage save fails", () => {
+    const conversation = createConversation("Kept")
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota")
+    })
+    saveConversation(conversation.id, { title: "Kept after fail" })
+    expect(getConversation(conversation.id)?.title).toBe("Kept after fail")
+    expect(getConversationStoreStatus()).toBe("ready")
+    expect(getConversationSaveWarning()).toMatch(/could not save/i)
+    expect(listConversations()).toHaveLength(1)
+
+    retryConversationStore()
+    expect(getConversation(conversation.id)?.title).toBe("Kept after fail")
+    vi.restoreAllMocks()
   })
 })

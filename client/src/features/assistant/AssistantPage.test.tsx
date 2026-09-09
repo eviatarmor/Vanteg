@@ -97,4 +97,29 @@ describe("AssistantPage", () => {
 
     expect(screen.getByText("Conversation not found")).toBeInTheDocument()
   })
+
+  it("renames a conversation from history actions", async () => {
+    const conversation = createConversation("Old title")
+    const { user } = renderAssistant(`/assistant/${conversation.id}`)
+
+    await user.click(screen.getByRole("button", { name: `Actions for Old title` }))
+    await user.click(screen.getByRole("menuitem", { name: "Rename" }))
+    const input = screen.getByRole("textbox", { name: "Conversation title" })
+    await user.clear(input)
+    await user.type(input, "Custom name")
+    await user.click(screen.getByRole("button", { name: "Save" }))
+
+    expect(screen.getByText("Custom name")).toBeInTheDocument()
+  })
+
+  it("deletes the open empty thread and returns to /assistant", async () => {
+    const conversation = createConversation("Empty chat")
+    const { user, router } = renderAssistant(`/assistant/${conversation.id}`)
+
+    await user.click(screen.getByRole("button", { name: `Actions for Empty chat` }))
+    await user.click(screen.getByRole("menuitem", { name: "Delete" }))
+
+    expect(router.state.location.pathname).toBe("/assistant")
+    expect(screen.queryByText("Empty chat")).not.toBeInTheDocument()
+  })
 })

@@ -155,6 +155,7 @@ export function AssistantPanel() {
           conversation={active}
           context={context}
           initialPrompt={pendingPrompt ?? undefined}
+          onInitialPromptConsumed={() => setPendingPrompt(null)}
         />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">

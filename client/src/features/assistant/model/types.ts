@@ -11,6 +11,7 @@ export interface AssistantConversation {
   title: string
   messages: AssistantMessage[]
   updatedAt: number
+  titleLocked?: boolean
 }
 
 export interface WorkflowChatContext {
