@@ -5,6 +5,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import {
   TEAM_CAPABILITIES,
   TEAM_ROLE_PRESETS,
+  toggleCapability,
   type TeamCapability,
   type TeamRolePreset,
 } from "../model/types"
@@ -36,11 +37,7 @@ export function MemberFieldChooser({
   idPrefix?: string
 }) {
   function toggle(capability: TeamCapability) {
-    onCapabilitiesChange(
-      capabilities.includes(capability)
-        ? capabilities.filter((item) => item !== capability)
-        : [...capabilities, capability]
-    )
+    onCapabilitiesChange(toggleCapability(capabilities, capability))
   }
 
   return (

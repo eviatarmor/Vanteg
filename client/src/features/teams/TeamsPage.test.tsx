@@ -112,4 +112,22 @@ describe("TeamsPage", () => {
 
     expect(screen.getAllByText("Lead").length).toBeGreaterThan(0)
   })
+
+  it("validates an empty custom role in the member sheet", async () => {
+    const user = userEvent.setup()
+    renderTeams("/teams/team-swe")
+
+    const leadLabel = screen.getAllByText("Lead SWE agent")[0]
+    fireEvent.doubleClick(leadLabel.closest(".react-flow__node") ?? leadLabel)
+
+    const sheet = await screen.findByRole("dialog")
+    const customInput = within(sheet).getByPlaceholderText("e.g. Lead SWE")
+    await user.clear(customInput)
+    await user.click(within(sheet).getByRole("button", { name: "Save member" }))
+
+    expect(within(sheet).getByRole("alert")).toHaveTextContent(
+      "Enter a custom role or pick a preset."
+    )
+    expect(screen.getAllByText("Lead SWE").length).toBeGreaterThan(0)
+  })
 })

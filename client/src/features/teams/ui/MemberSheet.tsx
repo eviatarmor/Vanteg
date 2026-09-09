@@ -66,7 +66,6 @@ export function MemberSheet({
   }, [initial])
 
   const resolvedRole = resolveMemberRole(rolePreset, customRole)
-  const canSave = Boolean(node) && resolvedRole.length > 0
 
   function submit() {
     setAttempted(true)
@@ -124,7 +123,7 @@ export function MemberSheet({
               <Button type="button" variant="outline" onClick={onDelete}>
                 Remove
               </Button>
-              <Button type="button" onClick={submit} disabled={!canSave}>
+              <Button type="button" onClick={submit} disabled={!node}>
                 Save member
               </Button>
             </SheetFooter>
