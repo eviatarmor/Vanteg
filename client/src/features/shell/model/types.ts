@@ -1,6 +1,7 @@
 export type NavIconId =
   | "home"
   | "inbox"
+  | "assistant"
   | "workflows"
   | "agents"
   | "teams"
