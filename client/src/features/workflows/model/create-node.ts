@@ -5,6 +5,10 @@ import type { VantegNode, NodeField } from "./types"
 function defaultConfig(fields: readonly NodeField[] | undefined): Record<string, string> {
   const config: Record<string, string> = {}
   for (const field of fields ?? []) {
+    if (field.control === "boolean") {
+      config[field.key] = field.placeholder === "false" ? "false" : "true"
+      continue
+    }
     if (field.control !== "select" || !field.options?.length) {
       continue
     }

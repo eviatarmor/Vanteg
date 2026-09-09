@@ -4,7 +4,7 @@ export type WorkflowStatus = "draft" | "dev" | "prod"
 
 export type NodeKind = "trigger" | "action" | "logic"
 
-export type FieldControl = "input" | "textarea" | "code" | "select" | "credential"
+export type FieldControl = "input" | "textarea" | "code" | "select" | "credential" | "boolean"
 
 export interface NodeFieldOption {
   value: string
