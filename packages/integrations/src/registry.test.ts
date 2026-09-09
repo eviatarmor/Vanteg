@@ -143,7 +143,6 @@ describe("integrations registry", () => {
     )
   })
 
-
   it("fills payment refund and invoice trigger fields with filters", () => {
     for (const id of ["stripe", "paypal", "square"] as const) {
       const app = getApp(id)
@@ -266,6 +265,60 @@ describe("integrations registry", () => {
     expect(discordSend?.fields.find((field) => field.key === "message")?.control).toBe("textarea")
     const discordReaction = getApp("discord")?.methods.find((method) => method.id === "discord-add-reaction")
     expect(discordReaction?.fields.find((field) => field.key === "emoji")?.control).toBe("select")
+  })
+
+  it("uses select controls for CRM pipeline and stage fields", () => {
+    for (const id of ["hubspot", "salesforce", "pipedrive", "zoho-crm", "attio"] as const) {
+      const app = getApp(id)
+      expect(app, id).toBeDefined()
+
+      const stageChanged = app!.methods.find((method) => method.id === `${id}-deal-stage-changed`)
+      const pipeline = stageChanged?.fields.find((field) => field.key === "pipeline")
+      const stage = stageChanged?.fields.find((field) => field.key === "stage")
+      expect(pipeline?.control, id).toBe("select")
+      expect(pipeline?.options?.map((option) => option.value), id).toEqual(
+        expect.arrayContaining(["sales", "marketing", "support"])
+      )
+      expect(stage?.control, id).toBe("select")
+      expect(stage?.placeholder, id).toBe("__any__")
+      expect(stage?.options?.map((option) => option.value), id).toEqual(
+        expect.arrayContaining(["__any__", "closed_won", "closed_lost", "qualification"])
+      )
+      expect(pipeline?.placeholder, id).toBe("__any__")
+
+      const createDeal = app!.methods.find((method) => method.id === `${id}-create-deal`)
+      const amount = createDeal?.fields.find((field) => field.key === "amount")
+      expect(amount?.control ?? "input", id).toBe("input")
+      expect(amount?.help, id).toMatch(/numeric|number|digits/i)
+
+      const updateStage = app!.methods.find((method) => method.id === `${id}-update-deal-stage`)
+      expect(updateStage?.fields.find((field) => field.key === "stage")?.control, id).toBe("select")
+    }
+  })
+
+  it("clarifies calendar start/until fields and keeps calendar id as input", () => {
+    for (const id of ["google-calendar", "outlook-calendar"] as const) {
+      const app = getApp(id)
+      expect(app, id).toBeDefined()
+
+      const create = app!.methods.find((method) => method.id === `${id}-create-event`)
+      const calendar = create?.fields.find((field) => field.key === "calendar")
+      const start = create?.fields.find((field) => field.key === "start")
+      const until = create?.fields.find((field) => field.key === "until")
+      const description = create?.fields.find((field) => field.key === "description")
+
+      expect(calendar?.control ?? "input", id).toBe("input")
+      expect(start?.help, id).toMatch(/start/i)
+      expect(until?.key, id).toBe("until")
+      expect(until?.help, id).toMatch(/end/i)
+      expect(description?.control, id).toBe("textarea")
+
+      const update = app!.methods.find((method) => method.id === `${id}-update-event`)
+      expect(update?.fields.map((field) => field.key), id).toEqual(
+        expect.arrayContaining(["start", "until", "description"])
+      )
+      expect(update?.fields.find((field) => field.key === "description")?.control, id).toBe("textarea")
+    }
   })
 
   it("groups connectors into named categories", () => {

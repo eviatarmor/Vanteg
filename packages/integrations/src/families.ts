@@ -11,6 +11,13 @@ const CURRENCY_OPTIONS = [
   { value: "cad", label: "CAD" },
 ] as const
 
+const PIPELINE_OPTIONS = [
+  { value: "sales", label: "Sales" },
+  { value: "marketing", label: "Marketing" },
+  { value: "customer_success", label: "Customer success" },
+  { value: "support", label: "Support" },
+] as const
+
 const DEAL_STAGE_OPTIONS = [
   { value: "qualification", label: "Qualification" },
   { value: "proposal", label: "Proposal" },
@@ -48,6 +55,20 @@ function currencyFilterField(): MethodField {
   )
 }
 
+function pipelineFilterField(): MethodField {
+  return selectField(
+    "pipeline",
+    "Pipeline",
+    FILTER_ANY,
+    withAnyOption(PIPELINE_OPTIONS, "Any pipeline"),
+    { help: "Optional. Only fire for this pipeline." }
+  )
+}
+
+function pipelineActionField(placeholder = "sales"): MethodField {
+  return selectField("pipeline", "Pipeline", placeholder, PIPELINE_OPTIONS)
+}
+
 function dealStageFilterField(): MethodField {
   return selectField(
     "stage",
@@ -58,8 +79,8 @@ function dealStageFilterField(): MethodField {
   )
 }
 
-function dealStageActionField(): MethodField {
-  return selectField("stage", "Stage", "closed_won", DEAL_STAGE_OPTIONS)
+function dealStageActionField(placeholder = "closed_won"): MethodField {
+  return selectField("stage", "Stage", placeholder, DEAL_STAGE_OPTIONS)
 }
 
 function ticketStatusFilterField(): MethodField {
@@ -78,16 +99,22 @@ function ticketStatusActionField(placeholder: string): MethodField {
   })
 }
 
+function amountField(placeholder = "12000"): MethodField {
+  return field("amount", "Amount", placeholder, {
+    help: "Numeric amount (for example 12000). Enter digits only.",
+  })
+}
+
 function crmFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-contact`, "trigger", "New contact", `Start when a ${name} contact is created.`, [
       field("list", "List", "all"),
     ]),
     method(`${prefix}-new-deal`, "trigger", "New deal", `Start when a ${name} deal is created.`, [
-      field("pipeline", "Pipeline", "Sales"),
+      pipelineFilterField(),
     ]),
     method(`${prefix}-deal-stage-changed`, "trigger", "Deal stage changed", `Start when a ${name} deal moves stage.`, [
-      field("pipeline", "Pipeline", "Sales"),
+      pipelineFilterField(),
       dealStageFilterField(),
     ]),
     method(`${prefix}-contact-updated`, "trigger", "Contact property updated", `Start when a ${name} contact changes.`, [
@@ -106,7 +133,9 @@ function crmFamily(prefix: string, name: string): Method[] {
     ]),
     method(`${prefix}-create-deal`, "action", "Create deal", `Create a ${name} deal.`, [
       field("name", "Name", "Acme renewal"),
-      field("amount", "Amount", "12000"),
+      amountField(),
+      pipelineActionField(),
+      dealStageActionField("qualification"),
     ]),
     method(`${prefix}-update-deal-stage`, "action", "Update deal stage", `Move a ${name} deal to a stage.`, [
       field("id", "Deal ID", "456"),
@@ -170,26 +199,49 @@ function paymentFamily(prefix: string, name: string): Method[] {
 function calendarFamily(prefix: string, name: string): Method[] {
   return [
     method(`${prefix}-new-event`, "trigger", "New event created", `Start when a ${name} event is created.`, [
-      field("calendar", "Calendar", "primary"),
+      field("calendar", "Calendar", "primary", {
+        help: "Calendar ID. Use primary for the default calendar.",
+      }),
     ]),
     method(`${prefix}-event-starting-soon`, "trigger", "Event starting soon", `Start a set time before a ${name} event.`, [
-      field("calendar", "Calendar", "primary"),
+      field("calendar", "Calendar", "primary", {
+        help: "Calendar ID. Use primary for the default calendar.",
+      }),
       field("lead", "Lead time", "15m"),
     ]),
     method(`${prefix}-event-updated`, "trigger", "Event updated", `Start when a ${name} event changes.`, [
-      field("calendar", "Calendar", "primary"),
+      field("calendar", "Calendar", "primary", {
+        help: "Calendar ID. Use primary for the default calendar.",
+      }),
     ]),
     method(`${prefix}-event-cancelled`, "trigger", "Event cancelled", `Start when a ${name} event is cancelled.`, [
-      field("calendar", "Calendar", "primary"),
+      field("calendar", "Calendar", "primary", {
+        help: "Calendar ID. Use primary for the default calendar.",
+      }),
     ]),
     method(`${prefix}-create-event`, "action", "Create event", `Create a ${name} event.`, [
-      field("calendar", "Calendar", "primary"),
+      field("calendar", "Calendar", "primary", {
+        help: "Calendar ID. Use primary for the default calendar.",
+      }),
       field("title", "Title", "Kickoff"),
-      field("start", "Start", "2026-09-08T09:00"),
+      field("start", "Start", "2026-09-08T09:00", {
+        help: "Event start time (ISO 8601 local or UTC).",
+      }),
+      field("until", "Until", "2026-09-08T10:00", {
+        help: "Event end time (ISO 8601). Must be after start.",
+      }),
+      field("description", "Description", "Agenda and notes", { control: "textarea" }),
     ]),
     method(`${prefix}-update-event`, "action", "Update event", `Update a ${name} event.`, [
       field("eventId", "Event ID", "evt_123"),
       field("title", "Title", "Kickoff"),
+      field("start", "Start", "2026-09-08T09:00", {
+        help: "Event start time (ISO 8601 local or UTC).",
+      }),
+      field("until", "Until", "2026-09-08T10:00", {
+        help: "Event end time (ISO 8601). Must be after start.",
+      }),
+      field("description", "Description", "Agenda and notes", { control: "textarea" }),
     ]),
     method(`${prefix}-add-attendee`, "action", "Add attendee", `Add an attendee to a ${name} event.`, [
       field("eventId", "Event ID", "evt_123"),
