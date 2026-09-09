@@ -12,9 +12,9 @@ describe("inbox store", () => {
     expect(getPendingInboxCount()).toBe(3)
   })
 
-  it("always-approve marks the item and hides it from pending", () => {
+  it("always-approve marks the item and hides it from pending", async () => {
     const item = listPendingInbox()[0]!
-    const next = decideInbox(item.id, "always")
+    const next = await decideInbox(item.id, "always")
 
     expect(next?.status).toBe("always")
     expect(listPendingInbox().some((pending) => pending.id === item.id)).toBe(false)

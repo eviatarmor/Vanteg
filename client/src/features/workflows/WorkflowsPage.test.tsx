@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
@@ -28,12 +28,12 @@ describe("WorkflowsPage", () => {
     resetWorkflows()
   })
 
-  it("shows an empty card instead of a placeholder sentence", () => {
+  it("shows an empty card instead of a placeholder sentence", async () => {
     renderWorkflows()
 
+    expect(await screen.findByRole("heading", { name: "No production workflows" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Workflows" })).toBeInTheDocument()
     expect(screen.getByText("Build, draft, and run automations.")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "No production workflows" })).toBeInTheDocument()
     expect(
       screen.queryByText("Deployed workflows will appear here.")
     ).not.toBeInTheDocument()
@@ -43,6 +43,7 @@ describe("WorkflowsPage", () => {
   it("creates a named draft immediately and opens the editor", async () => {
     const user = userEvent.setup()
     renderWorkflows()
+    await screen.findByRole("heading", { name: "No production workflows" })
 
     await user.click(screen.getAllByRole("button", { name: "New workflow" })[0]!)
 
@@ -55,6 +56,18 @@ describe("WorkflowsPage", () => {
   it("opens drafts from the tab query", async () => {
     renderWorkflows("/workflows?tab=drafts")
 
-    expect(screen.getByRole("heading", { name: "No draft workflows" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "No draft workflows" })).toBeInTheDocument()
+  })
+
+  it("shows a loading spinner while hydrating", async () => {
+    renderWorkflows()
+    // May already be ready in the same tick; assert either spinner or empty eventually settles.
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "No production workflows" }) ||
+          screen.queryByLabelText("Loading workflows")
+      ).toBeTruthy()
+    })
+    expect(await screen.findByRole("heading", { name: "No production workflows" })).toBeInTheDocument()
   })
 })
