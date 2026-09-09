@@ -41,6 +41,7 @@ import { logout } from "./model/session"
 import { matchActivePath } from "./model/match-path"
 import type { NavItem } from "./model/types"
 import { navIcons } from "./nav-icons"
+import { ThemeMenuSection } from "./ThemeMenu"
 
 const menuButtonClassName =
   "h-9 rounded-xl px-2.5 text-[15px] font-normal text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground [&_svg]:text-sidebar-foreground/55 data-active:[&_svg]:text-sidebar-primary group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:p-0!"
@@ -142,6 +143,7 @@ function UserMenu() {
                 </DropdownMenuItem>
               )
             )}
+            <ThemeMenuSection />
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
