@@ -9,6 +9,7 @@ import {
 import { err, ok, type Result } from "./errors.ts"
 import { getApp, getOAuthApp, listApps } from "./registry.ts"
 import type {
+  CompleteOAuthCallbackInput,
   CompleteOAuthInput,
   ConnectAppInput,
   Connection,
@@ -95,7 +96,7 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   const connections = new Map<string, Connection>()
   const credentials = new Map<string, Credential>()
   const customCredentials = new Map<string, CustomCredential>()
-  const oauthStates = new Map<string, { provider: string }>()
+  const oauthStates = new Map<string, { provider: string; appId?: string; name?: string }>()
   const idempotency = new Map<string, Result<Record<string, unknown>>>()
 
   function putConnection(connection: Connection, credential: Credential): Connection {
@@ -115,13 +116,41 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
         provider: input.provider,
       })
     }
+    if (input.appId) {
+      const app = getApp(input.appId)
+      if (!app || app.auth.kind !== "oauth2" || app.auth.provider !== input.provider) {
+        return err({
+          code: "not_found",
+          message: `Unknown OAuth app: ${input.appId}`,
+          provider: input.provider,
+        })
+      }
+    }
     const state = newId()
-    oauthStates.set(state, { provider: input.provider })
-    const authorizeUrl = `https://example.invalid/oauth/${input.provider}?state=${encodeURIComponent(state)}`
+    oauthStates.set(state, {
+      provider: input.provider,
+      appId: input.appId,
+      name: input.name,
+    })
+    // Local demo: no real IdP — authorize URL is the in-app callback with a fake code.
+    const params = new URLSearchParams({
+      code: "mock-code",
+      state,
+      provider: input.provider,
+    })
+    const authorizeUrl = `/integrations/oauth/callback?${params.toString()}`
     return ok({ authorizeUrl, state })
   }
 
   async function completeOAuth(input: CompleteOAuthInput): Promise<Result<Connection>> {
+    if (!input.code?.trim()) {
+      return err({
+        code: "validation",
+        message: "Missing OAuth authorization code",
+        fields: { code: "Required" },
+        provider: input.provider,
+      })
+    }
     const pending = oauthStates.get(input.state)
     if (!pending || pending.provider !== input.provider) {
       return err({
@@ -132,13 +161,14 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     }
     oauthStates.delete(input.state)
 
-    const appId = appsForProvider(input.provider)[0] ?? input.provider
+    const appId = pending.appId ?? appsForProvider(input.provider)[0] ?? input.provider
     const app = getApp(appId)
+    const displayName = pending.name ?? app?.name ?? input.provider
     const createdAt = nowIso()
     const credential: Credential = {
       id: newId(),
       appId,
-      name: app?.name ?? input.provider,
+      name: displayName,
       kind: "oauth2",
       managed: true,
       status: "connected",
@@ -147,13 +177,65 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     const connection: Connection = {
       id: newId(),
       appId,
-      name: app?.name ?? input.provider,
+      name: displayName,
       credentialId: credential.id,
       status: "connected",
       createdAt,
       updatedAt: createdAt,
     }
     return ok(putConnection(connection, credential))
+  }
+
+  async function completeOAuthCallback(
+    input: CompleteOAuthCallbackInput
+  ): Promise<Result<Connection>> {
+    if (input.error) {
+      const pending = input.state ? oauthStates.get(input.state) : undefined
+      if (input.state) {
+        oauthStates.delete(input.state)
+      }
+      return err({
+        code: "unauthorized",
+        message: input.errorDescription?.trim() || input.error,
+        provider: input.provider ?? pending?.provider,
+      })
+    }
+    if (!input.state?.trim()) {
+      return err({
+        code: "validation",
+        message: "Missing OAuth state",
+        fields: { state: "Required" },
+        provider: input.provider,
+      })
+    }
+    if (!input.code?.trim()) {
+      return err({
+        code: "validation",
+        message: "Missing OAuth authorization code",
+        fields: { code: "Required" },
+        provider: input.provider,
+      })
+    }
+    const pending = oauthStates.get(input.state)
+    if (!pending) {
+      return err({
+        code: "unauthorized",
+        message: "Invalid or expired OAuth state",
+        provider: input.provider,
+      })
+    }
+    if (input.provider && pending.provider !== input.provider) {
+      return err({
+        code: "unauthorized",
+        message: "Invalid or expired OAuth state",
+        provider: input.provider,
+      })
+    }
+    return completeOAuth({
+      provider: pending.provider,
+      code: input.code,
+      state: input.state,
+    })
   }
 
   async function connectManaged(
@@ -168,7 +250,7 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
       })
     }
     const provider = app.auth.provider
-    const started = await startOAuth({ provider })
+    const started = await startOAuth({ provider, appId, name })
     if (!started.ok) {
       return started
     }
@@ -422,6 +504,7 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     createConnection,
     startOAuth,
     completeOAuth,
+    completeOAuthCallback,
     deleteConnection,
     executeMethod,
     verifyWebhook,
