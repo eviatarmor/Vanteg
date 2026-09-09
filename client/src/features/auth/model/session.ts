@@ -116,6 +116,7 @@ export function initialsFromName(name: string): string {
 
 const fallbackUser: CurrentUser = {
   displayName: "Darren",
+  email: "darren@vanteg.app",
   role: "Owner",
   initials: "DH",
 }
@@ -126,6 +127,7 @@ export function resolveCurrentUser(): CurrentUser {
   if (!session) return fallbackUser
   return {
     displayName: session.name,
+    email: session.email,
     role: "Owner",
     initials: initialsFromName(session.name),
   }

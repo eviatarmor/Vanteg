@@ -23,6 +23,7 @@ import {
 import { Switch } from "@workspace/ui/components/switch"
 
 import { useTheme } from "@/components/theme-provider"
+import { setSession } from "@/features/auth/model/session"
 import { PageHeader } from "@/features/page-header/PageHeader"
 import { getCurrentUser, getPageCopy } from "@/features/shell/model/catalog"
 
@@ -73,6 +74,10 @@ export function SettingsPage() {
     const next = {
       displayName: profile.displayName.trim(),
       email: profile.email.trim(),
+    }
+    if (!setSession({ name: next.displayName, email: next.email })) {
+      toast.error("Could not save profile.")
+      return
     }
     setProfile(next)
     setSavedProfile(next)

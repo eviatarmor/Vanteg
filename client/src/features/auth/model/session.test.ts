@@ -32,6 +32,7 @@ describe("mock auth session", () => {
     })
     expect(resolveCurrentUser()).toEqual({
       displayName: "Alex V",
+      email: "alex@vanteg.test",
       role: "Owner",
       initials: "AV",
     })

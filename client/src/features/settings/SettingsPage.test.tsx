@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { getSession, resetAuthSession } from "@/features/auth/model/session"
 
 import { SettingsPage } from "./SettingsPage"
 import { resetPreferences } from "./model/preferences"
@@ -29,6 +30,7 @@ function renderSettings() {
 describe("SettingsPage", () => {
   beforeEach(() => {
     resetPreferences()
+    resetAuthSession()
     window.localStorage.clear()
   })
 
@@ -68,6 +70,10 @@ describe("SettingsPage", () => {
 
     expect(toast.success).toHaveBeenCalledWith("Profile saved.")
     expect(screen.getByText("Signed in as ada@vanteg.app")).toBeInTheDocument()
+    expect(getSession()).toEqual({
+      email: "ada@vanteg.app",
+      name: "Ada Lovelace",
+    })
   })
 
   it("persists notification toggles and workspace name", async () => {
