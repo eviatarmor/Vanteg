@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { Plus, Users } from "lucide-react"
 import {
   addEdge,
   MarkerType,
@@ -20,6 +21,7 @@ import {
   flowSnapGrid,
 } from "@/components/flow-canvas/canvas-controls"
 
+import { Button } from "@workspace/ui/components/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +35,7 @@ import {
   saveTeam,
   updateTeamMember,
 } from "../model/store"
-import type { Team, TeamNode } from "../model/types"
+import type { Team, TeamCapability, TeamNode } from "../model/types"
 import { AddMemberDialog } from "./AddMemberDialog"
 import { MemberSheet } from "./MemberSheet"
 import { TeamAgentNode } from "./TeamAgentNode"
@@ -109,6 +111,23 @@ function TeamCanvasInner({ team }: { team: Team }) {
       >
         <FlowCanvasChrome locked={locked} onLockedChange={setLocked} />
       </ReactFlow>
+      {nodes.length === 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
+          <div className="pointer-events-auto flex max-w-sm flex-col items-center rounded-xl border border-dashed border-border bg-card/95 px-6 py-8 text-center shadow-sm backdrop-blur-sm">
+            <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-muted">
+              <Users className="size-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-medium">No members yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Add agents as Lead, Researcher, Writer, and more — then wire how they hand off work.
+            </p>
+            <Button className="mt-4" size="sm" onClick={() => setAddOpen(true)}>
+              <Plus />
+              Add member
+            </Button>
+          </div>
+        </div>
+      ) : null}
       {paneMenu ? (
         <DropdownMenu open onOpenChange={(open) => !open && setPaneMenu(null)}>
           <DropdownMenuTrigger asChild>
@@ -133,8 +152,8 @@ function TeamCanvasInner({ team }: { team: Team }) {
       <AddMemberDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        onAdd={(agentId, role) => {
-          const node = addTeamMember(team.id, agentId, role)
+        onAdd={(agentId, role, capabilities) => {
+          const node = addTeamMember(team.id, agentId, role, capabilities)
           if (node) {
             setNodes((current) => [...current, node])
           }
@@ -148,14 +167,16 @@ function TeamCanvasInner({ team }: { team: Team }) {
             setSheetId(null)
           }
         }}
-        onSave={(role) => {
+        onSave={({ role, capabilities }: { role: string; capabilities: TeamCapability[] }) => {
           if (!sheetId) {
             return
           }
-          updateTeamMember(team.id, sheetId, { role })
+          updateTeamMember(team.id, sheetId, { role, capabilities })
           setNodes((current) =>
             current.map((node) =>
-              node.id === sheetId ? { ...node, data: { ...node.data, role } } : node
+              node.id === sheetId
+                ? { ...node, data: { ...node.data, role, capabilities } }
+                : node
             )
           )
         }}
