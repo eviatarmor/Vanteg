@@ -12,5 +12,6 @@ Shared rules for client UI so product code and agents stay consistent.
 
 ## Workflow In/Out ExplorerTree
 
-- Workflow I/O variables derived from secret-sensitive config keys (`token`, `password`, `apiKey`, `clientSecret`, `Authorization`, and similar) or explicitly marked `secret: true` are tagged on `NodeVar`.
-- In/Out `ExplorerTree` leaves for those vars use `icon: "secret"` and keep the `{{Node.key}}` expression hint — never raw secrets or live tokens in `outVar` defaults.
+- Workflow I/O variables derived from secret-sensitive config keys (`token`, `password`, `apiKey`, `clientSecret`, `credentialId`, `Authorization`, and similar) or explicitly marked `secret: true` are tagged on `NodeVar`.
+- In/Out `ExplorerTree` leaves for those vars use `icon: "secret"` and show masked hints (`maskSecretLast` or `SECRET_MASK`) — never raw secrets or live tokens in `outVar` defaults.
+- Credential ids may appear as opaque/masked values; do not paste live tokens into defaults.
