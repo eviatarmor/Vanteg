@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it } from "vitest"
 import {
   addDataRow,
   connectConnector,
+  createCustomCredential,
+  deleteCustomCredential,
   getIntegrationsSnapshot,
   insertDataRows,
   resetIntegrationsStore,
+  updateCustomCredential,
 } from "./store"
 
 describe("integrations store", () => {
@@ -85,5 +88,35 @@ describe("integrations store", () => {
     await connectConnector("stripe", { apiKey: "" }, id)
 
     expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_live_one")
+  })
+
+  it("creates and updates custom credentials without exposing blank-secret clears", async () => {
+    const created = await createCustomCredential({
+      name: "HMAC prod",
+      kind: "hmac",
+      fields: { secret: "shh", algorithm: "SHA256" },
+    })
+    expect(created.ok).toBe(true)
+    if (!created.ok) {
+      return
+    }
+    expect(getIntegrationsSnapshot().customCredentials).toHaveLength(1)
+
+    const updated = await updateCustomCredential({
+      id: created.data.id,
+      name: "HMAC staging",
+      fields: { secret: "", algorithm: "SHA512", headerName: "X-Sig" },
+    })
+    expect(updated.ok).toBe(true)
+    if (!updated.ok) {
+      return
+    }
+    expect(updated.data.fields.secret).toBe("shh")
+    expect(updated.data.fields.algorithm).toBe("SHA512")
+    expect(updated.data.name).toBe("HMAC staging")
+
+    const deleted = await deleteCustomCredential(created.data.id)
+    expect(deleted.ok).toBe(true)
+    expect(getIntegrationsSnapshot().customCredentials).toHaveLength(0)
   })
 })
