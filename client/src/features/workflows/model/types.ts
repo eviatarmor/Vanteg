@@ -4,7 +4,7 @@ export type WorkflowStatus = "draft" | "dev" | "prod"
 
 export type NodeKind = "trigger" | "action" | "logic"
 
-export type FieldControl = "input" | "textarea" | "code" | "select"
+export type FieldControl = "input" | "textarea" | "code" | "select" | "credential"
 
 export interface NodeFieldOption {
   value: string
@@ -19,6 +19,13 @@ export interface NodeField {
   control?: FieldControl
   language?: "javascript" | "json"
   options?: readonly NodeFieldOption[]
+  /** Render with SecretInput (never type=password). */
+  secret?: boolean
+  /**
+   * Inline auth secret superseded by a selected custom credential.
+   * Hidden in the editor when `config.credentialId` is set.
+   */
+  inlineAuth?: boolean
 }
 
 export type PortColor =
@@ -76,4 +83,14 @@ export interface Workflow {
   nodes: VantegNode[]
   edges: VantegEdge[]
   updatedAt: number
+}
+
+/** Sentinel Select value for "no custom credential". Stored as empty string in config. */
+export const CREDENTIAL_NONE = "__none__"
+
+export function normalizeCredentialId(value: string | undefined | null): string {
+  if (!value || value === CREDENTIAL_NONE) {
+    return ""
+  }
+  return value
 }
