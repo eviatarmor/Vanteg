@@ -11,7 +11,7 @@ import {
   useCustomCredentials,
   useCustomCredentialsError,
   useCustomCredentialsStatus,
-} from "@/features/integrations/model/store"
+} from "@/features/integrations/model/custom-credentials-load"
 
 const CREATE_HREF = "/integrations?tab=custom-credentials"
 
