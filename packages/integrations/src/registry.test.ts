@@ -83,6 +83,8 @@ describe("integrations registry", () => {
       { appId: "notion", key: "page", resourceType: "notion.page", min: 4 },
       { appId: "google-calendar", key: "calendar", resourceType: "calendar.calendar", min: 4 },
       { appId: "google-forms", key: "formId", resourceType: "forms.form", min: 3 },
+      { appId: "microsoft-teams", key: "team", resourceType: "teams.team", min: 7 },
+      { appId: "microsoft-teams", key: "channel", resourceType: "teams.channel", min: 4 },
     ]
     for (const { appId, key, resourceType, min } of cases) {
       const app = getApp(appId)
@@ -94,6 +96,56 @@ describe("integrations registry", () => {
         expect(field.control, `${appId}.${key}`).toBe("resource")
         expect(field.resourceType, `${appId}.${key}`).toBe(resourceType)
       }
+    }
+  })
+
+  it("promotes Microsoft Teams with featured methods and textarea message fields", () => {
+    const teams = getApp("microsoft-teams")
+    expect(teams?.featured).toBe(true)
+    expect(teams?.sheetsTemplate).toBe("chat")
+    expect(teams?.methods.map((method) => method.id)).toEqual(
+      expect.arrayContaining([
+        "microsoft-teams-new-message",
+        "microsoft-teams-channel-created",
+        "microsoft-teams-member-added",
+        "microsoft-teams",
+        "microsoft-teams-reply-in-thread",
+        "microsoft-teams-update-message",
+        "microsoft-teams-list-channels",
+      ])
+    )
+    expect(getConnector("microsoft-teams")?.operations).toEqual(
+      expect.arrayContaining(["Post message", "Reply in thread", "Update message", "List channels"])
+    )
+    expect(getConnector("microsoft-teams")?.operations).not.toContain("post")
+    const messageFields = teams!.methods
+      .filter((method) => method.kind === "action")
+      .flatMap((method) => method.fields)
+      .filter((field) => field.key === "message")
+    expect(messageFields.length).toBeGreaterThan(0)
+    expect(messageFields.every((field) => field.control === "textarea")).toBe(true)
+    expect(listFeaturedMethods().map((method) => method.id)).toEqual(
+      expect.arrayContaining(["microsoft-teams", "microsoft-teams-new-message"])
+    )
+  })
+
+  it("marks Microsoft Teams team and channel MethodFields as resource-select", () => {
+    const teams = getApp("microsoft-teams")
+    const teamFields = (teams?.methods ?? []).flatMap((method) =>
+      method.fields.filter((field) => field.key === "team")
+    )
+    const channelFields = (teams?.methods ?? []).flatMap((method) =>
+      method.fields.filter((field) => field.key === "channel")
+    )
+    expect(teamFields.length).toBeGreaterThanOrEqual(7)
+    expect(channelFields.length).toBeGreaterThanOrEqual(4)
+    for (const field of teamFields) {
+      expect(field.control).toBe("resource")
+      expect(field.resourceType).toBe("teams.team")
+    }
+    for (const field of channelFields) {
+      expect(field.control).toBe("resource")
+      expect(field.resourceType).toBe("teams.channel")
     }
   })
 
