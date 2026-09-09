@@ -221,14 +221,23 @@ describe("integrations registry", () => {
     expect(slackEmoji?.options?.map((option) => option.value)).toEqual([
       "eyes",
       "thumbsup",
+      "thumbsdown",
       "white_check_mark",
+      "tada",
+      "fire",
+      "heart",
+      "clap",
+      "rocket",
+      "warning",
     ])
+    expect(slackSend?.fields.find((field) => field.key === "unfurlLinks")?.placeholder).toBe("true")
 
     const discordSend = getApp("discord")?.methods.find((method) => method.id === "discord")
     expect(discordSend?.fields.find((field) => field.key === "message")?.control).toBe("textarea")
     const discordReaction = getApp("discord")?.methods.find((method) => method.id === "discord-add-reaction")
     expect(discordReaction?.fields.find((field) => field.key === "emoji")?.control).toBe("select")
   })
+
   it("groups connectors into named categories", () => {
     expect(listConnectorCategories()).toEqual(
       expect.arrayContaining(["Google", "Microsoft", "Communication", "CRM", "AI"])

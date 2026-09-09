@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select"
+import { Switch } from "@workspace/ui/components/switch"
 import { Textarea } from "@workspace/ui/components/textarea"
 
 import { SecretInput } from "@/components/secret-input"
@@ -129,6 +130,19 @@ export function NodeConfigFields({
                   ))}
                 </SelectContent>
               </Select>
+            ) : field.control === "boolean" ? (
+              <Switch
+                id={`node-${field.key}`}
+                checked={(node.data.config[field.key] ?? field.placeholder) !== "false"}
+                onCheckedChange={(checked) =>
+                  onChange(node.id, {
+                    config: {
+                      ...node.data.config,
+                      [field.key]: checked ? "true" : "false",
+                    },
+                  })
+                }
+              />
             ) : field.secret ? (
               <SecretInput
                 id={`node-${field.key}`}

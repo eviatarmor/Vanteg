@@ -30,6 +30,18 @@ export function selectField(
   return field(key, label, placeholder, { control: "select", options, ...extra })
 }
 
+export function booleanField(
+  key: string,
+  label: string,
+  defaultValue: boolean,
+  extra: Partial<MethodField> = {}
+): MethodField {
+  return field(key, label, defaultValue ? "true" : "false", {
+    control: "boolean",
+    ...extra,
+  })
+}
+
 export function integrationApp(
   input: Omit<IntegrationApp, "toggles" | "featured" | "methods"> & {
     methods?: readonly Method[]

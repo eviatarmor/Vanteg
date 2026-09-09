@@ -1,4 +1,4 @@
-import { field, integrationApp, method, oauth, selectField } from "../define.ts"
+import { booleanField, field, integrationApp, method, oauth, selectField } from "../define.ts"
 
 const SLACK_EMOJI_OPTIONS = [
   { value: "eyes", label: ":eyes:" },
@@ -22,8 +22,7 @@ function slackMessageField(placeholder: string) {
 }
 
 function unfurlLinksField() {
-  return field("unfurlLinks", "Unfurl links", "true", {
-    control: "boolean",
+  return booleanField("unfurlLinks", "Unfurl links", true, {
     help: "Expand link previews when posting or updating Slack messages.",
   })
 }
