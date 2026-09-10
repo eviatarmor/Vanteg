@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
@@ -45,12 +45,21 @@ describe("AppShell soft gate", () => {
 
   afterEach(() => {
     resetAuthSession()
+    vi.unstubAllEnvs()
   })
 
   it("renders the app when DEV/test soft-default is authenticated", () => {
     renderShell()
     expect(screen.getByText("Home body")).toBeInTheDocument()
     expect(screen.getByText("Vanteg")).toBeInTheDocument()
+  })
+
+  it("redirects to /login when VITE_REQUIRE_AUTH=true and storage is empty", () => {
+    vi.stubEnv("VITE_REQUIRE_AUTH", "true")
+    resetAuthSession()
+    renderShell()
+    expect(screen.getByText("Login shell")).toBeInTheDocument()
+    expect(screen.queryByText("Home body")).not.toBeInTheDocument()
   })
 
   it("redirects to /login when explicitly logged out", () => {

@@ -41,3 +41,12 @@ npx shadcn@latest add button -c client
 ```tsx
 import { Button } from "@workspace/ui/components/button"
 ```
+
+## Soft auth gate (DEV)
+
+Mock auth lives in `client/src/features/auth/model/session.ts`:
+
+- Missing storage key in DEV/test → still authenticated (demos keep working)
+- Explicit logout writes `logged-out` → AppShell redirects to `/login`
+- `/login` and `/sign-up` are public; passwords use `SecretInput` (never `type="password"`)
+- Set `VITE_REQUIRE_AUTH=true` for strict mode (missing key requires login even in DEV)

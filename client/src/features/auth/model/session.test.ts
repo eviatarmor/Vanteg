@@ -14,6 +14,7 @@ import {
 describe("mock auth session", () => {
   afterEach(() => {
     resetAuthSession()
+    vi.unstubAllEnvs()
   })
 
   it("defaults to authenticated in test/DEV when storage is empty", () => {
@@ -60,6 +61,18 @@ describe("mock auth session", () => {
     expect(clearSession()).toBe(false)
     vi.restoreAllMocks()
     expect(getSession()).toEqual({ email: "alex@vanteg.test", name: "Alex" })
+  })
+
+  it("treats missing key as logged out when VITE_REQUIRE_AUTH=true", () => {
+    vi.stubEnv("VITE_REQUIRE_AUTH", "true")
+    resetAuthSession()
+    expect(isAuthenticated()).toBe(false)
+
+    expect(setSession({ email: "alex@vanteg.test", name: "Alex" })).toBe(true)
+    expect(isAuthenticated()).toBe(true)
+
+    expect(clearSession()).toBe(true)
+    expect(isAuthenticated()).toBe(false)
   })
 
   it("allows only in-app return paths", () => {
