@@ -8,18 +8,23 @@ import { resetInbox } from "@/features/inbox/model/store"
 
 import { HomePage } from "./HomePage"
 import { failNextHomeLoad, resetHomeLoadFlags } from "./model/load"
-import { dismissOnboarding, resetOnboarding } from "./model/onboarding-store"
+
+function hrefsToTemplates(): HTMLElement[] {
+  return screen.queryAllByRole("link").filter((link) => {
+    const href = link.getAttribute("href") ?? ""
+    return href === "/templates" || href.startsWith("/templates/")
+  })
+}
 
 describe("HomePage", () => {
   beforeEach(() => {
     resetAgents()
     resetInbox()
     resetHomeLoadFlags()
-    resetOnboarding()
     window.localStorage.clear()
   })
 
-  it("shows quick action CTAs to templates, assistant, workflows, and agents", async () => {
+  it("renders Home without a Quick actions section", async () => {
     render(
       <MemoryRouter>
         <HomePage />
@@ -27,28 +32,19 @@ describe("HomePage", () => {
     )
 
     expect(screen.getByRole("heading", { name: "Home" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Quick actions" })).toBeInTheDocument()
-
-    const actions = screen.getByRole("region", { name: "Quick actions" })
-    expect(within(actions).getByRole("link", { name: "Templates" })).toHaveAttribute(
-      "href",
-      "/templates"
-    )
-    expect(within(actions).getByRole("link", { name: "Assistant" })).toHaveAttribute(
-      "href",
-      "/assistant"
-    )
-    expect(within(actions).getByRole("link", { name: "New workflow" })).toHaveAttribute(
-      "href",
-      "/workflows"
-    )
-    expect(within(actions).getByRole("link", { name: "New agent" })).toHaveAttribute(
-      "href",
-      "/agents"
-    )
+    expect(
+      screen.queryByRole("heading", { name: "Quick actions" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("region", { name: "Quick actions" })
+    ).not.toBeInTheDocument()
+    expect(hrefsToTemplates()).toHaveLength(0)
+    await waitFor(() => {
+      expect(screen.getByText("Overview")).toBeInTheDocument()
+    })
   })
 
-  it("shows a stats skeleton then workspace stats, suggestions, and the onboarding checklist", async () => {
+  it("shows a stats skeleton then workspace stats and a multi-column suggestion grid", async () => {
     render(
       <MemoryRouter>
         <HomePage />
@@ -56,7 +52,12 @@ describe("HomePage", () => {
     )
 
     expect(screen.getByTestId("home-stats-skeleton")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Getting started" })).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Getting started" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "You're all set" })
+    ).not.toBeInTheDocument()
 
     await waitFor(() => {
       expect(screen.getByText("Overview")).toBeInTheDocument()
@@ -66,19 +67,31 @@ describe("HomePage", () => {
     expect(screen.getByText("Runs this week")).toBeInTheDocument()
     expect(screen.getByText("Agents")).toBeInTheDocument()
     expect(screen.getByText("Workflows")).toBeInTheDocument()
-    expect(screen.getByText("Suggested for you")).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", { name: "Suggested for you" })
+    ).toBeInTheDocument()
     expect(
       screen.getByText("Route failed HTTP Request runs to Support copilot")
     ).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Open Support copilot/i })).toHaveAttribute(
-      "href",
-      "/agents/agent-support"
+    expect(
+      screen.getByRole("link", { name: /Open Support copilot/i })
+    ).toHaveAttribute("href", "/agents/agent-support")
+    expect(
+      screen.queryByRole("link", { name: /Browse templates/i })
+    ).not.toBeInTheDocument()
+    expect(hrefsToTemplates()).toHaveLength(0)
+
+    const suggestionHeading = screen.getByRole("heading", {
+      name: "Suggested for you",
+    })
+    const suggestionSection = suggestionHeading.closest("section")
+    expect(suggestionSection).toBeTruthy()
+    const cards = within(suggestionSection!).getAllByRole("article")
+    expect(cards.length).toBeGreaterThanOrEqual(3)
+    const cardGrid = cards[0]!.parentElement
+    expect(cardGrid?.className ?? "").toMatch(
+      /\b(?:\S+:)?grid-cols-(?:[2-9]|1[0-2])\b/
     )
-    const templateLinks = screen.getAllByRole("link", { name: /Browse templates/i })
-    expect(templateLinks.length).toBeGreaterThanOrEqual(1)
-    for (const link of templateLinks) {
-      expect(link).toHaveAttribute("href", "/templates")
-    }
     expect(
       screen.queryByRole("heading", { name: "Nothing on the dashboard yet" })
     ).not.toBeInTheDocument()
@@ -99,21 +112,14 @@ describe("HomePage", () => {
     expect(
       screen.getByText(/couldn't load workspace stats/i)
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Getting started" })
+    ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Try again" }))
 
     await waitFor(() => {
       expect(screen.getByText("Waiting on you")).toBeInTheDocument()
     })
-  })
-
-  it("hides the checklist after it was dismissed", () => {
-    dismissOnboarding()
-    render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>
-    )
-    expect(screen.queryByRole("heading", { name: "Getting started" })).not.toBeInTheDocument()
   })
 })

@@ -121,10 +121,12 @@ export function CustomCredentialDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit credential" : "New credential"}</DialogTitle>
+          <DialogTitle>
+            {editing ? "Edit credential" : "New credential"}
+          </DialogTitle>
           <DialogDescription>
-            Typed auth configs agents and workflows can reference by id. Separate from managed
-            connector connections.
+            Typed auth configs agents and workflows can reference by id.
+            Separate from managed connector connections.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
@@ -154,7 +156,11 @@ export function CustomCredentialDialog({
                 }
               }}
             >
-              <SelectTrigger id="custom-credential-kind" className="w-full" aria-label="Kind">
+              <SelectTrigger
+                id="custom-credential-kind"
+                className="w-full"
+                aria-label="Kind"
+              >
                 <SelectValue placeholder="Select kind" />
               </SelectTrigger>
               <SelectContent>
@@ -171,14 +177,18 @@ export function CustomCredentialDialog({
           </div>
           {fields.map((field) => (
             <div key={field.id} className="grid gap-2">
-              <Label htmlFor={`custom-credential-${field.id}`}>{field.label}</Label>
+              <Label htmlFor={`custom-credential-${field.id}`}>
+                {field.label}
+              </Label>
               {field.secret ? (
                 <SecretInput
                   id={`custom-credential-${field.id}`}
                   value={values[field.id] ?? ""}
                   disabled={pending}
                   placeholder={
-                    editing ? "Leave blank to keep current" : (field.placeholder ?? field.label)
+                    editing
+                      ? "Leave blank to keep current"
+                      : (field.placeholder ?? field.label)
                   }
                   autoComplete="new-password"
                   aria-invalid={Boolean(fieldErrors[field.id])}
@@ -195,12 +205,17 @@ export function CustomCredentialDialog({
                   autoComplete="off"
                   aria-invalid={Boolean(fieldErrors[field.id])}
                   onChange={(event) =>
-                    setValues((current) => ({ ...current, [field.id]: event.target.value }))
+                    setValues((current) => ({
+                      ...current,
+                      [field.id]: event.target.value,
+                    }))
                   }
                 />
               )}
               {fieldErrors[field.id] ? (
-                <p className="text-xs text-destructive">{fieldErrors[field.id]}</p>
+                <p className="text-xs text-destructive">
+                  {fieldErrors[field.id]}
+                </p>
               ) : null}
             </div>
           ))}
@@ -214,8 +229,18 @@ export function CustomCredentialDialog({
           >
             Cancel
           </Button>
-          <Button type="button" disabled={pending} onClick={() => void submit()}>
-            {pending ? (editing ? "Saving…" : "Creating…") : editing ? "Save" : "Create"}
+          <Button
+            type="button"
+            disabled={pending}
+            onClick={() => void submit()}
+          >
+            {pending
+              ? editing
+                ? "Saving…"
+                : "Creating…"
+              : editing
+                ? "Save"
+                : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

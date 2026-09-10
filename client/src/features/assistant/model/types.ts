@@ -1,4 +1,19 @@
+import type { AgentModel } from "@/features/agents/model/types"
+
 export type AssistantRole = "user" | "assistant"
+
+export interface AssistantStartFile {
+  type: "file"
+  filename?: string
+  mediaType?: string
+  url: string
+}
+
+export interface AssistantStartPayload {
+  text: string
+  files?: AssistantStartFile[]
+  model: AgentModel
+}
 
 export interface AssistantMessage {
   id: string

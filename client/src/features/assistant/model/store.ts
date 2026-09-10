@@ -159,7 +159,9 @@ export function clearConversationStoreError(): void {
   }
 }
 
-export function createConversation(title = "New conversation"): AssistantConversation {
+export function createConversation(
+  title = "New conversation"
+): AssistantConversation {
   ensureConversationsHydrated()
   const conversation: AssistantConversation = {
     id: crypto.randomUUID(),
@@ -183,7 +185,9 @@ export function listConversations(): AssistantConversation[] {
 
 export function saveConversation(
   id: string,
-  patch: Partial<Pick<AssistantConversation, "title" | "messages" | "titleLocked">>
+  patch: Partial<
+    Pick<AssistantConversation, "title" | "messages" | "titleLocked">
+  >
 ): AssistantConversation | undefined {
   ensureConversationsHydrated()
   const current = conversations.find((conversation) => conversation.id === id)
@@ -192,12 +196,17 @@ export function saveConversation(
   }
   const next = { ...current, ...patch, updatedAt: Date.now() }
   persist(
-    conversations.map((conversation) => (conversation.id === id ? next : conversation))
+    conversations.map((conversation) =>
+      conversation.id === id ? next : conversation
+    )
   )
   return next
 }
 
-export function renameConversation(id: string, title: string): AssistantConversation | undefined {
+export function renameConversation(
+  id: string,
+  title: string
+): AssistantConversation | undefined {
   const trimmed = title.trim()
   if (!trimmed) {
     return undefined

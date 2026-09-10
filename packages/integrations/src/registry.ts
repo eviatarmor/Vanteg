@@ -23,7 +23,10 @@ const PICKER_GROUPS: Record<
   },
 }
 
-function mergeApps(featured: IntegrationApp[], longTail: IntegrationApp[]): IntegrationApp[] {
+function mergeApps(
+  featured: IntegrationApp[],
+  longTail: IntegrationApp[]
+): IntegrationApp[] {
   const seen = new Set<string>()
   const apps: IntegrationApp[] = []
   for (const app of featured) {
@@ -42,7 +45,9 @@ function mergeApps(featured: IntegrationApp[], longTail: IntegrationApp[]): Inte
 
 function toConnector(app: IntegrationApp): Connector {
   const sheets = templates[app.sheetsTemplate]
-  const actionLabels = app.methods.filter((method) => method.kind === "action").map((method) => method.label)
+  const actionLabels = app.methods
+    .filter((method) => method.kind === "action")
+    .map((method) => method.label)
   return {
     id: app.id,
     name: app.name,
@@ -56,12 +61,18 @@ function toConnector(app: IntegrationApp): Connector {
     inFields: sheets.in,
     dataFields: sheets.data,
     outFields: sheets.out,
-    operations: actionLabels.length > 0 ? actionLabels : templateOperations(app),
+    operations:
+      actionLabels.length > 0 ? actionLabels : templateOperations(app),
   }
+}
+
+function isShippedApp(app: IntegrationApp): boolean {
+  return app.category === "Google"
 }
 
 const apps = mergeApps(featuredApps, longTailApps)
 const oauth = materializeOAuth(apps)
+const allConnectors: Connector[] = apps.map(toConnector)
 
 export function listApps(): IntegrationApp[] {
   return apps
@@ -71,10 +82,12 @@ export function getApp(id: string): IntegrationApp | undefined {
   return apps.find((app) => app.id === id)
 }
 
-export const CONNECTORS: Connector[] = apps.map(toConnector)
+export const CONNECTORS: Connector[] = allConnectors.filter(
+  (connector) => connector.category === "Google"
+)
 
 export function getConnector(id: string): Connector | undefined {
-  return CONNECTORS.find((connector) => connector.id === id)
+  return allConnectors.find((connector) => connector.id === id)
 }
 
 export function listConnectorCategories(): ConnectorCategory[] {
@@ -85,10 +98,16 @@ export function listFeaturedMethods(): Method[] {
   return apps.filter((app) => app.featured).flatMap((app) => [...app.methods])
 }
 
+export function listUnshippedFeaturedMethodIds(): string[] {
+  return apps
+    .filter((app) => app.featured && !isShippedApp(app))
+    .flatMap((app) => app.methods.map((method) => method.id))
+}
+
 export function listPickerConnectorApps(): ConnectorApp[] {
   const grouped = new Map<string, IntegrationApp[]>()
   for (const app of apps) {
-    if (!app.featured) {
+    if (!app.featured || !isShippedApp(app)) {
       continue
     }
     const groupId = app.pickerGroup ?? app.id

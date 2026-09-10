@@ -83,13 +83,13 @@ export function OAuthCallbackPage() {
           <p className="mt-1 text-sm text-muted-foreground">{message}</p>
           {status === "success" ? (
             <Button className="mt-6" onClick={goIntegrations}>
-              Back to Integrations
+              Back to Connectors
             </Button>
           ) : null}
           {status === "error" ? (
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               <Button variant="outline" onClick={retryIntegrations}>
-                Back to Integrations
+                Back to Connectors
               </Button>
               <Button onClick={retryIntegrations}>Try again</Button>
             </div>

@@ -5,7 +5,6 @@ import { SignUpPage } from "@/features/auth/SignUpPage"
 import { AgentsPage } from "@/features/agents/AgentsPage"
 import { AssistantPage } from "@/features/assistant/AssistantPage"
 import { TeamsPage } from "@/features/teams/TeamsPage"
-import { TemplatesPage } from "@/features/templates/TemplatesPage"
 import { ApiKeysPage } from "@/features/api-keys/ApiKeysPage"
 import { DataPage } from "@/features/data/DataPage"
 import { HelpPage } from "@/features/help/HelpPage"
@@ -49,7 +48,6 @@ export const router = createBrowserRouter([
       { path: "workflows/:workflowId", Component: WorkflowEditorPage },
       { path: "agents/:agentId?", Component: AgentsPage },
       { path: "teams/:teamId?", Component: TeamsPage },
-      { path: "templates/:industryId?", Component: TemplatesPage },
       { path: "data", Component: DataPage },
       { path: "memory", Component: MemoryPage },
       { path: "integrations", Component: IntegrationsPage },

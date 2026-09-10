@@ -78,7 +78,6 @@ describe("workflow node catalog", () => {
     expect(listCommonIntegrations().map((node) => node.id)).toEqual([
       "http",
       "email-send",
-      "slack",
       "spreadsheet",
       "database",
     ])
@@ -93,33 +92,24 @@ describe("workflow node catalog", () => {
     expect(listConnectors().map((node) => node.id)).toEqual(
       expect.arrayContaining(["http", "slack", "github", "ai"])
     )
-    expect(listConnectorApps().map((app) => app.name)).toEqual(
-      expect.arrayContaining([
-        "Slack",
-        "GitHub",
-        "HTTP",
-        "Google",
-        "Email",
-        "HubSpot",
-        "Stripe",
-        "Google Calendar",
-        "Zendesk",
-      ])
+    const connectorNames = listConnectorApps().map((app) => app.name)
+    expect(connectorNames).toEqual(
+      expect.arrayContaining(["Google", "Google Calendar", "HTTP", "Email"])
     )
+    expect(connectorNames).not.toContain("Slack")
+    expect(connectorNames).not.toContain("GitHub")
+    expect(connectorNames).not.toContain("HubSpot")
+    expect(connectorNames).not.toContain("Stripe")
     expect(
       listConnectorApps()
-        .find((app) => app.id === "github")
+        .find((app) => app.id === "google")
         ?.methods.map((method) => method.id)
     ).toEqual(
       expect.arrayContaining([
-        "github-new-issue",
-        "github-pull-request",
-        "github-new-commit",
-        "github-new-release",
-        "github",
-        "github-comment",
-        "github-create-pr",
-        "github-add-label",
+        "spreadsheet-new-row",
+        "spreadsheet",
+        "google-drive-upload",
+        "google-docs-create",
       ])
     )
   })
@@ -133,17 +123,9 @@ describe("workflow node catalog", () => {
     }
   })
 
-  it("exposes extra slack and google methods in the picker", () => {
-    const slack = listConnectorApps().find((app) => app.id === "slack")
+  it("exposes extra google methods in the picker", () => {
     const google = listConnectorApps().find((app) => app.id === "google")
-    expect(slack?.methods.map((method) => method.id)).toEqual(
-      expect.arrayContaining([
-        "slack-new-channel",
-        "slack-app-mentioned",
-        "slack-upload-file",
-        "slack-add-reaction",
-      ])
-    )
+    expect(listConnectorApps().find((app) => app.id === "slack")).toBeUndefined()
     expect(google?.methods.map((method) => method.id)).toEqual(
       expect.arrayContaining([
         "spreadsheet-updated-row",
@@ -422,15 +404,11 @@ describe("workflow node catalog", () => {
   })
 
   it("covers CRM, payments, and the missing database insert action", () => {
-    const hubspot = listConnectorApps().find((app) => app.id === "hubspot")
-    const stripe = listConnectorApps().find((app) => app.id === "stripe")
     const database = listConnectorApps().find((app) => app.id === "database")
-    expect(hubspot?.methods.map((method) => method.id)).toEqual(
-      expect.arrayContaining(["hubspot-deal-stage-changed", "hubspot-create-contact"])
-    )
-    expect(stripe?.methods.map((method) => method.id)).toEqual(
-      expect.arrayContaining(["stripe-payment-failed", "stripe-subscription-cancelled"])
-    )
+    expect(listConnectorApps().find((app) => app.id === "hubspot")).toBeUndefined()
+    expect(listConnectorApps().find((app) => app.id === "stripe")).toBeUndefined()
+    expect(getNodeType("hubspot-create-contact")?.id).toBe("hubspot-create-contact")
+    expect(getNodeType("stripe-payment-failed")?.id).toBe("stripe-payment-failed")
     expect(database?.methods.map((method) => method.id)).toContain("database-insert-row")
   })
 

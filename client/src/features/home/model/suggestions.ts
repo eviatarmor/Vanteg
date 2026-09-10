@@ -17,9 +17,9 @@ export const homeSuggestions: HomeSuggestion[] = [
   {
     id: "suggest-slack-renew",
     title: "Remind you before Slack credentials expire",
-    body: "Form intake still depends on Slack. A short workflow can warn you a week out instead of failing mid-run — start from Integrations or a template.",
+    body: "Form intake still depends on Slack. A short workflow can warn you a week out instead of failing mid-run — start from Integrations.",
     href: "/integrations",
-    action: "Open Integrations",
+    action: "Open Connectors",
   },
   {
     id: "suggest-webhook-team",
@@ -29,10 +29,10 @@ export const homeSuggestions: HomeSuggestion[] = [
     action: "Open engineering team",
   },
   {
-    id: "suggest-templates",
-    title: "Start from an industry template",
-    body: "Legal, sales, support, and agency playbooks ship with assistants, workflows, and teams already wired. Pick one and customize instead of building blank.",
-    href: "/templates",
-    action: "Browse templates",
+    id: "suggest-blank-workflow",
+    title: "Start a workflow from a blank canvas",
+    body: "Triggers, actions, and agents wire up on the canvas. Open Workflows and create a draft instead of starting from a playbook.",
+    href: "/workflows",
+    action: "Open Workflows",
   },
 ]

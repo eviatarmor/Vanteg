@@ -68,7 +68,9 @@ describe("assistant conversation store", () => {
 
   it("builds titles from the first user message", () => {
     expect(
-      titleFromMessages([{ id: "1", role: "user", content: "Draft a workflow for invoices" }])
+      titleFromMessages([
+        { id: "1", role: "user", content: "Draft a workflow for invoices" },
+      ])
     ).toBe("Draft a workflow for invoices")
     expect(titleFromMessages([])).toBe("New conversation")
   })

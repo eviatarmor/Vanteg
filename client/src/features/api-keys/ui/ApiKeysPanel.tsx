@@ -26,7 +26,7 @@ export function ApiKeysPanel({
 
   if (snapshot.loadState === "loading") {
     return (
-      <div className="flex min-h-[20rem] flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
         <Spinner className="size-6" />
         Loading API keys…
       </div>

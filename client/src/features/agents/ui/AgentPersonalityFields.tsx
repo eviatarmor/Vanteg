@@ -160,12 +160,12 @@ export function AgentPersonalityFields({
       <div className="rounded-lg border border-border bg-muted/30 px-3 py-3 text-sm">
         <p className="font-medium">Connectors</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          App credentials and OAuth connectors live under Integrations.
+          App credentials and OAuth connectors live under Connectors.
           Wire them into workflows this agent can start.
         </p>
         <Button asChild variant="link" className="mt-1 h-auto px-0">
           <Link to="/integrations">
-            Open Integrations
+            Open Connectors
             <ExternalLink className="size-3.5" />
           </Link>
         </Button>

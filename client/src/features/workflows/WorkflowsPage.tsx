@@ -35,10 +35,6 @@ export function WorkflowsPage() {
     navigate(`/workflows/${workflow.id}`)
   }
 
-  function browseTemplates() {
-    navigate("/templates")
-  }
-
   const { title, subtitle } = getPageCopy("/workflows")
   const normalizedQuery = query.trim().toLowerCase()
 
@@ -75,11 +71,17 @@ export function WorkflowsPage() {
             return (
               <div
                 role="alert"
-                className="flex min-h-[28rem] flex-1 flex-col items-center justify-center gap-3 px-6 text-center"
+                className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center"
               >
                 <p className="text-sm font-medium">Couldn’t load workflows</p>
-                <p className="text-sm text-muted-foreground">{error ?? "Something went wrong."}</p>
-                <Button type="button" size="sm" onClick={() => retryWorkflowsLoad()}>
+                <p className="text-sm text-muted-foreground">
+                  {error ?? "Something went wrong."}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => retryWorkflowsLoad()}
+                >
                   Retry
                 </Button>
               </div>
@@ -87,7 +89,9 @@ export function WorkflowsPage() {
           }
 
           const statuses =
-            tab.id === "deployed" ? (["prod"] as const) : (["draft", "dev"] as const)
+            tab.id === "deployed"
+              ? (["prod"] as const)
+              : (["draft", "dev"] as const)
           const items = listWorkflows(statuses)
           const filtered = filterByQuery(items)
 
@@ -95,12 +99,13 @@ export function WorkflowsPage() {
             return (
               <EmptyWorkflows
                 title={
-                  tab.id === "deployed" ? "No production workflows" : "No draft workflows"
+                  tab.id === "deployed"
+                    ? "No production workflows"
+                    : "No draft workflows"
                 }
-                description="Create a workflow to start connecting triggers and actions, or browse templates for a head start."
+                description="Create a workflow to start connecting triggers and actions."
                 actionLabel="New workflow"
                 onCreate={createAndOpen}
-                onBrowseTemplates={browseTemplates}
               />
             )
           }

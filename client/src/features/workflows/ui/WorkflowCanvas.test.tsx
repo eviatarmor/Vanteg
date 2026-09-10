@@ -50,7 +50,7 @@ describe("WorkflowCanvas", () => {
     expect(screen.getByRole("menuitem", { name: "Webhook" })).toBeInTheDocument()
     expect(screen.getByRole("menuitem", { name: "Inbound call" })).toBeInTheDocument()
     expect(screen.getByRole("menuitem", { name: "If" })).toBeInTheDocument()
-    expect(screen.getByRole("menuitem", { name: "Send message" })).toBeInTheDocument()
+    expect(screen.getByRole("menuitem", { name: "Send email" })).toBeInTheDocument()
     expect(screen.getByRole("menuitem", { name: "More" })).toBeInTheDocument()
   })
 

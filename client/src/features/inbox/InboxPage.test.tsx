@@ -24,7 +24,7 @@ function renderInbox(path = "/inbox") {
   const router = createMemoryRouter(
     [
       { path: "/inbox", Component: InboxPage },
-      { path: "/templates", element: <div>Templates destination</div> },
+      { path: "/workflows", element: <div>Workflows destination</div> },
     ],
     { initialEntries: [path] }
   )
@@ -51,11 +51,17 @@ describe("InboxPage", () => {
     expect(
       await screen.findByText("Send a Slack reply in #customers")
     ).toBeInTheDocument()
-    expect(screen.getByText("Slack credential needs renewal")).toBeInTheDocument()
+    expect(
+      screen.getByText("Slack credential needs renewal")
+    ).toBeInTheDocument()
     expect(screen.getAllByRole("button", { name: /^Approve:/ })).toHaveLength(3)
     expect(screen.getAllByRole("button", { name: /^Deny:/ })).toHaveLength(3)
-    expect(screen.getAllByRole("button", { name: /^Always approve:/ })).toHaveLength(3)
-    expect(screen.getByRole("list", { name: "Pending inbox items" })).toBeInTheDocument()
+    expect(
+      screen.getAllByRole("button", { name: /^Always approve:/ })
+    ).toHaveLength(3)
+    expect(
+      screen.getByRole("list", { name: "Pending inbox items" })
+    ).toBeInTheDocument()
   })
 
   it("removes a card after approve and updates the pending count", async () => {
@@ -101,7 +107,9 @@ describe("InboxPage", () => {
         })
       ).not.toBeDisabled()
     })
-    expect(screen.getByText("Send a Slack reply in #customers")).toBeInTheDocument()
+    expect(
+      screen.getByText("Send a Slack reply in #customers")
+    ).toBeInTheDocument()
     expect(getPendingInboxCount()).toBe(3)
     expect(toast.error).toHaveBeenCalled()
   })
@@ -121,8 +129,11 @@ describe("InboxPage", () => {
     ).toBeInTheDocument()
     expect(getPendingInboxCount()).toBe(0)
 
-    await user.click(screen.getByRole("button", { name: "Browse templates" }))
-    expect(router.state.location.pathname).toBe("/templates")
+    expect(
+      screen.queryByRole("button", { name: "Browse templates" })
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "New workflow" }))
+    expect(router.state.location.pathname).toBe("/workflows")
   })
 
   it("shows human error copy and retries after a failed load", async () => {

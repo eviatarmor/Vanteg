@@ -122,7 +122,9 @@ export function ConnectConnectorDialog({
           </DialogDescription>
         </DialogHeader>
         {managed ? (
-          <p className="text-sm text-muted-foreground">{connector.description}</p>
+          <p className="text-sm text-muted-foreground">
+            {connector.description}
+          </p>
         ) : (
           <div className="grid gap-3">
             {fields.map((field) => (
@@ -137,7 +139,10 @@ export function ConnectConnectorDialog({
                     aria-invalid={Boolean(fieldErrors[field.id])}
                     disabled={pending}
                     onValueChange={(value) =>
-                      setValues((current) => ({ ...current, [field.id]: value }))
+                      setValues((current) => ({
+                        ...current,
+                        [field.id]: value,
+                      }))
                     }
                   />
                 ) : (
@@ -150,12 +155,17 @@ export function ConnectConnectorDialog({
                     aria-invalid={Boolean(fieldErrors[field.id])}
                     disabled={pending}
                     onChange={(event) =>
-                      setValues((current) => ({ ...current, [field.id]: event.target.value }))
+                      setValues((current) => ({
+                        ...current,
+                        [field.id]: event.target.value,
+                      }))
                     }
                   />
                 )}
                 {fieldErrors[field.id] ? (
-                  <p className="text-xs text-destructive">{fieldErrors[field.id]}</p>
+                  <p className="text-xs text-destructive">
+                    {fieldErrors[field.id]}
+                  </p>
                 ) : null}
               </div>
             ))}
@@ -170,7 +180,11 @@ export function ConnectConnectorDialog({
           >
             Cancel
           </Button>
-          <Button type="button" disabled={pending || !canSubmit} onClick={() => void submit()}>
+          <Button
+            type="button"
+            disabled={pending || !canSubmit}
+            onClick={() => void submit()}
+          >
             {pending ? (managed ? "Redirecting…" : "Connecting…") : actionLabel}
           </Button>
         </DialogFooter>

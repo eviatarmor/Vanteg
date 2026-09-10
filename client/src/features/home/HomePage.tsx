@@ -8,11 +8,8 @@ import {
   Bot,
   Home,
   Inbox,
-  LayoutTemplate,
-  MessageSquare,
   Minus,
   Play,
-  Plus,
   Sparkles,
   Workflow,
 } from "lucide-react"
@@ -42,7 +39,6 @@ import {
 } from "./model/load"
 import { getHomeStats, type HomeStat } from "./model/stats"
 import { homeSuggestions } from "./model/suggestions"
-import { OnboardingChecklist } from "./ui/OnboardingChecklist"
 
 const trendIcon = {
   up: ArrowUp,
@@ -135,43 +131,6 @@ export function HomePage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title={title} subtitle={subtitle} icon={Home} />
       <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-auto px-6 py-6">
-        <OnboardingChecklist />
-
-        <section className="grid gap-3" aria-label="Quick actions">
-          <div>
-            <h2 className="text-sm font-medium">Quick actions</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Jump into templates, the assistant, or create something new.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/templates">
-                <LayoutTemplate />
-                Templates
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/assistant">
-                <MessageSquare />
-                Assistant
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/workflows">
-                <Plus />
-                New workflow
-              </Link>
-            </Button>
-            <Button size="sm" variant="secondary" asChild>
-              <Link to="/agents">
-                <Plus />
-                New agent
-              </Link>
-            </Button>
-          </div>
-        </section>
-
         <section className="grid gap-3">
           <h2 className="text-sm font-medium">Overview</h2>
           {status === "loading" ? <HomeStatsSkeleton /> : null}
@@ -181,7 +140,10 @@ export function HomePage() {
               className="flex flex-col items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-5 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-start gap-2">
-                <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+                <AlertCircle
+                  className="mt-0.5 size-4 shrink-0 text-destructive"
+                  aria-hidden
+                />
                 <div>
                   <p className="text-sm font-medium">Could not load overview</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
@@ -203,14 +165,14 @@ export function HomePage() {
           ) : null}
         </section>
 
-        <section className="grid max-w-2xl gap-3">
+        <section className="grid gap-3">
           <div>
             <h2 className="text-sm font-medium">Suggested for you</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Vanteg noticed work you could automate — pick one and continue.
             </p>
           </div>
-          <div className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {homeSuggestions.map((suggestion) => (
               <article
                 key={suggestion.id}
@@ -218,14 +180,24 @@ export function HomePage() {
               >
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted">
-                    <Sparkles className="size-3.5 text-muted-foreground" aria-hidden />
+                    <Sparkles
+                      className="size-3.5 text-muted-foreground"
+                      aria-hidden
+                    />
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{suggestion.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{suggestion.body}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {suggestion.body}
+                    </p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="self-start" asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  asChild
+                >
                   <Link to={suggestion.href}>
                     {suggestion.action}
                     <ArrowRight />

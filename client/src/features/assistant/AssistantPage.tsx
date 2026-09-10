@@ -7,15 +7,7 @@ import {
   ConversationContent,
   ConversationEmptyState,
 } from "@/components/ai-elements/conversation"
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputFooter,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputTools,
-  type PromptInputMessage,
-} from "@/components/ai-elements/prompt-input"
+import { Shimmer } from "@/components/ai-elements/shimmer"
 import { Suggestion } from "@/components/ai-elements/suggestion"
 import { Spinner } from "@workspace/ui/components/spinner"
 
@@ -25,6 +17,8 @@ import { PageHeader } from "@/features/page-header/PageHeader"
 import { getPageCopy } from "@/features/shell/model/catalog"
 import { useWorkflows } from "@/features/workflows/model/store"
 
+import { getAgentModel } from "@/features/agents/model/types"
+
 import { buildAssistantContext, suggestionsForPath } from "./model/chat-context"
 import {
   createConversation,
@@ -32,59 +26,40 @@ import {
   useConversationStoreStatus,
   useConversations,
 } from "./model/store"
-import type { AssistantChatContext, AssistantConversation } from "./model/types"
+import type {
+  AssistantChatContext,
+  AssistantConversation,
+  AssistantStartPayload,
+} from "./model/types"
+import { AssistantComposer } from "./ui/AssistantComposer"
 import { ChatThread } from "./ui/ChatThread"
 import { ThreadHistory } from "./ui/ThreadHistory"
 
-function EmptyComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
-  const [input, setInput] = useState("")
-
-  function handleSubmit(message: PromptInputMessage) {
-    const text = message.text.trim()
-    if (!text) {
-      return
-    }
-    setInput("")
-    onSubmit(text)
-  }
-
-  return (
-    <div className="border-t border-border p-3">
-      <PromptInput onSubmit={handleSubmit}>
-        <PromptInputBody>
-          <PromptInputTextarea
-            value={input}
-            onChange={(event) => setInput(event.currentTarget.value)}
-            placeholder="Ask Vanteg…"
-            aria-label="Message"
-            className="min-h-11"
-          />
-        </PromptInputBody>
-        <PromptInputFooter>
-          <PromptInputTools />
-          <PromptInputSubmit disabled={input.trim() === ""} aria-label="Send" />
-        </PromptInputFooter>
-      </PromptInput>
-    </div>
-  )
-}
+type PendingStart = AssistantStartPayload & { id: string }
 
 function nextPending(
   conversationId: string,
-  prompt?: string
-): { id: string; prompt: string } | null {
-  if (!prompt) {
+  start?: string | AssistantStartPayload
+): PendingStart | null {
+  if (!start) {
     return null
   }
-  return { id: conversationId, prompt }
+  if (typeof start === "string") {
+    return {
+      id: conversationId,
+      text: start,
+      model: getAgentModel("not-a-real-model").value,
+    }
+  }
+  return { id: conversationId, ...start }
 }
 
-function pendingPromptFor(
-  pending: { id: string; prompt: string } | null,
+function pendingFor(
+  pending: PendingStart | null,
   conversationId: string
-) {
+): PendingStart | undefined {
   if (pending && pending.id === conversationId) {
-    return pending.prompt
+    return pending
   }
   return undefined
 }
@@ -114,7 +89,7 @@ function AssistantEmpty({
   onStart,
 }: {
   suggestions: readonly string[]
-  onStart: (prompt?: string) => void
+  onStart: (start?: string | AssistantStartPayload) => void
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -126,6 +101,7 @@ function AssistantEmpty({
             title="Ask Vanteg"
             description="Start a conversation, or pick a prompt."
           />
+          <Shimmer>Ready when you are</Shimmer>
           <div className="flex w-full flex-col gap-2">
             {suggestions.map((suggestion) => (
               <Suggestion
@@ -138,7 +114,15 @@ function AssistantEmpty({
           </div>
         </ConversationContent>
       </Conversation>
-      <EmptyComposer onSubmit={(text) => onStart(text)} />
+      <AssistantComposer
+        onSubmit={(message, model) => {
+          const text = message.text.trim()
+          if (!(text || message.files?.length)) {
+            return
+          }
+          onStart({ text, files: message.files, model })
+        }}
+      />
     </div>
   )
 }
@@ -170,21 +154,24 @@ function AssistantChatPane({
   selected: AssistantConversation | undefined
   threadId: string | undefined
   context: AssistantChatContext
-  pending: { id: string; prompt: string } | null
+  pending: PendingStart | null
   suggestions: readonly string[]
-  onStart: (prompt?: string) => void
+  onStart: (start?: string | AssistantStartPayload) => void
   onInitialPromptConsumed: () => void
 }) {
   if (status === "loading" && !selected) {
     return <AssistantLoading />
   }
   if (selected) {
+    const start = pendingFor(pending, selected.id)
     return (
       <ChatThread
         key={selected.id}
         conversation={selected}
         context={context}
-        initialPrompt={pendingPromptFor(pending, selected.id)}
+        initialPrompt={start?.text}
+        initialFiles={start?.files}
+        initialModel={start?.model}
         onInitialPromptConsumed={onInitialPromptConsumed}
       />
     )
@@ -210,13 +197,11 @@ export function AssistantPage() {
     [location.pathname]
   )
   const suggestions = suggestionsForPath("/")
-  const [pending, setPending] = useState<{ id: string; prompt: string } | null>(
-    null
-  )
+  const [pending, setPending] = useState<PendingStart | null>(null)
 
-  function startNew(prompt?: string) {
+  function startNew(start?: string | AssistantStartPayload) {
     const conversation = createConversation()
-    setPending(nextPending(conversation.id, prompt))
+    setPending(nextPending(conversation.id, start))
     navigate(`/assistant/${conversation.id}`)
   }
 

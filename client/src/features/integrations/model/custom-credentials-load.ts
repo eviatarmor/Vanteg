@@ -17,10 +17,16 @@ type CustomCredentialsMeta = {
   error: string | null
 }
 
-let customCredentialsMeta: CustomCredentialsMeta = { status: "idle", error: null }
+let customCredentialsMeta: CustomCredentialsMeta = {
+  status: "idle",
+  error: null,
+}
 let customCredentialsLoadPromise: Promise<void> | null = null
 let failNextCustomCredentialsLoad = false
-let customCredentialsLoadHold: { promise: Promise<void>; resolve: () => void } | null = null
+let customCredentialsLoadHold: {
+  promise: Promise<void>
+  resolve: () => void
+} | null = null
 
 const listeners = new Set<() => void>()
 
@@ -99,7 +105,9 @@ export async function ensureCustomCredentialsLoaded(): Promise<void> {
       customCredentialsMeta = {
         status: "error",
         error:
-          error instanceof Error ? error.message : "Failed to load custom credentials",
+          error instanceof Error
+            ? error.message
+            : "Failed to load custom credentials",
       }
     } finally {
       customCredentialsLoadPromise = null

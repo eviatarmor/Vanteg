@@ -29,15 +29,19 @@ import { CustomCredentialDialog } from "./ui/CustomCredentialDialog"
 import { CustomCredentials } from "./ui/CustomCredentials"
 import { DeleteCustomCredentialDialog } from "./ui/DeleteCustomCredentialDialog"
 import { IntegrationsSkeleton } from "./ui/IntegrationsSkeleton"
+import { AddMcpServerDialog, McpServers } from "./ui/McpServers"
 
 export function IntegrationsPage() {
   const { title, subtitle } = getPageCopy("/integrations")
   const snapshot = useIntegrationsStore()
   const [pending, setPending] = useState<Connector | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [mcpOpen, setMcpOpen] = useState(false)
   const [credentialOpen, setCredentialOpen] = useState(false)
-  const [editingCredential, setEditingCredential] = useState<CustomCredential | null>(null)
-  const [deletingCredential, setDeletingCredential] = useState<CustomCredential | null>(null)
+  const [editingCredential, setEditingCredential] =
+    useState<CustomCredential | null>(null)
+  const [deletingCredential, setDeletingCredential] =
+    useState<CustomCredential | null>(null)
   const [status, setStatus] = useState<IntegrationsLoadStatus>("loading")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -73,7 +77,9 @@ export function IntegrationsPage() {
   }
 
   function pickConnector(connector: Connector) {
-    const existing = snapshot.connections.find((item) => item.connectorId === connector.id)
+    const existing = snapshot.connections.find(
+      (item) => item.connectorId === connector.id
+    )
     setPickerOpen(false)
     if (existing) {
       return
@@ -89,14 +95,19 @@ export function IntegrationsPage() {
       return (
         <div
           role="alert"
-          className="flex min-h-[20rem] flex-col items-center justify-center px-6 py-10 text-center"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-10 text-center"
         >
           <AlertCircle className="size-8 text-destructive" aria-hidden />
           <p className="mt-3 text-sm font-medium">Could not load connectors</p>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             {errorMessage ?? humanizeIntegrationsLoadError(null)}
           </p>
-          <Button type="button" className="mt-4" variant="outline" onClick={load}>
+          <Button
+            type="button"
+            className="mt-4"
+            variant="outline"
+            onClick={load}
+          >
             Try again
           </Button>
         </div>
@@ -117,6 +128,10 @@ export function IntegrationsPage() {
             openCreateCredential()
             return
           }
+          if (tab.id === "mcp-servers") {
+            setMcpOpen(true)
+            return
+          }
           openPicker()
         }}
         renderPanel={(tab) => {
@@ -128,6 +143,9 @@ export function IntegrationsPage() {
                 onDelete={setDeletingCredential}
               />
             )
+          }
+          if (tab.id === "mcp-servers") {
+            return <McpServers onAdd={() => setMcpOpen(true)} />
           }
           return renderConnectorsPanel()
         }}
@@ -150,6 +168,7 @@ export function IntegrationsPage() {
           }
         }}
       />
+      <AddMcpServerDialog open={mcpOpen} onOpenChange={setMcpOpen} />
       <CustomCredentialDialog
         open={credentialOpen}
         credential={editingCredential}

@@ -23,9 +23,9 @@ export const HELP_FAQ: HelpFaqItem[] = [
   },
   {
     id: "connect-integration",
-    question: "How do I connect an integration?",
+    question: "How do I connect a connector?",
     answer:
-      "Open Integrations, pick an app, and connect with OAuth or credentials. Secrets use SecretInput so tokens stay masked. See docs/integrations.md for the connector catalog.",
+      "Open Connectors, pick a Google app, and connect with OAuth. MCP servers live on the MCP Servers tab — paste mcp.json, npx, docker, claude mcp add, a URL, or a Cursor link.",
     tags: ["integrations", "oauth", "connectors"],
   },
   {
@@ -89,14 +89,17 @@ export const HELP_DOC_LINKS: HelpDocLink[] = [
   },
   {
     id: "integrations",
-    title: "Integrations",
-    description: "Connector catalog notes and auth mix for apps.",
+    title: "Connectors",
+    description: "Google connector catalog notes and auth mix for apps.",
     path: "docs/integrations.md",
     href: "https://github.com/eviatarmor/Vanteg/blob/master/docs/integrations.md",
   },
 ]
 
-export function filterFaq(query: string, items: HelpFaqItem[] = HELP_FAQ): HelpFaqItem[] {
+export function filterFaq(
+  query: string,
+  items: HelpFaqItem[] = HELP_FAQ
+): HelpFaqItem[] {
   const normalized = query.trim().toLowerCase()
   if (!normalized) {
     return items

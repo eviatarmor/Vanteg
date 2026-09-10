@@ -95,7 +95,7 @@ export function PaneAddMenu({
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
-        <DropdownMenuLabel>Integrations</DropdownMenuLabel>
+        <DropdownMenuLabel>Connectors</DropdownMenuLabel>
         {listCommonIntegrations().map((node) => (
           <DropdownMenuItem key={node.id} onSelect={() => choose(node)}>
             <NodeIcon catalogId={node.id} />

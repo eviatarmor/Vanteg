@@ -69,7 +69,7 @@ export function CredentialMultiPicker({
             to={CREATE_HREF}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
-            Integrations → Custom Credentials
+            Connectors → Custom Credentials
           </Link>{" "}
           and assign it here. Do not paste secrets into the agent form.
         </div>

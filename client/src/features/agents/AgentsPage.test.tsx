@@ -77,7 +77,7 @@ describe("AgentsPage", () => {
       "aria-pressed",
       "true"
     )
-    expect(screen.getByRole("link", { name: /Open Integrations/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Open Connectors/i })).toHaveAttribute(
       "href",
       "/integrations"
     )

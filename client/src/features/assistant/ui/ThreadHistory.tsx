@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router"
-import { MoreHorizontal, Plus, Sparkles, Trash2 } from "lucide-react"
+import { MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -125,6 +125,7 @@ function ThreadRow({
                   setRenaming(true)
                 }}
               >
+                <Pencil />
                 Rename
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -312,16 +313,15 @@ function HistoryBody({
   }
   if (conversations.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <EmptyState
-          icon={Sparkles}
-          title="No chats yet"
-          description="Start a conversation with Vanteg. History is saved in this browser."
-          actionLabel="New chat"
-          onCreate={onCreate}
-          className="min-h-0 flex-1"
-        />
-      </div>
+      <EmptyState
+        icon={Sparkles}
+        title="No chats yet"
+        description="Start a conversation with Vanteg. History is saved in this browser."
+        actionLabel="New chat"
+        onCreate={onCreate}
+        align="start"
+        framed={false}
+      />
     )
   }
   return (

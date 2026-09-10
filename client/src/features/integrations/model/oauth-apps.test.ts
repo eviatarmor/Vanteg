@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
 
-import { getOAuthApp, oauthApps, terraformOAuthApps } from "@workspace/integrations"
+import {
+  getOAuthApp,
+  oauthApps,
+  terraformOAuthApps,
+} from "@workspace/integrations"
 
 const terraformDir = path.resolve(process.cwd(), "../infra/terraform")
 
@@ -35,7 +39,9 @@ describe("Vanteg-owned OAuth apps", () => {
 
   it("exports terraform locals for every managed oauth app", () => {
     const locals = terraformOAuthApps()
-    expect(Object.keys(locals).sort()).toEqual(oauthApps.map((app) => app.id).sort())
+    expect(Object.keys(locals).sort()).toEqual(
+      oauthApps.map((app) => app.id).sort()
+    )
     expect(locals.google).toEqual({
       name: "Google",
       client_id_env: "FREEZE_GOOGLE_OAUTH_CLIENT_ID",
@@ -43,13 +49,20 @@ describe("Vanteg-owned OAuth apps", () => {
       authorize_url: "https://accounts.google.com/o/oauth2/v2/auth",
       token_url: "https://oauth2.googleapis.com/token",
       redirect_path: "/integrations/oauth/google/callback",
-      scopes: expect.arrayContaining(["https://www.googleapis.com/auth/spreadsheets"]),
+      scopes: expect.arrayContaining([
+        "https://www.googleapis.com/auth/spreadsheets",
+      ]),
     })
   })
 
   it("keeps terraform oauth_apps.auto.tf.json in sync with the catalog", () => {
-    const file = readFileSync(path.join(terraformDir, "oauth_apps.auto.tf.json"), "utf8")
-    expect(JSON.parse(file)).toEqual({ locals: { oauth_apps: terraformOAuthApps() } })
+    const file = readFileSync(
+      path.join(terraformDir, "oauth_apps.auto.tf.json"),
+      "utf8"
+    )
+    expect(JSON.parse(file)).toEqual({
+      locals: { oauth_apps: terraformOAuthApps() },
+    })
   })
 
   it("provisions SSM parameters and redirect URIs for every oauth app", () => {
@@ -68,4 +81,3 @@ describe("Vanteg-owned OAuth apps", () => {
     expect(tf).toContain('local.oauth_apps["microsoft"]')
   })
 })
-

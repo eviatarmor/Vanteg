@@ -12,7 +12,6 @@ import {
 } from "@/features/auth/model/session"
 import { resetAssistantOpen } from "@/features/assistant/model/open-store"
 import { resetInbox } from "@/features/inbox/model/store"
-import { resetOnboarding } from "@/features/home/model/onboarding-store"
 
 import { AppShell } from "./AppShell"
 
@@ -40,7 +39,6 @@ describe("AppShell soft gate", () => {
     resetInbox()
     resetAuthSession()
     resetAssistantOpen()
-    resetOnboarding()
   })
 
   afterEach(() => {
@@ -82,7 +80,6 @@ describe("AppShell accessibility", () => {
     resetInbox()
     resetAuthSession()
     resetAssistantOpen()
-    resetOnboarding()
     setSession({ email: "alex@vanteg.test", name: "Alex" })
   })
 

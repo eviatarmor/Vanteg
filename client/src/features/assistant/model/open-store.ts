@@ -33,7 +33,11 @@ export function toggleAssistant(): void {
 }
 
 export function useAssistantOpen(): boolean {
-  return useSyncExternalStore(subscribeAssistantOpen, getAssistantOpen, getAssistantOpen)
+  return useSyncExternalStore(
+    subscribeAssistantOpen,
+    getAssistantOpen,
+    getAssistantOpen
+  )
 }
 
 export function resetAssistantOpen(): void {

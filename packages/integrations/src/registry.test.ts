@@ -18,7 +18,8 @@ describe("integrations registry", () => {
     const apps = listApps()
     expect(apps.length).toBeGreaterThanOrEqual(100)
     expect(new Set(apps.map((app) => app.id)).size).toBe(apps.length)
-    expect(CONNECTORS.length).toBe(apps.length)
+    expect(CONNECTORS.length).toBeGreaterThan(0)
+    expect(CONNECTORS.length).toBeLessThan(apps.length)
   })
 
   it("matches documented catalog counts in docs/integrations.md", () => {
@@ -27,8 +28,18 @@ describe("integrations registry", () => {
     expect(apps.length).toBe(173)
     expect(featured.length).toBe(26)
     expect(apps.length - featured.length).toBe(147)
-    expect(listPickerConnectorApps().length).toBe(24)
-    expect(featured.map((app) => app.id)).toEqual(expect.arrayContaining(["microsoft-teams", "slack"]))
+    expect(
+      CONNECTORS.every((connector) => connector.category === "Google")
+    ).toBe(true)
+    expect(
+      listPickerConnectorApps().every((app) => app.id.startsWith("google"))
+    ).toBe(true)
+    expect(listPickerConnectorApps().map((app) => app.id)).not.toContain(
+      "slack"
+    )
+    expect(featured.map((app) => app.id)).toEqual(
+      expect.arrayContaining(["microsoft-teams", "slack"])
+    )
   })
 
   it("gives every app an icon, auth, and In / Data / Out sheets", () => {
@@ -89,7 +100,12 @@ describe("integrations registry", () => {
       ])
     )
     expect(getConnector("microsoft-teams")?.operations).toEqual(
-      expect.arrayContaining(["Post message", "Reply in thread", "Update message", "List channels"])
+      expect.arrayContaining([
+        "Post message",
+        "Reply in thread",
+        "Update message",
+        "List channels",
+      ])
     )
     expect(getConnector("microsoft-teams")?.operations).not.toContain("post")
     const messageFields = teams!.methods
@@ -97,7 +113,9 @@ describe("integrations registry", () => {
       .flatMap((method) => method.fields)
       .filter((field) => field.key === "message")
     expect(messageFields.length).toBeGreaterThan(0)
-    expect(messageFields.every((field) => field.control === "textarea")).toBe(true)
+    expect(messageFields.every((field) => field.control === "textarea")).toBe(
+      true
+    )
     expect(listFeaturedMethods().map((method) => method.id)).toEqual(
       expect.arrayContaining(["microsoft-teams", "microsoft-teams-new-message"])
     )
@@ -116,18 +134,63 @@ describe("integrations registry", () => {
   })
 
   it("marks featured app MethodFields as resource-select", () => {
-    const cases: Array<{ appId: string; key: string; resourceType: string; min: number }> = [
+    const cases: Array<{
+      appId: string
+      key: string
+      resourceType: string
+      min: number
+    }> = [
       { appId: "github", key: "repo", resourceType: "github.repo", min: 10 },
-      { appId: "google-sheets", key: "sheet", resourceType: "sheets.sheet", min: 4 },
-      { appId: "discord", key: "channel", resourceType: "discord.channel", min: 5 },
+      {
+        appId: "google-sheets",
+        key: "sheet",
+        resourceType: "sheets.sheet",
+        min: 4,
+      },
+      {
+        appId: "discord",
+        key: "channel",
+        resourceType: "discord.channel",
+        min: 5,
+      },
       { appId: "notion", key: "page", resourceType: "notion.page", min: 4 },
-      { appId: "google-calendar", key: "calendar", resourceType: "calendar.calendar", min: 4 },
-      { appId: "outlook-calendar", key: "calendar", resourceType: "calendar.calendar", min: 4 },
-      { appId: "google-forms", key: "formId", resourceType: "forms.form", min: 3 },
+      {
+        appId: "google-calendar",
+        key: "calendar",
+        resourceType: "calendar.calendar",
+        min: 4,
+      },
+      {
+        appId: "outlook-calendar",
+        key: "calendar",
+        resourceType: "calendar.calendar",
+        min: 4,
+      },
+      {
+        appId: "google-forms",
+        key: "formId",
+        resourceType: "forms.form",
+        min: 3,
+      },
       { appId: "typeform", key: "formId", resourceType: "forms.form", min: 3 },
-      { appId: "surveymonkey", key: "formId", resourceType: "forms.form", min: 3 },
-      { appId: "microsoft-teams", key: "team", resourceType: "teams.team", min: 7 },
-      { appId: "microsoft-teams", key: "channel", resourceType: "teams.channel", min: 4 },
+      {
+        appId: "surveymonkey",
+        key: "formId",
+        resourceType: "forms.form",
+        min: 3,
+      },
+      {
+        appId: "microsoft-teams",
+        key: "team",
+        resourceType: "teams.team",
+        min: 7,
+      },
+      {
+        appId: "microsoft-teams",
+        key: "channel",
+        resourceType: "teams.channel",
+        min: 4,
+      },
     ]
     for (const { appId, key, resourceType, min } of cases) {
       const app = getApp(appId)
@@ -177,13 +240,19 @@ describe("integrations registry", () => {
         "google-docs-create",
       ])
     )
-    expect(listPickerConnectorApps().map((app) => app.id)).not.toContain("google-sheets")
+    expect(listPickerConnectorApps().map((app) => app.id)).not.toContain(
+      "google-sheets"
+    )
   })
 
   it("derives picker nodes from featured methods", () => {
     const methodIds = listFeaturedMethods().map((method) => method.id)
     expect(methodIds).toEqual(
-      expect.arrayContaining(["slack", "github-new-issue", "hubspot-create-contact"])
+      expect.arrayContaining([
+        "slack",
+        "github-new-issue",
+        "hubspot-create-contact",
+      ])
     )
     for (const app of listPickerConnectorApps()) {
       const triggers = app.methods.filter((method) => method.kind === "trigger")
@@ -197,12 +266,17 @@ describe("integrations registry", () => {
     const pickerIds = new Set(listPickerConnectorApps().map((app) => app.id))
     expect(pickerIds.has("klaviyo")).toBe(false)
     expect(getApp("klaviyo")?.featured).toBe(false)
-    expect(getConnector("klaviyo")?.auth).toEqual({ kind: "oauth2", oauthAppId: "klaviyo" })
+    expect(getConnector("klaviyo")?.auth).toEqual({
+      kind: "oauth2",
+      oauthAppId: "klaviyo",
+    })
   })
 
   it("exports terraform locals whose scopes include provider base scopes plus app scopes", () => {
     const locals = terraformOAuthApps()
-    expect(Object.keys(locals).sort()).toEqual(oauthApps.map((app) => app.id).sort())
+    expect(Object.keys(locals).sort()).toEqual(
+      oauthApps.map((app) => app.id).sort()
+    )
     expect(oauthApps.every((app) => app.managed)).toBe(true)
     expect(getOAuthApp("microsoft")?.provisioner).toBe("azuread")
     expect(getOAuthApp("google")?.provisioner).toBe("google-apis")
@@ -216,23 +290,33 @@ describe("integrations registry", () => {
     for (const id of ["stripe", "paypal", "square"] as const) {
       const app = getApp(id)
       expect(app, id).toBeDefined()
-      const refund = app!.methods.find((method) => method.id === `${id}-refund-issued`)
-      const invoice = app!.methods.find((method) => method.id === `${id}-invoice-paid`)
-      expect(refund?.fields.map((field) => field.key), id).toEqual(["currency", "chargeId"])
-      expect(invoice?.fields.map((field) => field.key), id).toEqual([
-        "currency",
-        "customerId",
-        "invoiceId",
-      ])
-      const refundCurrency = refund?.fields.find((field) => field.key === "currency")
+      const refund = app!.methods.find(
+        (method) => method.id === `${id}-refund-issued`
+      )
+      const invoice = app!.methods.find(
+        (method) => method.id === `${id}-invoice-paid`
+      )
+      expect(
+        refund?.fields.map((field) => field.key),
+        id
+      ).toEqual(["currency", "chargeId"])
+      expect(
+        invoice?.fields.map((field) => field.key),
+        id
+      ).toEqual(["currency", "customerId", "invoiceId"])
+      const refundCurrency = refund?.fields.find(
+        (field) => field.key === "currency"
+      )
       expect(refundCurrency?.control, id).toBe("select")
       expect(refundCurrency?.placeholder, id).toBe("__any__")
-      expect(refund?.fields.find((field) => field.key === "chargeId")?.help, id).toMatch(
-        /optional/i
-      )
-      expect(invoice?.fields.find((field) => field.key === "customerId")?.help, id).toMatch(
-        /optional/i
-      )
+      expect(
+        refund?.fields.find((field) => field.key === "chargeId")?.help,
+        id
+      ).toMatch(/optional/i)
+      expect(
+        invoice?.fields.find((field) => field.key === "customerId")?.help,
+        id
+      ).toMatch(/optional/i)
     }
   })
 
@@ -241,26 +325,38 @@ describe("integrations registry", () => {
       const app = getApp(id)
       expect(app, id).toBeDefined()
 
-      const submission = app!.methods.find((method) => method.id === `${id}-new-submission`)
+      const submission = app!.methods.find(
+        (method) => method.id === `${id}-new-submission`
+      )
       const formId = submission?.fields.find((field) => field.key === "formId")
       expect(formId?.control, id).toBe("resource")
       expect(formId?.resourceType, id).toBe("forms.form")
       expect(formId?.label, id).toBe("Form ID")
       expect(formId?.help, id).toMatch(/pick a form/i)
 
-      const notify = app!.methods.find((method) => method.id === `${id}-notify-respondent`)
+      const notify = app!.methods.find(
+        (method) => method.id === `${id}-notify-respondent`
+      )
       const message = notify?.fields.find((field) => field.key === "message")
       expect(message?.control, id).toBe("textarea")
-      expect(notify?.fields.find((field) => field.key === "formId")?.control, id).toBe("resource")
-      expect(notify?.fields.find((field) => field.key === "formId")?.resourceType, id).toBe(
-        "forms.form"
-      )
+      expect(
+        notify?.fields.find((field) => field.key === "formId")?.control,
+        id
+      ).toBe("resource")
+      expect(
+        notify?.fields.find((field) => field.key === "formId")?.resourceType,
+        id
+      ).toBe("forms.form")
     }
   })
 
   it("uses select controls for currency, ticket status, CRM stage, and GitHub action", () => {
-    const stripeCharge = getApp("stripe")?.methods.find((method) => method.id === "stripe-new-charge")
-    const currency = stripeCharge?.fields.find((field) => field.key === "currency")
+    const stripeCharge = getApp("stripe")?.methods.find(
+      (method) => method.id === "stripe-new-charge"
+    )
+    const currency = stripeCharge?.fields.find(
+      (field) => field.key === "currency"
+    )
     expect(currency?.control).toBe("select")
     expect(currency?.options?.map((option) => option.value)).toEqual([
       "__any__",
@@ -271,8 +367,12 @@ describe("integrations registry", () => {
       "cad",
     ])
 
-    const createCharge = getApp("stripe")?.methods.find((method) => method.id === "stripe-create-charge")
-    const chargeCurrency = createCharge?.fields.find((field) => field.key === "currency")
+    const createCharge = getApp("stripe")?.methods.find(
+      (method) => method.id === "stripe-create-charge"
+    )
+    const chargeCurrency = createCharge?.fields.find(
+      (field) => field.key === "currency"
+    )
     expect(chargeCurrency?.control).not.toBe("select")
     expect(chargeCurrency?.placeholder).toBe("usd")
 
@@ -296,14 +396,11 @@ describe("integrations registry", () => {
     const zendeskUpdate = getApp("zendesk")?.methods.find(
       (method) => method.id === "zendesk-update-ticket-status"
     )
-    expect(zendeskUpdate?.fields.find((field) => field.key === "status")?.options?.map((option) => option.value)).toEqual([
-      "new",
-      "open",
-      "pending",
-      "hold",
-      "solved",
-      "closed",
-    ])
+    expect(
+      zendeskUpdate?.fields
+        .find((field) => field.key === "status")
+        ?.options?.map((option) => option.value)
+    ).toEqual(["new", "open", "pending", "hold", "solved", "closed"])
 
     const hubspotStage = getApp("hubspot")?.methods.find(
       (method) => method.id === "hubspot-deal-stage-changed"
@@ -320,7 +417,9 @@ describe("integrations registry", () => {
       "closed_lost",
     ])
 
-    const githubAction = getApp("github")?.methods.find((method) => method.id === "github")
+    const githubAction = getApp("github")?.methods.find(
+      (method) => method.id === "github"
+    )
     const action = githubAction?.fields.find((field) => field.key === "action")
     expect(action?.control).toBe("select")
     expect(action?.options?.map((option) => option.value)).toEqual([
@@ -331,12 +430,22 @@ describe("integrations registry", () => {
   })
 
   it("uses textarea, select, and boolean controls for Slack and Discord", () => {
-    const slackSend = getApp("slack")?.methods.find((method) => method.id === "slack")
-    expect(slackSend?.fields.find((field) => field.key === "message")?.control).toBe("textarea")
-    expect(slackSend?.fields.find((field) => field.key === "unfurlLinks")?.control).toBe("boolean")
+    const slackSend = getApp("slack")?.methods.find(
+      (method) => method.id === "slack"
+    )
+    expect(
+      slackSend?.fields.find((field) => field.key === "message")?.control
+    ).toBe("textarea")
+    expect(
+      slackSend?.fields.find((field) => field.key === "unfurlLinks")?.control
+    ).toBe("boolean")
 
-    const slackReaction = getApp("slack")?.methods.find((method) => method.id === "slack-add-reaction")
-    const slackEmoji = slackReaction?.fields.find((field) => field.key === "emoji")
+    const slackReaction = getApp("slack")?.methods.find(
+      (method) => method.id === "slack-add-reaction"
+    )
+    const slackEmoji = slackReaction?.fields.find(
+      (field) => field.key === "emoji"
+    )
     expect(slackEmoji?.control).toBe("select")
     expect(slackEmoji?.options?.map((option) => option.value)).toEqual([
       "eyes",
@@ -350,40 +459,77 @@ describe("integrations registry", () => {
       "rocket",
       "warning",
     ])
-    expect(slackSend?.fields.find((field) => field.key === "unfurlLinks")?.placeholder).toBe("true")
+    expect(
+      slackSend?.fields.find((field) => field.key === "unfurlLinks")
+        ?.placeholder
+    ).toBe("true")
 
-    const discordSend = getApp("discord")?.methods.find((method) => method.id === "discord")
-    expect(discordSend?.fields.find((field) => field.key === "message")?.control).toBe("textarea")
-    const discordReaction = getApp("discord")?.methods.find((method) => method.id === "discord-add-reaction")
-    expect(discordReaction?.fields.find((field) => field.key === "emoji")?.control).toBe("select")
+    const discordSend = getApp("discord")?.methods.find(
+      (method) => method.id === "discord"
+    )
+    expect(
+      discordSend?.fields.find((field) => field.key === "message")?.control
+    ).toBe("textarea")
+    const discordReaction = getApp("discord")?.methods.find(
+      (method) => method.id === "discord-add-reaction"
+    )
+    expect(
+      discordReaction?.fields.find((field) => field.key === "emoji")?.control
+    ).toBe("select")
   })
 
   it("uses select controls for CRM pipeline and stage fields", () => {
-    for (const id of ["hubspot", "salesforce", "pipedrive", "zoho-crm", "attio"] as const) {
+    for (const id of [
+      "hubspot",
+      "salesforce",
+      "pipedrive",
+      "zoho-crm",
+      "attio",
+    ] as const) {
       const app = getApp(id)
       expect(app, id).toBeDefined()
 
-      const stageChanged = app!.methods.find((method) => method.id === `${id}-deal-stage-changed`)
-      const pipeline = stageChanged?.fields.find((field) => field.key === "pipeline")
+      const stageChanged = app!.methods.find(
+        (method) => method.id === `${id}-deal-stage-changed`
+      )
+      const pipeline = stageChanged?.fields.find(
+        (field) => field.key === "pipeline"
+      )
       const stage = stageChanged?.fields.find((field) => field.key === "stage")
       expect(pipeline?.control, id).toBe("select")
-      expect(pipeline?.options?.map((option) => option.value), id).toEqual(
-        expect.arrayContaining(["sales", "marketing", "support"])
-      )
+      expect(
+        pipeline?.options?.map((option) => option.value),
+        id
+      ).toEqual(expect.arrayContaining(["sales", "marketing", "support"]))
       expect(stage?.control, id).toBe("select")
       expect(stage?.placeholder, id).toBe("__any__")
-      expect(stage?.options?.map((option) => option.value), id).toEqual(
-        expect.arrayContaining(["__any__", "closed_won", "closed_lost", "qualification"])
+      expect(
+        stage?.options?.map((option) => option.value),
+        id
+      ).toEqual(
+        expect.arrayContaining([
+          "__any__",
+          "closed_won",
+          "closed_lost",
+          "qualification",
+        ])
       )
       expect(pipeline?.placeholder, id).toBe("__any__")
 
-      const createDeal = app!.methods.find((method) => method.id === `${id}-create-deal`)
+      const createDeal = app!.methods.find(
+        (method) => method.id === `${id}-create-deal`
+      )
       const amount = createDeal?.fields.find((field) => field.key === "amount")
       expect(amount?.control, id).toBe("number")
       expect(amount?.help, id).toMatch(/numeric|number|digits/i)
 
-      const updateStage = app!.methods.find((method) => method.id === `${id}-update-deal-stage`)
-      expect(updateStage?.fields.find((field) => field.key === "stage")?.control, id).toBe("select")
+      const updateStage = app!.methods.find(
+        (method) => method.id === `${id}-update-deal-stage`
+      )
+      expect(
+        updateStage?.fields.find((field) => field.key === "stage")?.control,
+        id
+      ).toBe("select")
     }
   })
 
@@ -392,11 +538,15 @@ describe("integrations registry", () => {
       const app = getApp(id)
       expect(app, id).toBeDefined()
 
-      const create = app!.methods.find((method) => method.id === `${id}-create-event`)
+      const create = app!.methods.find(
+        (method) => method.id === `${id}-create-event`
+      )
       const calendar = create?.fields.find((field) => field.key === "calendar")
       const start = create?.fields.find((field) => field.key === "start")
       const until = create?.fields.find((field) => field.key === "until")
-      const description = create?.fields.find((field) => field.key === "description")
+      const description = create?.fields.find(
+        (field) => field.key === "description"
+      )
 
       expect(calendar?.control, id).toBe("resource")
       expect(calendar?.resourceType, id).toBe("calendar.calendar")
@@ -407,26 +557,42 @@ describe("integrations registry", () => {
       expect(until?.help, id).toMatch(/end/i)
       expect(description?.control, id).toBe("textarea")
 
-      const update = app!.methods.find((method) => method.id === `${id}-update-event`)
-      expect(update?.fields.map((field) => field.key), id).toEqual(
-        expect.arrayContaining(["start", "until", "description"])
+      const update = app!.methods.find(
+        (method) => method.id === `${id}-update-event`
       )
-      expect(update?.fields.find((field) => field.key === "description")?.control, id).toBe("textarea")
+      expect(
+        update?.fields.map((field) => field.key),
+        id
+      ).toEqual(expect.arrayContaining(["start", "until", "description"]))
+      expect(
+        update?.fields.find((field) => field.key === "description")?.control,
+        id
+      ).toBe("textarea")
     }
   })
 
   it("polishes Sheets/Docs/Drive/Notion/Airtable field controls", () => {
     const sheets = getApp("google-sheets")
-    const createRow = sheets?.methods.find((method) => method.id === "spreadsheet-create-row")
-    const updateRow = sheets?.methods.find((method) => method.id === "spreadsheet")
+    const createRow = sheets?.methods.find(
+      (method) => method.id === "spreadsheet-create-row"
+    )
+    const updateRow = sheets?.methods.find(
+      (method) => method.id === "spreadsheet"
+    )
     const sheet = createRow?.fields.find((field) => field.key === "sheet")
     expect(sheet?.control).toBe("resource")
     expect(sheet?.resourceType).toBe("sheets.sheet")
     expect(sheet?.label).toBe("Sheet")
     expect(sheet?.help).toMatch(/pick a spreadsheet/i)
-    expect(createRow?.fields.find((field) => field.key === "values")?.control).toBe("textarea")
-    expect(updateRow?.fields.find((field) => field.key === "values")?.control).toBe("textarea")
-    expect(updateRow?.fields.find((field) => field.key === "row")?.key).toBe("row")
+    expect(
+      createRow?.fields.find((field) => field.key === "values")?.control
+    ).toBe("textarea")
+    expect(
+      updateRow?.fields.find((field) => field.key === "values")?.control
+    ).toBe("textarea")
+    expect(updateRow?.fields.find((field) => field.key === "row")?.key).toBe(
+      "row"
+    )
 
     const drive = getApp("google-drive")
     const folder = drive?.methods
@@ -436,9 +602,11 @@ describe("integrations registry", () => {
     expect(folder?.help).toMatch(/resource select later/i)
 
     const docs = getApp("google-docs")
-    expect(docs?.methods.find((method) => method.id === "google-docs-create")?.fields.find((field) => field.key === "content")?.control).toBe(
-      "textarea"
-    )
+    expect(
+      docs?.methods
+        .find((method) => method.id === "google-docs-create")
+        ?.fields.find((field) => field.key === "content")?.control
+    ).toBe("textarea")
 
     const notion = getApp("notion")
     const createPage = notion?.methods.find((method) => method.id === "notion")
@@ -446,35 +614,57 @@ describe("integrations registry", () => {
     expect(page?.control).toBe("resource")
     expect(page?.resourceType).toBe("notion.page")
     expect(page?.help).toMatch(/pick a notion page/i)
-    expect(createPage?.fields.find((field) => field.key === "properties")).toMatchObject({
+    expect(
+      createPage?.fields.find((field) => field.key === "properties")
+    ).toMatchObject({
       control: "code",
       language: "json",
     })
-    expect(notion?.methods.find((method) => method.id === "notion-update-page")?.fields.find((field) => field.key === "content")?.control).toBe(
-      "textarea"
+    expect(
+      notion?.methods
+        .find((method) => method.id === "notion-update-page")
+        ?.fields.find((field) => field.key === "content")?.control
+    ).toBe("textarea")
+    const createItem = notion?.methods.find(
+      (method) => method.id === "notion-create-database-item"
     )
-    const createItem = notion?.methods.find((method) => method.id === "notion-create-database-item")
-    expect(createItem?.fields.find((field) => field.key === "database")?.label).toBe("Database ID")
-    expect(createItem?.fields.find((field) => field.key === "properties")?.control).toBe("code")
+    expect(
+      createItem?.fields.find((field) => field.key === "database")?.label
+    ).toBe("Database ID")
+    expect(
+      createItem?.fields.find((field) => field.key === "properties")?.control
+    ).toBe("code")
 
     const airtable = getApp("airtable")
     const create = airtable?.methods.find((method) => method.id === "airtable")
-    const find = airtable?.methods.find((method) => method.id === "airtable-find-records")
-    expect(create?.fields.find((field) => field.key === "base")?.label).toBe("Base ID")
-    expect(create?.fields.find((field) => field.key === "base")?.help).toMatch(/resource select later/i)
-    expect(create?.fields.find((field) => field.key === "table")?.label).toBe("Table ID")
-    expect(create?.fields.find((field) => field.key === "table")?.help).toMatch(/resource select later/i)
-    expect(create?.fields.find((field) => field.key === "fields")).toMatchObject({
+    const find = airtable?.methods.find(
+      (method) => method.id === "airtable-find-records"
+    )
+    expect(create?.fields.find((field) => field.key === "base")?.label).toBe(
+      "Base ID"
+    )
+    expect(create?.fields.find((field) => field.key === "base")?.help).toMatch(
+      /resource select later/i
+    )
+    expect(create?.fields.find((field) => field.key === "table")?.label).toBe(
+      "Table ID"
+    )
+    expect(create?.fields.find((field) => field.key === "table")?.help).toMatch(
+      /resource select later/i
+    )
+    expect(
+      create?.fields.find((field) => field.key === "fields")
+    ).toMatchObject({
       control: "code",
       language: "json",
     })
-    expect(find?.fields.find((field) => field.key === "formula")?.control).toBe("textarea")
+    expect(find?.fields.find((field) => field.key === "formula")?.control).toBe(
+      "textarea"
+    )
   })
 
   it("groups connectors into named categories", () => {
-    expect(listConnectorCategories()).toEqual(
-      expect.arrayContaining(["Google", "Microsoft", "Communication", "CRM", "AI"])
-    )
+    expect(listConnectorCategories()).toEqual(["Google"])
   })
 
   it("uses number and datetime FieldControls on payment, CRM, and calendar methods", () => {

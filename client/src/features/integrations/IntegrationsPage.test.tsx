@@ -10,6 +10,7 @@ import {
   failNextIntegrationsLoad,
   resetIntegrationsLoadFlags,
 } from "./model/load"
+import { resetMcpServers } from "./model/mcp-store"
 import {
   connectConnector,
   getIntegrationsSnapshot,
@@ -37,21 +38,32 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
   beforeEach(() => {
     resetIntegrationsStore()
     resetIntegrationsLoadFlags()
+    resetMcpServers()
   })
 
-  it("shows a loading skeleton then Integrations and Custom Credentials tabs", async () => {
+  it("shows a loading skeleton then Connectors, MCP Servers, and Custom Credentials tabs", async () => {
     renderIntegrations()
 
     expect(screen.getByTestId("integrations-skeleton")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Integrations" })).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: "Integrations" })).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: "Custom Credentials" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", { name: "Connectors" })
+    ).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Connectors" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "MCP Servers" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("tab", { name: "Custom Credentials" })
+    ).toBeInTheDocument()
 
     expect(
       await screen.findByRole("heading", { name: "No connectors configured" })
     ).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: "Integrations" })).toHaveAttribute("data-state", "active")
-    expect(screen.getAllByRole("button", { name: "Add connector" }).length).toBeGreaterThan(0)
+    expect(screen.getByRole("tab", { name: "Connectors" })).toHaveAttribute(
+      "data-state",
+      "active"
+    )
+    expect(
+      screen.getAllByRole("button", { name: "Add connector" }).length
+    ).toBeGreaterThan(0)
   })
 
   it("shows human error copy and retries after a failed load", async () => {
@@ -62,7 +74,9 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     expect(await screen.findByRole("alert")).toBeInTheDocument()
     expect(screen.getByText("Could not load connectors")).toBeInTheDocument()
     expect(
-      screen.getByText("We couldn't load your connectors. Check your connection and try again.")
+      screen.getByText(
+        "We couldn't load your connectors. Check your connection and try again."
+      )
     ).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Try again" }))
@@ -76,14 +90,17 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     const user = userEvent.setup()
     renderIntegrations("/integrations?tab=custom-credentials")
 
-    expect(screen.getByRole("tab", { name: "Custom Credentials" })).toHaveAttribute(
-      "data-state",
-      "active"
-    )
-    expect(screen.getByRole("heading", { name: "No custom credentials yet" })).toBeInTheDocument()
-    expect(screen.getAllByRole("button", { name: "New credential" }).length).toBeGreaterThan(0)
+    expect(
+      screen.getByRole("tab", { name: "Custom Credentials" })
+    ).toHaveAttribute("data-state", "active")
+    expect(
+      screen.getByRole("heading", { name: "No custom credentials yet" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getAllByRole("button", { name: "New credential" }).length
+    ).toBeGreaterThan(0)
 
-    await user.click(screen.getByRole("tab", { name: "Integrations" }))
+    await user.click(screen.getByRole("tab", { name: "Connectors" }))
     expect(
       await screen.findByRole("heading", { name: "No connectors configured" })
     ).toBeInTheDocument()
@@ -94,15 +111,30 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     renderIntegrations()
 
     await screen.findByRole("heading", { name: "No connectors configured" })
-    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
+    await user.click(
+      screen.getAllByRole("button", { name: "Add connector" })[0]!
+    )
 
     const dialog = screen.getByRole("dialog", { name: "Add connector" })
     expect(dialog).toBeInTheDocument()
-    expect(screen.getByRole("textbox", { name: "Search connectors" })).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "All" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Google Sheets" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Slack" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Stripe" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("textbox", { name: "Search connectors" })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "All" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Google Sheets" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Google Drive" })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Slack" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Stripe" })
+    ).not.toBeInTheDocument()
     expect(dialog.querySelector('[data-slot="scroll-area"]')).toBeNull()
   })
 
@@ -111,13 +143,19 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     renderIntegrations()
 
     await screen.findByRole("heading", { name: "No connectors configured" })
-    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
+    await user.click(
+      screen.getAllByRole("button", { name: "Add connector" })[0]!
+    )
 
     const search = screen.getByRole("textbox", { name: "Search connectors" })
     await user.type(search, "zzzz-no-match")
 
-    expect(screen.getByText('No connectors match "zzzz-no-match".')).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Slack" })).not.toBeInTheDocument()
+    expect(
+      screen.getByText('No connectors match "zzzz-no-match".')
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Slack" })
+    ).not.toBeInTheDocument()
   })
 
   it("shows auth badges on catalog cards instead of categories", async () => {
@@ -125,18 +163,19 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     renderIntegrations()
 
     await screen.findByRole("heading", { name: "No connectors configured" })
-    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
+    await user.click(
+      screen.getAllByRole("button", { name: "Add connector" })[0]!
+    )
 
     const sheets = screen.getByRole("button", { name: "Google Sheets" })
     expect(within(sheets).getByText("OAUTH")).toBeInTheDocument()
     expect(within(sheets).queryByText("Google")).not.toBeInTheDocument()
-
-    const postgres = screen.getByRole("button", { name: "PostgreSQL" })
-    expect(within(postgres).getByText("BASIC")).toBeInTheDocument()
-    expect(within(postgres).queryByText("Databases")).not.toBeInTheDocument()
-
-    const snowflake = screen.getByRole("button", { name: "Snowflake" })
-    expect(within(snowflake).getByText("JWT")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "PostgreSQL" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Snowflake" })
+    ).not.toBeInTheDocument()
   })
 
   it("frames catalog logos and spans extra columns on wide dialogs", async () => {
@@ -144,7 +183,9 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     renderIntegrations()
 
     await screen.findByRole("heading", { name: "No connectors configured" })
-    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
+    await user.click(
+      screen.getAllByRole("button", { name: "Add connector" })[0]!
+    )
 
     const dialog = screen.getByRole("dialog", { name: "Add connector" })
     expect(dialog.className).toMatch(/max-w-5xl|max-w-6xl/)
@@ -166,21 +207,29 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     renderIntegrations()
 
     await screen.findByRole("heading", { name: "No connectors configured" })
-    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
+    await user.click(
+      screen.getAllByRole("button", { name: "Add connector" })[0]!
+    )
     await user.click(screen.getByRole("button", { name: "Google Sheets" }))
 
-    expect(screen.getByRole("dialog", { name: "Connect Google Sheets" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("dialog", { name: "Connect Google Sheets" })
+    ).toBeInTheDocument()
     expect(screen.queryByLabelText("Client ID")).not.toBeInTheDocument()
     expect(screen.queryByLabelText("Client Secret")).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole("button", { name: "Connect with Google" }))
+    await user.click(
+      screen.getByRole("button", { name: "Connect with Google" })
+    )
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Connected" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Connected" })
+      ).toBeInTheDocument()
     })
     expect(getIntegrationsSnapshot().connections).toHaveLength(1)
 
-    await user.click(screen.getByRole("button", { name: "Back to Integrations" }))
+    await user.click(screen.getByRole("button", { name: "Back to Connectors" }))
 
     await waitFor(() => {
       expect(screen.getByText("Google Sheets")).toBeInTheDocument()
@@ -188,47 +237,59 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     expect(screen.queryByRole("tab", { name: "In" })).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Data" })).not.toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: "Out" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Insert rows" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Insert rows" })
+    ).not.toBeInTheDocument()
   })
 
-  it("asks for an API key when connecting Stripe and keeps Connect disabled until filled", async () => {
+  it("adds an MCP server from an npx command", async () => {
     const user = userEvent.setup()
-    renderIntegrations()
+    renderIntegrations("/integrations?tab=mcp-servers")
 
-    await screen.findByRole("heading", { name: "No connectors configured" })
-    await user.click(screen.getAllByRole("button", { name: "Add connector" })[0]!)
-    await user.click(screen.getByRole("button", { name: "Stripe" }))
+    expect(
+      await screen.findByRole("heading", { name: "No MCP servers yet" })
+    ).toBeInTheDocument()
+    await user.click(
+      screen.getAllByRole("button", { name: "Add MCP server" })[0]!
+    )
 
-    const apiKey = screen.getByLabelText("API Key")
-    expect(apiKey).not.toHaveAttribute("type", "password")
-    const connect = screen.getByRole("button", { name: "Connect" })
-    expect(connect).toBeDisabled()
+    expect(screen.getByRole("combobox", { name: "Kind" })).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "Snippet" })).toBeInTheDocument()
+    expect(
+      screen.queryByRole("textbox", { name: "Command" })
+    ).not.toBeInTheDocument()
 
-    await user.type(apiKey, "sk_test_vanteg")
-    expect(apiKey).toHaveValue("*************g")
-    expect(connect).toBeEnabled()
-    await user.click(connect)
+    await user.click(screen.getByRole("combobox", { name: "Kind" }))
+    await user.click(screen.getByRole("option", { name: "npx" }))
 
-    await waitFor(() => {
-      expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_test_vanteg")
-    })
-    expect(screen.getByText("Stripe")).toBeInTheDocument()
+    const command = screen.getByRole("textbox", { name: "Command" })
+    expect(
+      screen.queryByRole("textbox", { name: "Snippet" })
+    ).not.toBeInTheDocument()
+    await user.type(command, "npx -y @modelcontextprotocol/server-github")
+    await user.click(screen.getByRole("button", { name: "Create" }))
+
+    expect(await screen.findByText("github")).toBeInTheDocument()
+    expect(screen.getByText("stdio")).toBeInTheDocument()
   })
 
   it("filters configured connectors with search", async () => {
     const user = userEvent.setup()
     await connectConnector("google-sheets")
-    await connectConnector("stripe", { apiKey: "sk_test_vanteg" })
+    await connectConnector("google-drive")
     renderIntegrations()
 
     await screen.findByRole("textbox", { name: "Search connected apps" })
     expect(screen.getByText("Google Sheets")).toBeInTheDocument()
-    expect(screen.getByText("Stripe")).toBeInTheDocument()
+    expect(screen.getByText("Google Drive")).toBeInTheDocument()
 
-    await user.type(screen.getByRole("textbox", { name: "Search connected apps" }), "stripe")
+    await user.type(
+      screen.getByRole("textbox", { name: "Search connected apps" }),
+      "drive"
+    )
 
     await waitFor(() => {
-      expect(screen.getByText("Stripe")).toBeInTheDocument()
+      expect(screen.getByText("Google Drive")).toBeInTheDocument()
       expect(screen.queryByText("Google Sheets")).not.toBeInTheDocument()
     })
   })
@@ -237,8 +298,12 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     const user = userEvent.setup()
     renderIntegrations("/integrations?tab=custom-credentials")
 
-    await user.click(screen.getAllByRole("button", { name: "New credential" })[0]!)
-    expect(screen.getByRole("dialog", { name: "New credential" })).toBeInTheDocument()
+    await user.click(
+      screen.getAllByRole("button", { name: "New credential" })[0]!
+    )
+    expect(
+      screen.getByRole("dialog", { name: "New credential" })
+    ).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Create" }))
 
@@ -252,8 +317,12 @@ describe("IntegrationsPage", { timeout: 15_000 }, () => {
     const user = userEvent.setup()
     renderIntegrations("/integrations?tab=custom-credentials")
 
-    await user.click(screen.getAllByRole("button", { name: "New credential" })[0]!)
-    expect(screen.getByRole("dialog", { name: "New credential" })).toBeInTheDocument()
+    await user.click(
+      screen.getAllByRole("button", { name: "New credential" })[0]!
+    )
+    expect(
+      screen.getByRole("dialog", { name: "New credential" })
+    ).toBeInTheDocument()
 
     const token = screen.getByLabelText("Token")
     expect(token).not.toHaveAttribute("type", "password")

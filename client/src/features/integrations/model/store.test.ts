@@ -43,7 +43,12 @@ describe("integrations store", () => {
     expect(snapshot.credentials[0]?.fields).not.toHaveProperty("clientId")
     expect(snapshot.credentials[0]?.fields).not.toHaveProperty("clientSecret")
     expect(snapshot.connections[0]?.sheets.in.map((row) => row.key)).toEqual(
-      expect.arrayContaining(["spreadsheetId", "sheetName", "range", "operation"])
+      expect.arrayContaining([
+        "spreadsheetId",
+        "sheetName",
+        "range",
+        "operation",
+      ])
     )
     expect(snapshot.connections[0]?.sheets.data.length).toBeGreaterThan(0)
     expect(snapshot.connections[0]?.sheets.out).toEqual([])
@@ -79,7 +84,8 @@ describe("integrations store", () => {
       company: "Vanteg",
       status: "active",
     })
-    const rowId = getIntegrationsSnapshot().connections[0]?.sheets.data.at(-1)?.id
+    const rowId =
+      getIntegrationsSnapshot().connections[0]?.sheets.data.at(-1)?.id
     expect(rowId).toBeDefined()
 
     insertDataRows(connection.id, [rowId!])
@@ -98,7 +104,9 @@ describe("integrations store", () => {
 
     await connectConnector("stripe", { apiKey: "" }, id)
 
-    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_live_one")
+    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe(
+      "sk_live_one"
+    )
   })
 
   it("creates and updates custom credentials without exposing blank-secret clears", async () => {
@@ -192,7 +200,9 @@ describe("integrations store", () => {
 
     expect(getIntegrationsSnapshot().connections).toHaveLength(1)
     expect(getIntegrationsSnapshot().credentials).toHaveLength(1)
-    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe("sk_live_two")
+    expect(getIntegrationsSnapshot().credentials[0]?.fields.apiKey).toBe(
+      "sk_live_two"
+    )
 
     const listed = await getIntegrationsAdapter().listConnections()
     expect(listed.ok && listed.data).toHaveLength(1)
@@ -232,7 +242,6 @@ describe("integrations store", () => {
     const listed = await getIntegrationsAdapter().listConnections()
     expect(listed.ok && listed.data).toHaveLength(0)
   })
-
 })
 
 describe("custom credentials load status", () => {
@@ -249,9 +258,9 @@ describe("custom credentials load status", () => {
     expect(created.ok).toBe(true)
     await ensureCustomCredentialsLoaded()
     expect(getCustomCredentialsMeta().status).toBe("ready")
-    expect(getIntegrationsSnapshot().customCredentials.map((item) => item.name)).toContain(
-      "Listed"
-    )
+    expect(
+      getIntegrationsSnapshot().customCredentials.map((item) => item.name)
+    ).toContain("Listed")
   })
 
   it("records a load failure", async () => {

@@ -26,9 +26,9 @@ function renderWorkflows(path = "/workflows") {
         },
       },
       {
-        path: "/templates",
-        Component: function TemplatesStub() {
-          return <p>Templates destination</p>
+        path: "/integrations",
+        Component: function IntegrationsStub() {
+          return <p>Integrations destination</p>
         },
       },
     ],
@@ -51,25 +51,36 @@ describe("WorkflowsPage", () => {
     resetWorkflowRuns()
   })
 
-  it("shows a loading skeleton then an empty card with create and browse templates", async () => {
+  it("shows a loading skeleton then an empty card with create and no templates CTA", async () => {
     const { router } = renderWorkflows()
 
     expect(screen.getByTestId("workflows-skeleton")).toBeInTheDocument()
     expect(screen.getByLabelText("Loading workflows")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Workflows" })).toBeInTheDocument()
-    expect(screen.getByText("Build, draft, and run automations.")).toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", { name: "Workflows" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("Build, draft, and run automations.")
+    ).toBeInTheDocument()
 
     expect(
       await screen.findByRole("heading", { name: "No production workflows" })
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/Create a workflow to start connecting triggers and actions/i)
+      screen.getByText(
+        /Create a workflow to start connecting triggers and actions/i
+      )
     ).toBeInTheDocument()
-    expect(screen.queryByText("Deployed workflows will appear here.")).not.toBeInTheDocument()
-    expect(screen.getAllByRole("button", { name: "New workflow" }).length).toBeGreaterThan(0)
-
-    await userEvent.setup().click(screen.getByRole("button", { name: "Browse templates" }))
-    expect(router.state.location.pathname).toBe("/templates")
+    expect(
+      screen.queryByText("Deployed workflows will appear here.")
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getAllByRole("button", { name: "New workflow" }).length
+    ).toBeGreaterThan(0)
+    expect(
+      screen.queryByRole("button", { name: "Browse templates" })
+    ).not.toBeInTheDocument()
+    expect(router.state.location.pathname).toBe("/workflows")
   })
 
   it("creates a named draft immediately and opens the editor", async () => {
@@ -77,7 +88,9 @@ describe("WorkflowsPage", () => {
     renderWorkflows()
     await screen.findByRole("heading", { name: "No production workflows" })
 
-    await user.click(screen.getAllByRole("button", { name: "New workflow" })[0]!)
+    await user.click(
+      screen.getAllByRole("button", { name: "New workflow" })[0]!
+    )
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(screen.getByText("Workflow editor")).toBeInTheDocument()
@@ -147,9 +160,13 @@ describe("WorkflowsPage", () => {
     const user = userEvent.setup()
     renderWorkflows("/workflows?tab=runs")
 
-    expect(await screen.findByRole("list", { name: "Workflow runs" })).toBeInTheDocument()
+    expect(
+      await screen.findByRole("list", { name: "Workflow runs" })
+    ).toBeInTheDocument()
     expect(screen.getByText("Lead alerts")).toBeInTheDocument()
-    expect(screen.queryByRole("heading", { name: "No runs yet" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "No runs yet" })
+    ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: /Lead alerts/i }))
     expect(screen.getByText(/Triggered by Webhook/)).toBeInTheDocument()

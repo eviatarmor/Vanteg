@@ -20,7 +20,7 @@ import { WorkflowRunList } from "./WorkflowRunList"
 function RunsLoadingPane() {
   return (
     <div
-      className="flex min-h-[16rem] items-center justify-center gap-2 text-sm text-muted-foreground"
+      className="flex min-h-0 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground"
       role="status"
     >
       <LoaderCircle className="size-4 animate-spin" />
@@ -37,7 +37,6 @@ function RunsErrorPane() {
       description="Run history could not be read from local storage. Try again after clearing corrupted data."
       actionLabel="Try again"
       onCreate={() => retryWorkflowRunsLoad()}
-      className="min-h-[16rem]"
     />
   )
 }
@@ -113,12 +112,12 @@ function RunsEmptyPane({
   onStarted: (id: string) => void
 }) {
   return (
-    <div className="flex min-h-[16rem] flex-col items-center justify-center gap-4">
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
       <EmptyState
         icon={History}
         title="No runs yet"
         description={emptyRunsDescription(workflowId)}
-        className="min-h-0 w-full"
+        className="w-full flex-none"
       />
       <RunNowControl
         showRunNow={showRunNow}

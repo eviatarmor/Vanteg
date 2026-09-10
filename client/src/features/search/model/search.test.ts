@@ -40,9 +40,9 @@ describe("searchWorkspace", () => {
   it("finds inbox items", () => {
     const hits = searchWorkspace("credential", [])
 
-    expect(hits.some((hit) => hit.group === "Inbox" && /credential/i.test(hit.title))).toBe(
-      true
-    )
+    expect(
+      hits.some((hit) => hit.group === "Inbox" && /credential/i.test(hit.title))
+    ).toBe(true)
   })
 
   it("finds data and integration tabs", () => {
@@ -56,23 +56,29 @@ describe("searchWorkspace", () => {
     const memoryHits = searchWorkspace("workspace", [])
     const agentHits = searchWorkspace("copilot", [])
 
-    expect(memoryHits.some((hit) => hit.group === "Memory" && hit.title === "Workspace")).toBe(
-      true
-    )
+    expect(
+      memoryHits.some(
+        (hit) => hit.group === "Memory" && hit.title === "Workspace"
+      )
+    ).toBe(true)
     expect(agentHits.some((hit) => hit.title === "Support copilot")).toBe(true)
   })
 
   it("finds teams", () => {
     const hits = searchWorkspace("software", [])
-    expect(hits.some((hit) => hit.group === "Teams" && hit.title === "Software engineering")).toBe(
-      true
-    )
+    expect(
+      hits.some(
+        (hit) => hit.group === "Teams" && hit.title === "Software engineering"
+      )
+    ).toBe(true)
   })
 
   it("finds pages", () => {
     const hits = searchWorkspace("inbox", [])
 
-    expect(hits.some((hit) => hit.title === "Inbox" && hit.group === "Pages")).toBe(true)
+    expect(
+      hits.some((hit) => hit.title === "Inbox" && hit.group === "Pages")
+    ).toBe(true)
   })
 
   it("filters action list by create and jump queries", () => {
@@ -85,19 +91,28 @@ describe("searchWorkspace", () => {
     const settings = searchWorkspace("settings", [])
     const data = searchWorkspace("jump to data", [])
 
-    expect(createHits.some((hit) => hit.command === "create-workflow")).toBe(true)
+    expect(createHits.some((hit) => hit.command === "create-workflow")).toBe(
+      true
+    )
     expect(agentHits.some((hit) => hit.command === "create-agent")).toBe(true)
     expect(teamHits.some((hit) => hit.command === "create-team")).toBe(true)
     expect(integrations.some((hit) => hit.path === "/integrations")).toBe(true)
-    expect(templates.some((hit) => hit.path === "/templates")).toBe(true)
+    expect(
+      searchWorkspace("mcp", []).some(
+        (hit) => hit.path === "/integrations?tab=mcp-servers"
+      )
+    ).toBe(true)
+    expect(templates.some((hit) => hit.path === "/templates")).toBe(false)
     expect(
       searchWorkspace("templates", []).filter(
-        (hit) => hit.group === "Pages" && hit.path === "/templates"
+        (hit) => hit.path === "/templates"
       )
-    ).toHaveLength(1)
+    ).toHaveLength(0)
     expect(assistant.some((hit) => hit.command === "open-assistant")).toBe(true)
     expect(settings.some((hit) => hit.path === "/settings")).toBe(true)
-    expect(data.some((hit) => hit.title === "Go to Data" && hit.path === "/data")).toBe(true)
+    expect(
+      data.some((hit) => hit.title === "Go to Data" && hit.path === "/data")
+    ).toBe(true)
   })
 
   it("returns actions, recent items, pages, and inbox when the query is empty", () => {
@@ -106,9 +121,11 @@ describe("searchWorkspace", () => {
       workflow("Newer workflow", "draft", 10),
     ])
 
-    expect(hits.some((hit) => hit.group === "Actions" && hit.command === "create-workflow")).toBe(
-      true
-    )
+    expect(
+      hits.some(
+        (hit) => hit.group === "Actions" && hit.command === "create-workflow"
+      )
+    ).toBe(true)
     expect(hits.some((hit) => hit.group === "Pages")).toBe(true)
     expect(hits.some((hit) => hit.group === "Inbox")).toBe(true)
     expect(hits.some((hit) => hit.title === "Newer workflow")).toBe(true)

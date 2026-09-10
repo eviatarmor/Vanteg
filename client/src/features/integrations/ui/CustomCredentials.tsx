@@ -47,15 +47,22 @@ export function CustomCredentials({
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{credential.name}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {primarySecretPreview(credential.kind, credential.fields) || "No secret"} · id{" "}
-              {credential.id}
+              {primarySecretPreview(credential.kind, credential.fields) ||
+                "No secret"}{" "}
+              · id {credential.id}
             </p>
           </div>
-          <Badge variant="secondary">{customAuthKindLabel(credential.kind)}</Badge>
+          <Badge variant="secondary">
+            {customAuthKindLabel(credential.kind)}
+          </Badge>
           <Button size="sm" variant="ghost" onClick={() => onEdit(credential)}>
             Edit
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onDelete(credential)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onDelete(credential)}
+          >
             Delete
           </Button>
         </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { ScrollFadeEdge } from "@workspace/ui/components/scroll-fade";
 import { cn } from "@workspace/ui/lib/utils";
 import type { UIMessage } from "ai";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
@@ -11,26 +10,14 @@ import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
 
-function ConversationOverflowFade() {
-  const { isAtBottom } = useStickToBottomContext();
-  return <ScrollFadeEdge visible={!isAtBottom} />;
-}
-
-export const Conversation = ({
-  className,
-  children,
-  ...props
-}: ConversationProps) => (
+export const Conversation = ({ className, ...props }: ConversationProps) => (
   <StickToBottom
     className={cn("relative flex-1 overflow-y-hidden", className)}
     initial="smooth"
     resize="smooth"
     role="log"
     {...props}
-  >
-    {children}
-    <ConversationOverflowFade />
-  </StickToBottom>
+  />
 );
 
 export type ConversationContentProps = ComponentProps<

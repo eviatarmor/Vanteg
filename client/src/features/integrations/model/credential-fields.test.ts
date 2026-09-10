@@ -14,7 +14,9 @@ describe("credential fields", () => {
   it("asks for an API key for Stripe", () => {
     const stripe = getConnector("stripe")
     expect(stripe).toBeDefined()
-    expect(credentialFieldsFor(stripe!).map((field) => field.id)).toEqual(["apiKey"])
+    expect(credentialFieldsFor(stripe!).map((field) => field.id)).toEqual([
+      "apiKey",
+    ])
     expect(credentialFieldsFor(stripe!)[0]?.secret).toBe(true)
   })
 

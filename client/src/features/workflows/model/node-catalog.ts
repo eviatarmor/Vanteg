@@ -1,6 +1,7 @@
 import {
   listFeaturedMethods,
   listPickerConnectorApps,
+  listUnshippedFeaturedMethodIds,
   type ConnectorApp as IntegrationConnectorApp,
   type Method,
 } from "@workspace/integrations"
@@ -19,8 +20,10 @@ function toNode(item: Method): WorkflowNodeType {
   }
 }
 
-
-const nodeTypes: WorkflowNodeType[] = [...platformNodes, ...listFeaturedMethods().map(toNode)]
+const nodeTypes: WorkflowNodeType[] = [
+  ...platformNodes,
+  ...listFeaturedMethods().map(toNode),
+]
 const nodeTypesById = new Map(nodeTypes.map((node) => [node.id, node]))
 
 const COMMON_TRIGGER_IDS = [
@@ -30,13 +33,7 @@ const COMMON_TRIGGER_IDS = [
   "inbound-call",
   "outbound-call",
 ]
-const COMMON_INTEGRATION_IDS = [
-  "http",
-  "email-send",
-  "slack",
-  "spreadsheet",
-  "database",
-]
+const COMMON_INTEGRATION_IDS = ["http", "email-send", "spreadsheet", "database"]
 
 function nodesByIds(ids: readonly string[]): WorkflowNodeType[] {
   return ids.flatMap((id) => {
@@ -53,7 +50,10 @@ export function getNodeType(id: string): WorkflowNodeType | undefined {
   return nodeTypesById.get(id)
 }
 
-export function nodeTypesByCategory(): { category: string; nodes: WorkflowNodeType[] }[] {
+export function nodeTypesByCategory(): {
+  category: string
+  nodes: WorkflowNodeType[]
+}[] {
   const groups = new Map<string, WorkflowNodeType[]>()
   for (const node of nodeTypes) {
     const list = groups.get(node.category) ?? []
@@ -94,14 +94,26 @@ const PLATFORM_APPS: ConnectorApp[] = [
     name: "HTTP",
     description: "Webhooks and REST requests.",
     iconCatalogId: "http",
-    methods: nodesByIds(["webhook", "http-poll", "http", "respond-webhook", "http-download"]),
+    methods: nodesByIds([
+      "webhook",
+      "http-poll",
+      "http",
+      "respond-webhook",
+      "http-download",
+    ]),
   },
   {
     id: "email",
     name: "Email",
     description: "Inbound and outbound mail.",
     iconCatalogId: "email-send",
-    methods: nodesByIds(["email", "email-new-attachment", "email-send", "email-reply", "email-forward"]),
+    methods: nodesByIds([
+      "email",
+      "email-new-attachment",
+      "email-send",
+      "email-reply",
+      "email-forward",
+    ]),
   },
   {
     id: "database",
@@ -180,9 +192,10 @@ export function listPickerSections(): {
   label: string
   nodes: WorkflowNodeType[]
 }[] {
-  const connectorMethodIds = new Set(
-    listConnectorApps().flatMap((app) => app.methods.map((item) => item.id))
-  )
+  const connectorMethodIds = new Set([
+    ...listConnectorApps().flatMap((app) => app.methods.map((item) => item.id)),
+    ...listUnshippedFeaturedMethodIds(),
+  ])
   return [
     {
       id: "triggers",

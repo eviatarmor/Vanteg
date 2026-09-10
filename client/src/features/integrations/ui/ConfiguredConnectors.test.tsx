@@ -4,11 +4,11 @@ import { beforeEach, describe, expect, it } from "vitest"
 
 import { err } from "@workspace/integrations"
 
-import { getIntegrationsAdapter, setIntegrationsAdapter } from "../model/adapter"
 import {
-  connectConnector,
-  resetIntegrationsStore,
-} from "../model/store"
+  getIntegrationsAdapter,
+  setIntegrationsAdapter,
+} from "../model/adapter"
+import { connectConnector, resetIntegrationsStore } from "../model/store"
 import { ConfiguredConnectors } from "./ConfiguredConnectors"
 
 describe("ConfiguredConnectors", () => {

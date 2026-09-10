@@ -26,9 +26,11 @@ import {
 export function AgentModelSelect({
   value,
   onChange,
+  compact = false,
 }: {
   value: AgentModel
   onChange: (value: AgentModel) => void
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const selected = getAgentModel(value)
@@ -42,7 +44,12 @@ export function AgentModelSelect({
           variant="outline"
           id="agent-model"
           aria-label="Model"
-          className="w-full justify-between bg-card font-normal"
+          size={compact ? "sm" : "default"}
+          className={
+            compact
+              ? "h-8 justify-between gap-2 bg-card px-2 font-normal"
+              : "w-full justify-between bg-card font-normal"
+          }
         >
           <span className="flex min-w-0 items-center gap-2">
             <ModelSelectorLogo provider={selectedProvider.logo} />

@@ -7,13 +7,11 @@ export function EmptyWorkflows({
   description,
   actionLabel,
   onCreate,
-  onBrowseTemplates,
 }: {
   title: string
   description: string
   actionLabel?: string
   onCreate?: () => void
-  onBrowseTemplates?: () => void
 }) {
   return (
     <EmptyState
@@ -22,8 +20,6 @@ export function EmptyWorkflows({
       description={description}
       actionLabel={actionLabel}
       onCreate={onCreate}
-      secondaryActionLabel={onBrowseTemplates ? "Browse templates" : undefined}
-      onSecondary={onBrowseTemplates}
     />
   )
 }

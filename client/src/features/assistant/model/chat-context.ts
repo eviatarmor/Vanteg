@@ -72,9 +72,15 @@ export function buildSystemPrompt(context?: AssistantChatContext): string {
       steps.length === 0
         ? "This workflow has no steps yet."
         : steps
-            .map((step, index) => `${index + 1}. ${step.label} (${step.catalogId})`)
+            .map(
+              (step, index) => `${index + 1}. ${step.label} (${step.catalogId})`
+            )
             .join("\n")
-    lines.push(`They are editing workflow: ${workflow.name}`, "Steps:", stepList)
+    lines.push(
+      `They are editing workflow: ${workflow.name}`,
+      "Steps:",
+      stepList
+    )
   }
 
   return lines.join("\n")

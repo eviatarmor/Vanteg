@@ -3,11 +3,18 @@ import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider, useLocation } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { getAssistantOpen, resetAssistantOpen } from "@/features/assistant/model/open-store"
+import {
+  getAssistantOpen,
+  resetAssistantOpen,
+} from "@/features/assistant/model/open-store"
 import { resetAgents } from "@/features/agents/model/store"
 import { resetInbox } from "@/features/inbox/model/store"
 import { resetTeams } from "@/features/teams/model/store"
-import { createDraft, resetWorkflows, saveWorkflow } from "@/features/workflows/model/store"
+import {
+  createDraft,
+  resetWorkflows,
+  saveWorkflow,
+} from "@/features/workflows/model/store"
 
 import { AppSearch } from "./AppSearch"
 
@@ -30,7 +37,6 @@ function renderSearch(path = "/") {
       { path: "/agents/:agentId?", Component: SearchHarness },
       { path: "/teams/:teamId?", Component: SearchHarness },
       { path: "/integrations", Component: SearchHarness },
-      { path: "/templates", Component: SearchHarness },
       { path: "/settings", Component: SearchHarness },
       { path: "/data", Component: SearchHarness },
       { path: "/api-keys", Component: SearchHarness },
@@ -52,7 +58,9 @@ describe("AppSearch", () => {
   it("shows a search field in the top bar", () => {
     renderSearch()
 
-    expect(screen.getByRole("searchbox", { name: "Search" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("searchbox", { name: "Search" })
+    ).toBeInTheDocument()
   })
 
   it("lists matching workflows and opens one", async () => {
@@ -64,7 +72,9 @@ describe("AppSearch", () => {
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
     await user.type(screen.getByRole("searchbox", { name: "Search" }), "intake")
 
-    expect(screen.getByRole("option", { name: "Form intake" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", { name: "Form intake" })
+    ).toBeInTheDocument()
 
     await user.click(screen.getByRole("option", { name: "Form intake" }))
 
@@ -77,7 +87,10 @@ describe("AppSearch", () => {
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "lasdasd")
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "lasdasd"
+    )
 
     expect(screen.queryByText("Ctrl+K")).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Clear search" }))
@@ -90,9 +103,14 @@ describe("AppSearch", () => {
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "credential")
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "credential"
+    )
 
-    expect(screen.getByRole("option", { name: /Slack credential needs renewal/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", { name: /Slack credential needs renewal/i })
+    ).toBeInTheDocument()
   })
 
   it("shows command actions and creates a workflow", async () => {
@@ -100,9 +118,14 @@ describe("AppSearch", () => {
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "create workflow")
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "create workflow"
+    )
 
-    expect(screen.getByRole("option", { name: "Create workflow" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", { name: "Create workflow" })
+    ).toBeInTheDocument()
     await user.click(screen.getByRole("option", { name: "Create workflow" }))
 
     expect(screen.getByText(/\/workflows\//)).toBeInTheDocument()
@@ -113,9 +136,14 @@ describe("AppSearch", () => {
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "create agent")
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "create agent"
+    )
 
-    expect(screen.getByRole("option", { name: "Create agent" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", { name: "Create agent" })
+    ).toBeInTheDocument()
     await user.click(screen.getByRole("option", { name: "Create agent" }))
 
     expect(screen.getByText(/\/agents\//)).toBeInTheDocument()
@@ -126,7 +154,10 @@ describe("AppSearch", () => {
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "assistant")
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "assistant"
+    )
     await user.click(screen.getByRole("option", { name: "Open Assistant" }))
 
     expect(getAssistantOpen()).toBe(true)
@@ -137,8 +168,11 @@ describe("AppSearch", () => {
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "integrations")
-    await user.click(screen.getByRole("option", { name: "Go to Integrations" }))
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "integrations"
+    )
+    await user.click(screen.getByRole("option", { name: "Go to Connectors" }))
 
     expect(screen.getByText("/integrations")).toBeInTheDocument()
   })
@@ -148,7 +182,10 @@ describe("AppSearch", () => {
     renderSearch()
 
     await user.click(screen.getByRole("searchbox", { name: "Search" }))
-    await user.type(screen.getByRole("searchbox", { name: "Search" }), "zzznomatchxyz")
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "zzznomatchxyz"
+    )
 
     expect(screen.getByText("No results")).toBeInTheDocument()
     expect(screen.getByText(/No matches for/)).toBeInTheDocument()
@@ -164,7 +201,11 @@ describe("AppSearch", () => {
 
     expect(screen.getByText("Recent workflows")).toBeInTheDocument()
     expect(screen.getByText("Recent agents")).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Recent form" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Create workflow" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", { name: "Recent form" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", { name: "Create workflow" })
+    ).toBeInTheDocument()
   })
 })

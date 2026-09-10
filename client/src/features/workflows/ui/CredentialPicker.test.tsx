@@ -54,7 +54,7 @@ describe("CredentialPicker", () => {
       "No custom credentials yet"
     )
     expect(
-      screen.getByRole("link", { name: /Integrations → Custom Credentials/i })
+      screen.getByRole("link", { name: /Connectors → Custom Credentials/i })
     ).toHaveAttribute("href", "/integrations?tab=custom-credentials")
     expect(screen.getByRole("link", { name: /Create new/i })).toHaveAttribute(
       "href",

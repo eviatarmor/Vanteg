@@ -49,7 +49,7 @@ export function CredentialPicker({
             to={CREATE_HREF}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
-            Integrations → Custom Credentials
+            Connectors → Custom Credentials
           </Link>{" "}
           and select it here instead of pasting secrets into the step.
         </div>

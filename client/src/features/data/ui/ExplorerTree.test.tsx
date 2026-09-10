@@ -34,24 +34,30 @@ describe("ExplorerTree", () => {
     )
 
     expect(screen.getByRole("tree", { name: "Databases" })).toBeInTheDocument()
-    expect(document.querySelector('[data-slot="scroll-fade"]')).toBeInTheDocument()
-    expect(screen.getByRole("treeitem", { name: /users/ })).toHaveAttribute(
+    expect(screen.getByRole("tree", { name: "Databases" })).toHaveAttribute(
+      "data-slot",
+      "file-tree"
+    )
+    expect(
+      document.querySelector('[data-slot="scroll-fade"]')
+    ).toBeInTheDocument()
+    expect(screen.getByRole("treeitem", { name: "users" })).toHaveAttribute(
       "aria-selected",
       "true"
     )
 
-    await user.click(screen.getByRole("treeitem", { name: /production/ }))
+    await user.click(screen.getByRole("button", { name: "production" }))
 
     expect(onSelect).not.toHaveBeenCalled()
-    expect(screen.getByRole("treeitem", { name: /production/ })).toHaveAttribute(
+    expect(screen.getByRole("treeitem", { name: "production" })).toHaveAttribute(
       "aria-expanded",
       "false"
     )
-    expect(screen.queryByRole("treeitem", { name: /users/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("treeitem", { name: "users" })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole("treeitem", { name: /production/ }))
+    await user.click(screen.getByRole("button", { name: "production" }))
 
-    expect(screen.getByRole("treeitem", { name: /users/ })).toBeInTheDocument()
+    expect(screen.getByRole("treeitem", { name: "users" })).toBeInTheDocument()
   })
 
   it("selects a leaf without toggling folders", async () => {
@@ -81,7 +87,7 @@ describe("ExplorerTree", () => {
       />
     )
 
-    await user.click(screen.getByRole("treeitem", { name: /users/ }))
+    await user.click(screen.getByRole("treeitem", { name: "users" }))
 
     expect(onSelect).toHaveBeenCalledWith("users")
   })

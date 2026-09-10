@@ -47,13 +47,17 @@ describe("OAuthCallbackPage", () => {
     renderCallback(started.data.authorizeUrl)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Connected" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Connected" })
+      ).toBeInTheDocument()
     })
-    expect(screen.getByText(/Google Sheets is ready to use/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Google Sheets is ready to use/i)
+    ).toBeInTheDocument()
     expect(getIntegrationsSnapshot().connections).toHaveLength(1)
     expect(getIntegrationsSnapshot().credentials[0]?.managed).toBe(true)
 
-    await user.click(screen.getByRole("button", { name: "Back to Integrations" }))
+    await user.click(screen.getByRole("button", { name: "Back to Connectors" }))
     expect(screen.getByText("Integrations home")).toBeInTheDocument()
   })
 
@@ -73,10 +77,14 @@ describe("OAuthCallbackPage", () => {
     renderCallback(`/integrations/oauth/callback?${params.toString()}`)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Connection failed" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Connection failed" })
+      ).toBeInTheDocument()
     })
     expect(screen.getByText("Access was denied")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Try again" })
+    ).toBeInTheDocument()
     expect(getIntegrationsSnapshot().connections).toHaveLength(0)
   })
 
@@ -84,7 +92,9 @@ describe("OAuthCallbackPage", () => {
     renderCallback("/integrations/oauth/callback?code=mock-code")
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Connection failed" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Connection failed" })
+      ).toBeInTheDocument()
     })
     expect(screen.getByText("Missing OAuth state")).toBeInTheDocument()
   })
@@ -95,9 +105,13 @@ describe("OAuthCallbackPage", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Connection failed" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Connection failed" })
+      ).toBeInTheDocument()
     })
-    expect(screen.getByText("Invalid or expired OAuth state")).toBeInTheDocument()
+    expect(
+      screen.getByText("Invalid or expired OAuth state")
+    ).toBeInTheDocument()
   })
 
   it("still ends Connected under StrictMode with a single store connection", async () => {
@@ -123,9 +137,13 @@ describe("OAuthCallbackPage", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Connected" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Connected" })
+      ).toBeInTheDocument()
     })
-    expect(screen.getByText(/Google Sheets is ready to use/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Google Sheets is ready to use/i)
+    ).toBeInTheDocument()
     expect(getIntegrationsSnapshot().connections).toHaveLength(1)
   })
 })

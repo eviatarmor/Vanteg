@@ -118,6 +118,15 @@ describe("PageTabs", () => {
     )
   })
 
+  it("lets tab panels fill remaining height so empty states can center", () => {
+    renderTabs(<PageTabs tabs={tabs} />)
+
+    const classes = screen.getByRole("tabpanel").className.split(/\s+/)
+    expect(classes).toContain("flex")
+    expect(classes).toContain("flex-col")
+    expect(classes).toContain("flex-1")
+  })
+
   it("renders a title and subtitle above the tabs", () => {
     renderTabs(
       <PageTabs

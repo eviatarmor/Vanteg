@@ -31,6 +31,7 @@ export {
   listConnectorCategories,
   listFeaturedMethods,
   listPickerConnectorApps,
+  listUnshippedFeaturedMethodIds,
   oauthApps,
   terraformOAuthApps,
 } from "./registry.ts"

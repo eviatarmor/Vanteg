@@ -57,12 +57,14 @@ describe("nav catalog", () => {
       "Workflows",
       "Agents",
       "Teams",
-      "Templates",
       "Data",
       "Memory",
     ])
+    expect(sections[1]?.items.map((item) => item.label)).not.toContain(
+      "Templates"
+    )
     expect(sections[2]?.items.map((item) => item.label)).toEqual([
-      "Integrations",
+      "Connectors",
       "API Keys",
     ])
   })
@@ -100,9 +102,9 @@ describe("getPageTitle", () => {
     expect(getPageTitle("/agents/abc")).toBe("Agents")
     expect(getPageTitle("/teams")).toBe("Teams")
     expect(getPageTitle("/teams/abc")).toBe("Teams")
-    expect(getPageTitle("/templates")).toBe("Templates")
-    expect(getPageTitle("/templates/legal")).toBe("Templates")
-    expect(getPageTitle("/integrations")).toBe("Integrations")
+    expect(getPageTitle("/templates")).toBe("Page not found")
+    expect(getPageTitle("/templates/legal")).toBe("Page not found")
+    expect(getPageTitle("/integrations")).toBe("Connectors")
     expect(getPageTitle("/api-keys")).toBe("API Keys")
     expect(getPageTitle("/help")).toBe("Help")
     expect(getPageTitle("/settings")).toBe("Settings")
@@ -112,6 +114,8 @@ describe("getPageTitle", () => {
 
   it("returns Page not found for unknown paths", () => {
     expect(getPageTitle("/missing")).toBe("Page not found")
+    expect(getPageTitle("/templates")).toBe(getPageTitle("/missing"))
+    expect(getPageTitle("/templates/legal")).toBe(getPageTitle("/missing"))
   })
 })
 
@@ -130,8 +134,8 @@ describe("getPageCopy", () => {
       subtitle: "Build, draft, and run automations.",
     })
     expect(getPageCopy("/integrations")).toEqual({
-      title: "Integrations",
-      subtitle: "Connect apps used by workflow steps.",
+      title: "Connectors",
+      subtitle: "Connect Google apps and MCP servers used by workflow steps.",
     })
     expect(getPageCopy("/api-keys")).toEqual({
       title: "API Keys",

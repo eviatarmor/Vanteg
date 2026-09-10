@@ -55,13 +55,13 @@ describe("DataPage", () => {
     expect(screen.getByRole("grid", { name: "Data grid" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /Email/ })).toBeInTheDocument()
 
-    await user.click(screen.getByRole("treeitem", { name: /production/ }))
+    await user.click(screen.getByRole("button", { name: "production" }))
 
     expect(screen.queryByRole("heading", { name: "Select a table" })).not.toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /Email/ })).toBeInTheDocument()
     expect(screen.queryByRole("treeitem", { name: /orders/ })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole("treeitem", { name: /production/ }))
+    await user.click(screen.getByRole("button", { name: "production" }))
 
     expect(screen.getByRole("treeitem", { name: /orders/ })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /Email/ })).toBeInTheDocument()

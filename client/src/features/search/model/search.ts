@@ -5,8 +5,14 @@ import { dataTabs } from "@/features/data/tabs"
 import { listPendingInbox } from "@/features/inbox/model/store"
 import { integrationTabs } from "@/features/integrations/tabs"
 import { memoryTabs } from "@/features/memory/tabs"
-import { getMemorySnapshot, hydrateMemoryStore } from "@/features/memory/model/store"
-import { getAllNavItems, getUserMenuItems } from "@/features/shell/model/catalog"
+import {
+  getMemorySnapshot,
+  hydrateMemoryStore,
+} from "@/features/memory/model/store"
+import {
+  getAllNavItems,
+  getUserMenuItems,
+} from "@/features/shell/model/catalog"
 import type { Workflow } from "@/features/workflows/model/types"
 
 export const searchGroups = [
@@ -16,7 +22,7 @@ export const searchGroups = [
   "Inbox",
   "Pages",
   "Data",
-  "Integrations",
+  "Connectors",
   "Memory",
   "Teams",
 ] as const
@@ -24,10 +30,7 @@ export const searchGroups = [
 export type SearchGroup = (typeof searchGroups)[number]
 
 export type SearchCommand =
-  | "create-workflow"
-  | "create-agent"
-  | "create-team"
-  | "open-assistant"
+  "create-workflow" | "create-agent" | "create-team" | "open-assistant"
 
 export interface SearchHit {
   id: string
@@ -50,7 +53,10 @@ function workflowSubtitle(workflow: Workflow): string {
   return `${workflow.status} · ${stepText}`
 }
 
-function byUpdatedAtDesc<T extends { updatedAt: number }>(left: T, right: T): number {
+function byUpdatedAtDesc<T extends { updatedAt: number }>(
+  left: T,
+  right: T
+): number {
   return right.updatedAt - left.updatedAt
 }
 
@@ -94,19 +100,11 @@ function actionHits(): SearchHit[] {
     },
     {
       id: "action-go-integrations",
-      title: "Go to Integrations",
-      subtitle: "Open connected apps",
+      title: "Go to Connectors",
+      subtitle: "Open connected Google apps and MCP servers",
       group: "Actions",
       path: "/integrations",
-      keywords: ["go", "jump", "connect"],
-    },
-    {
-      id: "action-go-templates",
-      title: "Go to Templates",
-      subtitle: "Browse industry playbooks",
-      group: "Actions",
-      path: "/templates",
-      keywords: ["go", "jump", "playbook", "industry"],
+      keywords: ["go", "jump", "connect", "integrations", "mcp"],
     },
     {
       id: "action-go-settings",
@@ -186,7 +184,7 @@ export function buildSearchIndex(workflows: readonly Workflow[]): SearchHit[] {
     id: `integration-${tab.id}`,
     title: tab.label,
     subtitle: tab.description,
-    group: "Integrations",
+    group: "Connectors",
     path: `/integrations?tab=${tab.id}`,
   }))
 

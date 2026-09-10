@@ -16,7 +16,9 @@ export function ConnectorCatalog({
 }) {
   const snapshot = useIntegrationsStore()
   const [query, setQuery] = useState("")
-  const connectedIds = new Set(snapshot.connections.map((item) => item.connectorId))
+  const connectedIds = new Set(
+    snapshot.connections.map((item) => item.connectorId)
+  )
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase()
@@ -63,11 +65,18 @@ export function ConnectorCatalog({
                   onClick={() => onPick(connector)}
                 >
                   <div className="flex items-start gap-2.5">
-                    <BrandIconCard slug={connector.iconSlug} name={connector.name} />
+                    <BrandIconCard
+                      slug={connector.iconSlug}
+                      name={connector.name}
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-2 text-sm font-medium">
-                        <span className="min-w-0 flex-1 truncate">{connector.name}</span>
-                        {connected ? <Badge variant="secondary">Connected</Badge> : null}
+                        <span className="min-w-0 flex-1 truncate">
+                          {connector.name}
+                        </span>
+                        {connected ? (
+                          <Badge variant="secondary">Connected</Badge>
+                        ) : null}
                       </p>
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {connector.description}

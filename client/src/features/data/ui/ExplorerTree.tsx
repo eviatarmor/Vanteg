@@ -1,29 +1,18 @@
-import { useCallback, useState, type KeyboardEvent, type ReactNode } from "react"
-import {
-  Braces,
-  ChevronRight,
-  Database,
-  Folder,
-  FolderOpen,
-  Lock,
-  Table2,
-} from "lucide-react"
+import { useCallback, useState, type ReactNode } from "react"
+import { Braces, Database, Folder, Lock, Table2 } from "lucide-react"
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible"
+  FileTree,
+  FileTreeFile,
+  FileTreeFolder,
+  FileTreeIcon,
+  FileTreeName,
+} from "@/components/ai-elements/file-tree"
 import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 import { cn } from "@workspace/ui/lib/utils"
 
 export type ExplorerIcon =
-  | "database"
-  | "schema"
-  | "table"
-  | "folder"
-  | "variable"
-  | "secret"
+  "database" | "schema" | "table" | "folder" | "variable" | "secret"
 
 export interface ExplorerNode {
   id: string
@@ -33,143 +22,90 @@ export interface ExplorerNode {
   children?: ExplorerNode[]
 }
 
-const icons: Record<ExplorerIcon, { closed: typeof Database; open?: typeof Database }> = {
-  database: { closed: Database },
-  schema: { closed: Folder, open: FolderOpen },
-  table: { closed: Table2 },
-  folder: { closed: Folder, open: FolderOpen },
-  variable: { closed: Braces },
-  secret: { closed: Lock },
+const leafIcons: Record<ExplorerIcon, typeof Database> = {
+  database: Database,
+  schema: Folder,
+  table: Table2,
+  folder: Folder,
+  variable: Braces,
+  secret: Lock,
 }
 
-function NodeIcon({
-  icon,
-  open,
-}: {
-  icon: ExplorerIcon
-  open: boolean
-}) {
-  const pair = icons[icon]
-  const Icon = open && pair.open ? pair.open : pair.closed
-  return <Icon className="size-4 shrink-0 text-muted-foreground" />
+function findNode(nodes: ExplorerNode[], id: string): ExplorerNode | undefined {
+  for (const node of nodes) {
+    if (node.id === id) {
+      return node
+    }
+    if (node.children) {
+      const nested = findNode(node.children, id)
+      if (nested) {
+        return nested
+      }
+    }
+  }
+  return undefined
 }
 
-function TreeItem({
-  node,
-  depth,
+function TreeNodes({
+  nodes,
   selectedId,
   expanded,
-  onSelect,
-  onToggle,
 }: {
-  node: ExplorerNode
-  depth: number
+  nodes: ExplorerNode[]
   selectedId?: string
   expanded: Set<string>
-  onSelect: (id: string) => void
-  onToggle: (id: string) => void
 }) {
-  const children = node.children ?? []
-  const hasChildren = children.length > 0
-  const isExpanded = expanded.has(node.id)
-  const isSelected = selectedId === node.id
-
-  const select = useCallback(() => {
-    if (hasChildren) {
-      onToggle(node.id)
-      return
-    }
-    onSelect(node.id)
-  }, [hasChildren, node.id, onSelect, onToggle])
-
-  const onKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault()
-        if (hasChildren) {
-          onToggle(node.id)
-          return
-        }
-        onSelect(node.id)
-      }
-      if (hasChildren && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
-        event.preventDefault()
-        const shouldExpand = event.key === "ArrowRight"
-        if (shouldExpand !== isExpanded) {
-          onToggle(node.id)
-        }
-      }
-    },
-    [hasChildren, isExpanded, node.id, onSelect, onToggle]
-  )
-
-  const row = (
-    <div
-      role="treeitem"
-      aria-selected={isSelected}
-      aria-expanded={hasChildren ? isExpanded : undefined}
-      tabIndex={0}
-      onClick={select}
-      onKeyDown={onKeyDown}
-      className={cn(
-        "flex w-full min-w-0 cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-left text-sm outline-none hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/50",
-        isSelected && "bg-muted font-medium"
-      )}
-      style={{ paddingLeft: 8 + depth * 12 }}
-    >
-      {hasChildren ? (
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
-            aria-hidden="true"
-            tabIndex={-1}
-            className="flex size-4 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted"
-            onClick={(event) => {
-              event.stopPropagation()
-            }}
-          >
-            <ChevronRight
-              className={cn("size-3.5 transition-transform", isExpanded && "rotate-90")}
-            />
-          </button>
-        </CollapsibleTrigger>
-      ) : (
-        <span className="size-4 shrink-0" />
-      )}
-      <NodeIcon icon={node.icon} open={isExpanded} />
-      <span className="min-w-0 flex-1 truncate">{node.label}</span>
-      {node.hint ? (
-        <span className="max-w-[45%] truncate font-mono text-xs text-muted-foreground">
-          {node.hint}
-        </span>
-      ) : null}
-    </div>
-  )
-
-  if (!hasChildren) {
-    return row
-  }
-
   return (
-    <Collapsible open={isExpanded} onOpenChange={() => onToggle(node.id)}>
-      {row}
-      <CollapsibleContent>
-        <div role="group">
-          {children.map((child) => (
-            <TreeItem
-              key={child.id}
-              node={child}
-              depth={depth + 1}
-              selectedId={selectedId}
-              expanded={expanded}
-              onSelect={onSelect}
-              onToggle={onToggle}
-            />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <>
+      {nodes.map((node) => {
+        const children = node.children ?? []
+        const hasChildren = children.length > 0
+        if (hasChildren) {
+          return (
+            <FileTreeFolder
+              key={node.id}
+              path={node.id}
+              name={node.label}
+              aria-label={node.label}
+              aria-selected={selectedId === node.id}
+              aria-expanded={expanded.has(node.id)}
+            >
+              <TreeNodes
+                nodes={children}
+                selectedId={selectedId}
+                expanded={expanded}
+              />
+            </FileTreeFolder>
+          )
+        }
+        const Icon = leafIcons[node.icon]
+        return (
+          <FileTreeFile
+            key={node.id}
+            path={node.id}
+            name={node.label}
+            aria-label={node.label}
+            aria-selected={selectedId === node.id}
+            icon={<Icon className="size-4 text-muted-foreground" />}
+          >
+            <span className="size-4 shrink-0" />
+            <FileTreeIcon>
+              {node.icon === "folder" ? (
+                <Folder className="size-4 text-muted-foreground" />
+              ) : (
+                <Icon className="size-4 text-muted-foreground" />
+              )}
+            </FileTreeIcon>
+            <FileTreeName>{node.label}</FileTreeName>
+            {node.hint ? (
+              <span className="ml-auto max-w-[45%] truncate font-mono text-xs text-muted-foreground">
+                {node.hint}
+              </span>
+            ) : null}
+          </FileTreeFile>
+        )
+      })}
+    </>
   )
 }
 
@@ -194,39 +130,48 @@ export function ExplorerTree({
 }) {
   const [expanded, setExpanded] = useState(() => new Set(defaultExpanded))
 
-  const onToggle = useCallback((id: string) => {
-    setExpanded((current) => {
-      const next = new Set(current)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
+  const handleSelect = useCallback(
+    (path: string) => {
+      const node = findNode(nodes, path)
+      if (node?.children && node.children.length > 0) {
+        setExpanded((current) => {
+          const next = new Set(current)
+          if (next.has(path)) {
+            next.delete(path)
+          } else {
+            next.add(path)
+          }
+          return next
+        })
+        return
       }
-      return next
-    })
-  }, [])
+      if (!readOnly) {
+        onSelect?.(path)
+      }
+    },
+    [nodes, onSelect, readOnly]
+  )
 
   return (
     <div className={cn("flex min-h-0 min-w-0 flex-col", className)}>
       {header}
-      <ScrollFade
-        role="tree"
-        aria-label={ariaLabel}
-        aria-readonly={readOnly || undefined}
-        className="min-h-0 min-w-0 flex-1"
-        viewportClassName="py-1"
-      >
-        {nodes.map((node) => (
-          <TreeItem
-            key={node.id}
-            node={node}
-            depth={0}
+      <ScrollFade className="min-h-0 min-w-0 flex-1" viewportClassName="py-1">
+        <FileTree
+          data-slot="file-tree"
+          aria-label={ariaLabel}
+          aria-readonly={readOnly || undefined}
+          className="rounded-none border-0 bg-transparent font-sans"
+          expanded={expanded}
+          onExpandedChange={setExpanded}
+          selectedPath={selectedId}
+          onSelect={handleSelect}
+        >
+          <TreeNodes
+            nodes={nodes}
             selectedId={selectedId}
             expanded={expanded}
-            onSelect={onSelect ?? (() => {})}
-            onToggle={onToggle}
           />
-        ))}
+        </FileTree>
       </ScrollFade>
     </div>
   )

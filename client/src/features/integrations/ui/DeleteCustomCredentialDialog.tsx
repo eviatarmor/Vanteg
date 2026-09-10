@@ -57,8 +57,8 @@ export function DeleteCustomCredentialDialog({
         <DialogHeader>
           <DialogTitle>Delete credential</DialogTitle>
           <DialogDescription>
-            Delete “{credential?.name ?? "this credential"}”? Agents and workflows that reference
-            it will stop working until updated.
+            Delete “{credential?.name ?? "this credential"}”? Agents and
+            workflows that reference it will stop working until updated.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

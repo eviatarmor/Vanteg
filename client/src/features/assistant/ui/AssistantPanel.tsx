@@ -7,58 +7,24 @@ import {
   ConversationContent,
   ConversationEmptyState,
 } from "@/components/ai-elements/conversation"
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputFooter,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputTools,
-  type PromptInputMessage,
-} from "@/components/ai-elements/prompt-input"
+import { Shimmer } from "@/components/ai-elements/shimmer"
 import { Suggestion } from "@/components/ai-elements/suggestion"
 import { Button } from "@workspace/ui/components/button"
 import { ScrollFade } from "@workspace/ui/components/scroll-fade"
 
 import { useWorkflows } from "@/features/workflows/model/store"
 
-import { buildAssistantContext, suggestionsForPath } from "../model/chat-context"
+import {
+  buildAssistantContext,
+  suggestionsForPath,
+} from "../model/chat-context"
 import { setAssistantOpen } from "../model/open-store"
+import { getAgentModel } from "@/features/agents/model/types"
+
+import type { AssistantStartPayload } from "../model/types"
 import { createConversation, useConversations } from "../model/store"
+import { AssistantComposer } from "./AssistantComposer"
 import { ChatThread } from "./ChatThread"
-
-function EmptyComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
-  const [input, setInput] = useState("")
-
-  function handleSubmit(message: PromptInputMessage) {
-    const text = message.text.trim()
-    if (!text) {
-      return
-    }
-    setInput("")
-    onSubmit(text)
-  }
-
-  return (
-    <div className="border-t border-border p-3">
-      <PromptInput onSubmit={handleSubmit}>
-        <PromptInputBody>
-          <PromptInputTextarea
-            value={input}
-            onChange={(event) => setInput(event.currentTarget.value)}
-            placeholder="Ask Vanteg…"
-            aria-label="Message"
-            className="min-h-11"
-          />
-        </PromptInputBody>
-        <PromptInputFooter>
-          <PromptInputTools />
-          <PromptInputSubmit disabled={input.trim() === ""} aria-label="Send" />
-        </PromptInputFooter>
-      </PromptInput>
-    </div>
-  )
-}
 
 export function AssistantPanel() {
   useWorkflows()
@@ -66,18 +32,29 @@ export function AssistantPanel() {
   const conversations = useConversations()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [view, setView] = useState<"chat" | "history">("chat")
-  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
-  const active = conversations.find((conversation) => conversation.id === activeId)
+  const [pending, setPending] = useState<AssistantStartPayload | null>(null)
+  const active = conversations.find(
+    (conversation) => conversation.id === activeId
+  )
   const context = useMemo(
     () => buildAssistantContext(location.pathname),
     [location.pathname]
   )
   const suggestions = suggestionsForPath(location.pathname)
 
-  function startNew(prompt?: string) {
+  function startNew(start?: string | AssistantStartPayload) {
     const conversation = createConversation()
     setActiveId(conversation.id)
-    setPendingPrompt(prompt ?? null)
+    if (!start) {
+      setPending(null)
+    } else if (typeof start === "string") {
+      setPending({
+        text: start,
+        model: getAgentModel("not-a-real-model").value,
+      })
+    } else {
+      setPending(start)
+    }
     setView("chat")
   }
 
@@ -88,7 +65,12 @@ export function AssistantPanel() {
     >
       <div className="flex items-center gap-1 border-b border-border px-3 py-2">
         <p className="min-w-0 flex-1 truncate text-sm font-medium">Assistant</p>
-        <Button type="button" variant="ghost" size="sm" onClick={() => startNew()}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => startNew()}
+        >
           <Plus />
           New
         </Button>
@@ -135,7 +117,7 @@ export function AssistantPanel() {
                   className="rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
                   onClick={() => {
                     setActiveId(conversation.id)
-                    setPendingPrompt(null)
+                    setPending(null)
                     setView("chat")
                   }}
                 >
@@ -154,8 +136,10 @@ export function AssistantPanel() {
           key={active.id}
           conversation={active}
           context={context}
-          initialPrompt={pendingPrompt ?? undefined}
-          onInitialPromptConsumed={() => setPendingPrompt(null)}
+          initialPrompt={pending?.text}
+          initialFiles={pending?.files}
+          initialModel={pending?.model}
+          onInitialPromptConsumed={() => setPending(null)}
         />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
@@ -167,19 +151,28 @@ export function AssistantPanel() {
                 title="Ask Vanteg"
                 description="Start a conversation, or pick a prompt."
               />
+              <Shimmer>Ready when you are</Shimmer>
               <div className="flex w-full flex-col gap-2">
                 {suggestions.map((suggestion) => (
                   <Suggestion
                     key={suggestion}
                     suggestion={suggestion}
                     onClick={(value) => startNew(value)}
-                    className="h-auto w-full justify-start whitespace-normal rounded-lg py-2"
+                    className="h-auto w-full justify-start rounded-lg py-2 whitespace-normal"
                   />
                 ))}
               </div>
             </ConversationContent>
           </Conversation>
-          <EmptyComposer onSubmit={(text) => startNew(text)} />
+          <AssistantComposer
+            onSubmit={(message, model) => {
+              const text = message.text.trim()
+              if (!(text || message.files?.length)) {
+                return
+              }
+              startNew({ text, files: message.files, model })
+            }}
+          />
         </div>
       )}
     </aside>

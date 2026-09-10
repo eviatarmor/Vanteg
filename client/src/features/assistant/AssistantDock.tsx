@@ -50,7 +50,9 @@ export function AssistantDock({ children }: { children: ReactNode }) {
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Assistant</SheetTitle>
-            <SheetDescription>Ask Vanteg about the current page.</SheetDescription>
+            <SheetDescription>
+              Ask Vanteg about the current page.
+            </SheetDescription>
           </SheetHeader>
           <AssistantPanel />
         </SheetContent>

@@ -29,7 +29,14 @@ export function credentialFieldsFor(connector: Connector): CredentialField[] {
   }
 
   if (connector.auth.kind === "api-key") {
-    return [{ id: "apiKey", label: "API Key", secret: true, placeholder: "Paste API key" }]
+    return [
+      {
+        id: "apiKey",
+        label: "API Key",
+        secret: true,
+        placeholder: "Paste API key",
+      },
+    ]
   }
 
   if (connector.auth.kind === "jwt") {

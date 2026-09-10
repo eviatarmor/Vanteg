@@ -42,7 +42,10 @@ const actionLabel: Record<InboxAction, string> = {
 
 function InboxCardSkeleton() {
   return (
-    <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4" aria-hidden>
+    <article
+      className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
+      aria-hidden
+    >
       <Skeleton className="h-5 w-24" />
       <Skeleton className="h-4 w-3/4 max-w-md" />
       <Skeleton className="h-4 w-full max-w-lg" />
@@ -170,7 +173,12 @@ export function InboxPage() {
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             {errorMessage ?? humanizeInboxLoadError(null)}
           </p>
-          <Button type="button" className="mt-4" variant="outline" onClick={load}>
+          <Button
+            type="button"
+            className="mt-4"
+            variant="outline"
+            onClick={load}
+          >
             Try again
           </Button>
         </div>
@@ -179,9 +187,9 @@ export function InboxPage() {
         <EmptyState
           icon={Inbox}
           title="Inbox is empty"
-          description="You're caught up. Approvals from agents and workflows will show up here — or browse templates to automate the next thing."
-          actionLabel="Browse templates"
-          onCreate={() => navigate("/templates")}
+          description="You're caught up. Approvals from agents and workflows will show up here — or create a workflow to automate the next thing."
+          actionLabel="New workflow"
+          onCreate={() => navigate("/workflows")}
           className="min-h-0 flex-1"
         />
       ) : null}
@@ -197,7 +205,8 @@ export function InboxPage() {
             </div>
           ))}
           <p className="sr-only">
-            Use Tab to move between Approve, Deny, and Always approve for each item.
+            Use Tab to move between Approve, Deny, and Always approve for each
+            item.
           </p>
         </div>
       ) : null}

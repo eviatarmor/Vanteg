@@ -17,6 +17,8 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
 
+import { cn } from "@workspace/ui/lib/utils"
+
 import { BrandIcon } from "@/features/integrations/ui/BrandIcon"
 
 import {
@@ -33,17 +35,28 @@ const methodFilters = [
   { id: "action", label: "Actions" },
 ] as const
 
+const pickerGridClass = "grid grid-cols-2 content-start gap-2"
+
+function spanLastOdd(index: number, count: number) {
+  return index === count - 1 && count % 2 === 1 ? "col-span-2" : undefined
+}
+
 function NodeCard({
   node,
   onChoose,
+  className,
 }: {
   node: WorkflowNodeType
   onChoose: (node: WorkflowNodeType) => void
+  className?: string
 }) {
   return (
     <button
       type="button"
-      className="rounded-lg border border-border bg-card px-3 py-2.5 text-left hover:bg-muted/60"
+      className={cn(
+        "w-full rounded-lg border border-border bg-card px-3 py-2.5 text-left hover:bg-muted/60",
+        className
+      )}
       onClick={() => onChoose(node)}
     >
       <p className="flex items-center gap-2 text-sm font-medium">
@@ -129,8 +142,8 @@ export function NodePickerDialog({
           <div
             className={
               selectedApp
-                ? "flex min-h-0 w-[200%] -translate-x-1/2 transition-transform duration-300 ease-out"
-                : "flex min-h-0 w-[200%] translate-x-0 transition-transform duration-300 ease-out"
+                ? "flex min-h-0 w-[200%] shrink-0 -translate-x-1/2 transition-transform duration-300 ease-out"
+                : "flex min-h-0 w-[200%] shrink-0 translate-x-0 transition-transform duration-300 ease-out"
             }
           >
             <div
@@ -164,13 +177,16 @@ export function NodePickerDialog({
                     {section.id === "connectors" ? (
                       <ScrollFade
                         className="max-h-[24rem] min-h-0 flex-1"
-                        viewportClassName="grid gap-2 sm:grid-cols-2"
+                        viewportClassName={pickerGridClass}
                       >
-                        {apps.map((app) => (
+                        {apps.map((app, index) => (
                           <button
                             key={app.id}
                             type="button"
-                            className="rounded-lg border border-border bg-card px-3 py-2.5 text-left hover:bg-muted/60"
+                            className={cn(
+                              "w-full rounded-lg border border-border bg-card px-3 py-2.5 text-left hover:bg-muted/60",
+                              spanLastOdd(index, apps.length)
+                            )}
                             onClick={() => openApp(app)}
                           >
                             <p className="flex items-center gap-2 text-sm font-medium">
@@ -200,13 +216,14 @@ export function NodePickerDialog({
                     ) : (
                       <ScrollFade
                         className="max-h-[24rem] min-h-0 flex-1"
-                        viewportClassName="grid gap-2 sm:grid-cols-2"
+                        viewportClassName={pickerGridClass}
                       >
-                        {section.nodes.map((node) => (
+                        {section.nodes.map((node, index) => (
                           <NodeCard
                             key={node.id}
                             node={node}
                             onChoose={choose}
+                            className={spanLastOdd(index, section.nodes.length)}
                           />
                         ))}
                       </ScrollFade>
@@ -247,15 +264,20 @@ export function NodePickerDialog({
                   </Tabs>
                   <ScrollFade
                     className="max-h-[24rem] min-h-0 flex-1"
-                    viewportClassName="grid gap-2 sm:grid-cols-2"
+                    viewportClassName={pickerGridClass}
                   >
                     {methods.length === 0 ? (
                       <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
                         No methods in this filter.
                       </p>
                     ) : (
-                      methods.map((node) => (
-                        <NodeCard key={node.id} node={node} onChoose={choose} />
+                      methods.map((node, index) => (
+                        <NodeCard
+                          key={node.id}
+                          node={node}
+                          onChoose={choose}
+                          className={spanLastOdd(index, methods.length)}
+                        />
                       ))
                     )}
                   </ScrollFade>

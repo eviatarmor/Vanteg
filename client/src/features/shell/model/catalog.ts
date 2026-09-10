@@ -19,18 +19,33 @@ const navSections: NavSection[] = [
     label: "Work",
     items: [
       { id: "home", label: "Home", path: "/", icon: "home" },
-      { id: "assistant", label: "Assistant", path: "/assistant", icon: "assistant" },
-      { id: "inbox", label: "Inbox", path: "/inbox", icon: "inbox", badgeCount: 3 },
+      {
+        id: "assistant",
+        label: "Assistant",
+        path: "/assistant",
+        icon: "assistant",
+      },
+      {
+        id: "inbox",
+        label: "Inbox",
+        path: "/inbox",
+        icon: "inbox",
+        badgeCount: 3,
+      },
     ],
   },
   {
     id: "build",
     label: "Build",
     items: [
-      { id: "workflows", label: "Workflows", path: "/workflows", icon: "workflows" },
+      {
+        id: "workflows",
+        label: "Workflows",
+        path: "/workflows",
+        icon: "workflows",
+      },
       { id: "agents", label: "Agents", path: "/agents", icon: "agents" },
       { id: "teams", label: "Teams", path: "/teams", icon: "teams" },
-      { id: "templates", label: "Templates", path: "/templates", icon: "templates" },
       { id: "data", label: "Data", path: "/data", icon: "data" },
       { id: "memory", label: "Memory", path: "/memory", icon: "memory" },
     ],
@@ -41,7 +56,7 @@ const navSections: NavSection[] = [
     items: [
       {
         id: "integrations",
-        label: "Integrations",
+        label: "Connectors",
         path: "/integrations",
         icon: "integrations",
       },
@@ -94,17 +109,21 @@ const pageSubtitles: Record<string, string> = {
   "/inbox": "Approve, deny, or always allow work from agents and workflows.",
   "/workflows": "Build, draft, and run automations.",
   "/agents": "Personalize agents and assign shared memory and knowledge.",
-  "/teams": "Orchestrate multiple agents as a graph, like a lead and senior SWE.",
-  "/templates": "Start from industry playbooks with assistants, workflows, and teams.",
+  "/teams":
+    "Orchestrate multiple agents as a graph, like a lead and senior SWE.",
   "/data": "Tables, variables, and secrets used by workflows.",
   "/memory": "Shared memory bases and knowledge files.",
-  "/integrations": "Connect apps used by workflow steps.",
+  "/integrations":
+    "Connect Google apps and MCP servers used by workflow steps.",
   "/api-keys": "API keys for calling Vanteg from outside this workspace.",
   "/help": "Guides and answers for Vanteg.",
   "/settings": "Workspace and account preferences.",
 }
 
-export function getPageCopy(pathname: string): { title: string; subtitle: string } {
+export function getPageCopy(pathname: string): {
+  title: string
+  subtitle: string
+} {
   const navMatch = getAllNavItems().find((item) =>
     matchActivePath(pathname, item.path)
   )

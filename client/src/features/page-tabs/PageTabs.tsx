@@ -257,7 +257,7 @@ function PageTabsPanel({
     <TabsContent
       value={tab.id}
       className={cn(
-        "min-h-0 min-w-0 flex-1 overflow-auto px-6 py-6",
+        "flex min-h-0 min-w-0 flex-1 flex-col overflow-auto px-6 py-6",
         panelClassName
       )}
     >

@@ -1,4 +1,6 @@
-const relativeTimeFormat = new Intl.RelativeTimeFormat("en", { numeric: "auto" })
+const relativeTimeFormat = new Intl.RelativeTimeFormat("en", {
+  numeric: "auto",
+})
 
 const divisions: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
   { amount: 60, unit: "second" },
@@ -10,7 +12,10 @@ const divisions: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
   { amount: Number.POSITIVE_INFINITY, unit: "year" },
 ]
 
-export function formatRelativeTime(timestamp: number, now = Date.now()): string {
+export function formatRelativeTime(
+  timestamp: number,
+  now = Date.now()
+): string {
   let duration = (timestamp - now) / 1000
 
   for (const division of divisions) {
