@@ -39,15 +39,29 @@ export function hasMockSession(): boolean {
   return getSession() != null
 }
 
+function requireAuthStrict(): boolean {
+  return (
+    String(import.meta.env.VITE_REQUIRE_AUTH ?? "").toLowerCase() === "true"
+  )
+}
+
+function softDevDefault(): boolean {
+  return import.meta.env.DEV || import.meta.env.MODE === "test"
+}
+
 /**
  * Soft gate: true when a mock session exists, or when DEV/test has not
  * explicitly logged out (so existing demos keep working without login).
+ *
+ * `VITE_REQUIRE_AUTH=true` disables the DEV/test soft default so a missing
+ * storage key requires login.
  */
 export function isAuthenticated(): boolean {
   const raw = readRaw()
   if (raw === LOGGED_OUT) return false
   if (getSession()) return true
-  return import.meta.env.DEV || import.meta.env.MODE === "test"
+  if (requireAuthStrict()) return false
+  return softDevDefault()
 }
 
 export function getSession(): MockAuthSession | null {
@@ -79,7 +93,11 @@ export function clearSession(): boolean {
 }
 
 export function safeReturnPath(from: unknown): string {
-  if (typeof from !== "string" || !from.startsWith("/") || from.startsWith("//")) {
+  if (
+    typeof from !== "string" ||
+    !from.startsWith("/") ||
+    from.startsWith("//")
+  ) {
     return "/"
   }
   if (from.includes("\\") || from.includes("://")) {
