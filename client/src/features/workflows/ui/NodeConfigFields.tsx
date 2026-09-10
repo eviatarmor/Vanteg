@@ -13,11 +13,150 @@ import { Textarea } from "@workspace/ui/components/textarea"
 import { SecretInput } from "@/components/secret-input"
 import { useIntegrationsStore } from "@/features/integrations/model/store"
 
-import { isInlineAuthSuperseded, patchConfigForCredential } from "../model/auth-fields"
-import type { VantegNode, VantegNodePatch, WorkflowNodeType } from "../model/types"
+import {
+  isInlineAuthSuperseded,
+  patchConfigForCredential,
+} from "../model/auth-fields"
+import type {
+  NodeField,
+  VantegNode,
+  VantegNodePatch,
+  WorkflowNodeType,
+} from "../model/types"
 import { CodeField } from "./CodeField"
 import { CredentialPicker } from "./CredentialPicker"
 import { ResourceSelectField } from "./ResourceSelectField"
+
+function patchField(
+  node: VantegNode,
+  field: NodeField,
+  value: string
+): VantegNodePatch {
+  return {
+    config: {
+      ...node.data.config,
+      [field.key]: value,
+    },
+  }
+}
+
+function NodeFieldControl({
+  field,
+  node,
+  onChange,
+}: {
+  field: NodeField
+  node: VantegNode
+  onChange: (nodeId: string, patch: VantegNodePatch) => void
+}) {
+  const id = `node-${field.key}`
+  const value = node.data.config[field.key] ?? ""
+  const setValue = (next: string) =>
+    onChange(node.id, patchField(node, field, next))
+
+  if (field.control === "code") {
+    return (
+      <CodeField
+        id={id}
+        value={value}
+        language={field.language ?? "javascript"}
+        onChange={setValue}
+      />
+    )
+  }
+  if (field.control === "textarea") {
+    return (
+      <Textarea
+        id={id}
+        value={value}
+        placeholder={field.placeholder}
+        onChange={(event) => setValue(event.target.value)}
+      />
+    )
+  }
+  if (field.control === "resource" && field.resourceType) {
+    return (
+      <ResourceSelectField
+        id={id}
+        label={field.label}
+        value={value}
+        placeholder={field.placeholder}
+        resourceType={field.resourceType}
+        onChange={setValue}
+      />
+    )
+  }
+  if (field.control === "number") {
+    return (
+      <Input
+        id={id}
+        type="number"
+        value={value}
+        placeholder={field.placeholder}
+        onChange={(event) => setValue(event.target.value)}
+      />
+    )
+  }
+  if (field.control === "datetime") {
+    return (
+      <Input
+        id={id}
+        type="datetime-local"
+        value={value}
+        placeholder={field.placeholder}
+        onChange={(event) => setValue(event.target.value)}
+      />
+    )
+  }
+  if (field.control === "select" && field.options) {
+    return (
+      <Select
+        value={value || field.options[0]?.value}
+        onValueChange={(next) => {
+          if (next) setValue(next)
+        }}
+      >
+        <SelectTrigger id={id} className="w-full" aria-label={field.label}>
+          <SelectValue placeholder={field.placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {field.options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    )
+  }
+  if (field.control === "boolean") {
+    return (
+      <Switch
+        id={id}
+        checked={(value || field.placeholder) !== "false"}
+        onCheckedChange={(checked) => setValue(checked ? "true" : "false")}
+      />
+    )
+  }
+  if (field.secret) {
+    return (
+      <SecretInput
+        id={id}
+        value={value}
+        placeholder={field.placeholder}
+        onValueChange={setValue}
+      />
+    )
+  }
+  return (
+    <Input
+      id={id}
+      value={value}
+      placeholder={field.placeholder}
+      onChange={(event) => setValue(event.target.value)}
+    />
+  )
+}
 
 export function NodeConfigFields({
   node,
@@ -48,7 +187,6 @@ export function NodeConfigFields({
         if (isInlineAuthSuperseded(field, node.data.config, credentialIds)) {
           return null
         }
-
         if (field.control === "credential") {
           return (
             <CredentialPicker
@@ -69,156 +207,10 @@ export function NodeConfigFields({
             />
           )
         }
-
         return (
           <div key={field.key} className="grid gap-2">
             <Label htmlFor={`node-${field.key}`}>{field.label}</Label>
-            {field.control === "code" ? (
-              <CodeField
-                id={`node-${field.key}`}
-                value={node.data.config[field.key] ?? ""}
-                language={field.language ?? "javascript"}
-                onChange={(value) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: value,
-                    },
-                  })
-                }
-              />
-            ) : field.control === "textarea" ? (
-              <Textarea
-                id={`node-${field.key}`}
-                value={node.data.config[field.key] ?? ""}
-                placeholder={field.placeholder}
-                onChange={(event) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: event.target.value,
-                    },
-                  })
-                }
-              />
-            ) : field.control === "resource" && field.resourceType ? (
-              <ResourceSelectField
-                id={`node-${field.key}`}
-                label={field.label}
-                value={node.data.config[field.key] ?? ""}
-                placeholder={field.placeholder}
-                resourceType={field.resourceType}
-                onChange={(value) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: value,
-                    },
-                  })
-                }
-              />
-            ) : field.control === "number" ? (
-              <Input
-                id={`node-${field.key}`}
-                type="number"
-                value={node.data.config[field.key] ?? ""}
-                placeholder={field.placeholder}
-                onChange={(event) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: event.target.value,
-                    },
-                  })
-                }
-              />
-            ) : field.control === "datetime" ? (
-              <Input
-                id={`node-${field.key}`}
-                type="datetime-local"
-                value={node.data.config[field.key] ?? ""}
-                placeholder={field.placeholder}
-                onChange={(event) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: event.target.value,
-                    },
-                  })
-                }
-              />
-            ) : field.control === "select" && field.options ? (
-              <Select
-                value={node.data.config[field.key] || field.options[0]?.value}
-                onValueChange={(value) => {
-                  if (!value) {
-                    return
-                  }
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: value,
-                    },
-                  })
-                }}
-              >
-                <SelectTrigger
-                  id={`node-${field.key}`}
-                  className="w-full"
-                  aria-label={field.label}
-                >
-                  <SelectValue placeholder={field.placeholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {field.options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : field.control === "boolean" ? (
-              <Switch
-                id={`node-${field.key}`}
-                checked={(node.data.config[field.key] ?? field.placeholder) !== "false"}
-                onCheckedChange={(checked) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: checked ? "true" : "false",
-                    },
-                  })
-                }
-              />
-            ) : field.secret ? (
-              <SecretInput
-                id={`node-${field.key}`}
-                value={node.data.config[field.key] ?? ""}
-                placeholder={field.placeholder}
-                onValueChange={(value) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: value,
-                    },
-                  })
-                }
-              />
-            ) : (
-              <Input
-                id={`node-${field.key}`}
-                value={node.data.config[field.key] ?? ""}
-                placeholder={field.placeholder}
-                onChange={(event) =>
-                  onChange(node.id, {
-                    config: {
-                      ...node.data.config,
-                      [field.key]: event.target.value,
-                    },
-                  })
-                }
-              />
-            )}
+            <NodeFieldControl field={field} node={node} onChange={onChange} />
             {field.help ? (
               <p className="text-xs text-muted-foreground">{field.help}</p>
             ) : null}

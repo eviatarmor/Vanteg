@@ -40,7 +40,10 @@ function emptySnapshot(): IntegrationsSnapshot {
 }
 
 let snapshot: IntegrationsSnapshot = emptySnapshot()
-const oauthCallbackInFlight = new Map<string, Promise<Result<ConnectorConnection>>>()
+const oauthCallbackInFlight = new Map<
+  string,
+  Promise<Result<ConnectorConnection>>
+>()
 
 export function subscribeIntegrations(listener: () => void) {
   listeners.add(listener)
@@ -100,7 +103,8 @@ function seedInRows(fields: SheetField[]): SheetRow[] {
 function emptyFromFields(fields: SheetField[]): SheetRow {
   const row: SheetRow = { id: crypto.randomUUID() }
   for (const item of fields) {
-    row[item.id] = item.defaultValue ?? (item.variant === "checkbox" ? false : "")
+    row[item.id] =
+      item.defaultValue ?? (item.variant === "checkbox" ? false : "")
   }
   return row
 }
@@ -140,6 +144,75 @@ function mergeSecretFields(
   return merged
 }
 
+function commitConnectedSnapshot(
+  existing: SavedCredential | undefined,
+  credential: SavedCredential,
+  connection: ConnectorConnection
+) {
+  snapshot = {
+    ...snapshot,
+    credentials: existing
+      ? snapshot.credentials.map((item) =>
+          item.id === credential.id ? credential : item
+        )
+      : [...snapshot.credentials, credential],
+    connections: existing
+      ? snapshot.connections.map((item) =>
+          item.credentialId === credential.id
+            ? { ...item, credentialId: credential.id, name: connection.name }
+            : item
+        )
+      : [...snapshot.connections, connection],
+    selectedConnectionId: existing
+      ? (snapshot.connections.find(
+          (item) => item.credentialId === credential.id
+        )?.id ?? snapshot.selectedConnectionId)
+      : connection.id,
+  }
+  if (
+    existing &&
+    snapshot.connections.every((item) => item.credentialId !== credential.id)
+  ) {
+    snapshot = {
+      ...snapshot,
+      connections: [...snapshot.connections, connection],
+      selectedConnectionId: connection.id,
+    }
+  }
+}
+
+function connectedPair(
+  connector: Connector,
+  existing: SavedCredential | undefined,
+  remote: { id: string; credentialId: string },
+  managed: boolean,
+  fields: Record<string, string>
+): { credential: SavedCredential; connection: ConnectorConnection } {
+  const credential: SavedCredential = {
+    id: existing?.id ?? remote.credentialId,
+    connectorId: connector.id,
+    name: existing?.name ?? connector.name,
+    kind: connector.auth.kind,
+    managed,
+    status: "connected",
+    fields: managed
+      ? { accessToken: fields.accessToken ?? "oauth-access-token" }
+      : fields,
+  }
+  const connection: ConnectorConnection = {
+    id: existing
+      ? (snapshot.connections.find(
+          (item) => item.credentialId === credential.id
+        )?.id ?? remote.id)
+      : remote.id,
+    connectorId: connector.id,
+    credentialId: credential.id,
+    name: connector.name,
+    sheets: seedSheets(connector),
+  }
+  return { credential, connection }
+}
+
 export async function connectConnector(
   connectorId: string,
   values: Record<string, string> = {},
@@ -154,11 +227,12 @@ export async function connectConnector(
   }
 
   const managed = isManagedOAuth(connector)
-  const existing = snapshot.credentials.find((item) => item.id === existingCredentialId)
+  const existing = snapshot.credentials.find(
+    (item) => item.id === existingCredentialId
+  )
   const fields = managed
     ? { accessToken: existing?.fields.accessToken ?? "oauth-access-token" }
     : mergeSecretFields(existing?.fields, values)
-
   const existingConnection = existing
     ? snapshot.connections.find((item) => item.credentialId === existing.id)
     : undefined
@@ -173,58 +247,18 @@ export async function connectConnector(
     return remote
   }
 
-  const credential: SavedCredential = {
-    id: existing?.id ?? remote.data.credentialId,
-    connectorId,
-    name: existing?.name ?? connector.name,
-    kind: connector.auth.kind,
+  const { credential, connection } = connectedPair(
+    connector,
+    existing,
+    remote.data,
     managed,
-    status: "connected",
-    fields: managed
-      ? { accessToken: fields.accessToken ?? "oauth-access-token" }
-      : fields,
-  }
-
-  const connection: ConnectorConnection = {
-    id: existing
-      ? snapshot.connections.find((item) => item.credentialId === credential.id)?.id ??
-        remote.data.id
-      : remote.data.id,
-    connectorId,
-    credentialId: credential.id,
-    name: connector.name,
-    sheets: seedSheets(connector),
-  }
-
-  snapshot = {
-    ...snapshot,
-    credentials: existing
-      ? snapshot.credentials.map((item) => (item.id === credential.id ? credential : item))
-      : [...snapshot.credentials, credential],
-    connections: existing
-      ? snapshot.connections.map((item) =>
-          item.credentialId === credential.id
-            ? { ...item, credentialId: credential.id, name: connection.name }
-            : item
-        )
-      : [...snapshot.connections, connection],
-    selectedConnectionId: existing
-      ? snapshot.connections.find((item) => item.credentialId === credential.id)?.id ??
-        snapshot.selectedConnectionId
-      : connection.id,
-  }
-
-  if (existing && snapshot.connections.every((item) => item.credentialId !== credential.id)) {
-    snapshot = {
-      ...snapshot,
-      connections: [...snapshot.connections, connection],
-      selectedConnectionId: connection.id,
-    }
-  }
-
+    fields
+  )
+  commitConnectedSnapshot(existing, credential, connection)
   emit()
   return ok(
-    snapshot.connections.find((item) => item.credentialId === credential.id) ?? connection
+    snapshot.connections.find((item) => item.credentialId === credential.id) ??
+      connection
   )
 }
 
@@ -267,13 +301,17 @@ function applyConnectedRemote(
     connectorId: remote.appId,
     credentialId: credential.id,
     name: connector?.name ?? remote.name,
-    sheets: existingConn?.sheets ?? (connector ? seedSheets(connector) : { in: [], data: [], out: [] }),
+    sheets:
+      existingConn?.sheets ??
+      (connector ? seedSheets(connector) : { in: [], data: [], out: [] }),
   }
 
   snapshot = {
     ...snapshot,
     credentials: existingCred
-      ? snapshot.credentials.map((item) => (item.id === credential.id ? credential : item))
+      ? snapshot.credentials.map((item) =>
+          item.id === credential.id ? credential : item
+        )
       : [...snapshot.credentials, credential],
     connections: existingConn
       ? snapshot.connections.map((item) =>
@@ -354,7 +392,9 @@ export function selectConnection(connectionId: string | null) {
 export async function disconnectConnector(
   connectionId: string
 ): Promise<Result<{ id: string }>> {
-  const connection = snapshot.connections.find((item) => item.id === connectionId)
+  const connection = snapshot.connections.find(
+    (item) => item.id === connectionId
+  )
   if (!connection) {
     return err({
       code: "not_found",
@@ -367,10 +407,16 @@ export async function disconnectConnector(
   }
   snapshot = {
     ...snapshot,
-    connections: snapshot.connections.filter((item) => item.id !== connectionId),
-    credentials: snapshot.credentials.filter((item) => item.id !== connection.credentialId),
+    connections: snapshot.connections.filter(
+      (item) => item.id !== connectionId
+    ),
+    credentials: snapshot.credentials.filter(
+      (item) => item.id !== connection.credentialId
+    ),
     selectedConnectionId:
-      snapshot.selectedConnectionId === connectionId ? null : snapshot.selectedConnectionId,
+      snapshot.selectedConnectionId === connectionId
+        ? null
+        : snapshot.selectedConnectionId,
   }
   emit()
   return result
@@ -379,10 +425,16 @@ export async function disconnectConnector(
 export function deleteCredential(credentialId: string) {
   snapshot = {
     ...snapshot,
-    credentials: snapshot.credentials.filter((item) => item.id !== credentialId),
-    connections: snapshot.connections.filter((item) => item.credentialId !== credentialId),
+    credentials: snapshot.credentials.filter(
+      (item) => item.id !== credentialId
+    ),
+    connections: snapshot.connections.filter(
+      (item) => item.credentialId !== credentialId
+    ),
     selectedConnectionId: snapshot.connections.some(
-      (item) => item.id === snapshot.selectedConnectionId && item.credentialId !== credentialId
+      (item) =>
+        item.id === snapshot.selectedConnectionId &&
+        item.credentialId !== credentialId
     )
       ? snapshot.selectedConnectionId
       : null,
@@ -403,20 +455,35 @@ function updateConnection(
   emit()
 }
 
-export function setSheetRows(connectionId: string, kind: SheetKind, rows: SheetRow[]) {
+export function setSheetRows(
+  connectionId: string,
+  kind: SheetKind,
+  rows: SheetRow[]
+) {
   updateConnection(connectionId, (connection) => ({
     ...connection,
     sheets: { ...connection.sheets, [kind]: rows },
   }))
 }
 
-export function addDataRow(connectionId: string, values: Record<string, unknown> = {}): SheetRow | undefined {
-  const connection = snapshot.connections.find((item) => item.id === connectionId)
-  const connector = connection ? getConnector(connection.connectorId) : undefined
+export function addDataRow(
+  connectionId: string,
+  values: Record<string, unknown> = {}
+): SheetRow | undefined {
+  const connection = snapshot.connections.find(
+    (item) => item.id === connectionId
+  )
+  const connector = connection
+    ? getConnector(connection.connectorId)
+    : undefined
   if (!connection || !connector) {
     return undefined
   }
-  const row = { ...emptyFromFields(connector.dataFields), ...values, id: crypto.randomUUID() }
+  const row = {
+    ...emptyFromFields(connector.dataFields),
+    ...values,
+    id: crypto.randomUUID(),
+  }
   updateConnection(connectionId, (item) => ({
     ...item,
     sheets: { ...item.sheets, data: [...item.sheets.data, row] },
@@ -424,8 +491,13 @@ export function addDataRow(connectionId: string, values: Record<string, unknown>
   return row
 }
 
-export function addVariableRow(connectionId: string, kind: "in" | "out"): SheetRow | undefined {
-  const connection = snapshot.connections.find((item) => item.id === connectionId)
+export function addVariableRow(
+  connectionId: string,
+  kind: "in" | "out"
+): SheetRow | undefined {
+  const connection = snapshot.connections.find(
+    (item) => item.id === connectionId
+  )
   if (!connection) {
     return undefined
   }
@@ -453,50 +525,66 @@ export function addVariableRow(connectionId: string, kind: "in" | "out"): SheetR
   return row
 }
 
-function buildOutRow(connector: Connector, dataRow: SheetRow, inVars: Record<string, unknown>): SheetRow {
+function outFieldValue(
+  connector: Connector,
+  item: { id: string; defaultValue?: unknown },
+  dataRow: SheetRow,
+  inVars: Record<string, unknown>,
+  rowId: string
+): unknown {
+  const counters: Record<string, unknown> = {
+    updatedRows: 1,
+    rows: 1,
+    updatedCells: connector.dataFields.length,
+    ok: true,
+    status: "ok",
+  }
+  if (item.id in counters) {
+    return counters[item.id]
+  }
+  if (item.id === "updatedRange") {
+    return `${String(inVars.sheetName ?? "Sheet1")}!A2:D2`
+  }
+  if (item.id === "spreadsheetId") {
+    return String(inVars.spreadsheetId || "spreadsheet")
+  }
+  if (dataRow[item.id] !== undefined && dataRow[item.id] !== "") {
+    return dataRow[item.id]
+  }
+  return item.defaultValue ?? `${item.id}-${rowId.slice(0, 8)}`
+}
+
+function buildOutRow(
+  connector: Connector,
+  dataRow: SheetRow,
+  inVars: Record<string, unknown>
+): SheetRow {
   const row: SheetRow = { id: crypto.randomUUID() }
   for (const item of connector.outFields) {
-    if (item.id === "updatedRows" || item.id === "rows") {
-      row[item.id] = 1
-      continue
-    }
-    if (item.id === "updatedCells") {
-      row[item.id] = connector.dataFields.length
-      continue
-    }
-    if (item.id === "updatedRange") {
-      const sheetName = String(inVars.sheetName ?? "Sheet1")
-      row[item.id] = `${sheetName}!A2:D2`
-      continue
-    }
-    if (item.id === "spreadsheetId") {
-      row[item.id] = String(inVars.spreadsheetId || "spreadsheet")
-      continue
-    }
-    if (item.id === "ok") {
-      row[item.id] = true
-      continue
-    }
-    if (item.id === "status") {
-      row[item.id] = "ok"
-      continue
-    }
-    if (dataRow[item.id] !== undefined && dataRow[item.id] !== "") {
-      row[item.id] = dataRow[item.id]
-      continue
-    }
-    row[item.id] = item.defaultValue ?? `${item.id}-${String(row.id).slice(0, 8)}`
+    row[item.id] = outFieldValue(
+      connector,
+      item,
+      dataRow,
+      inVars,
+      String(row.id)
+    )
   }
   return row
 }
 
 export function insertDataRows(connectionId: string, rowIds?: string[]) {
-  const connection = snapshot.connections.find((item) => item.id === connectionId)
-  const connector = connection ? getConnector(connection.connectorId) : undefined
+  const connection = snapshot.connections.find(
+    (item) => item.id === connectionId
+  )
+  const connector = connection
+    ? getConnector(connection.connectorId)
+    : undefined
   if (!connection || !connector) {
     return
   }
-  const selected = new Set(rowIds ?? connection.sheets.data.map((row) => row.id))
+  const selected = new Set(
+    rowIds ?? connection.sheets.data.map((row) => row.id)
+  )
   const inVars = inVarMap(connection.sheets.in)
   const outRows: SheetRow[] = []
   const data = connection.sheets.data.map((row) => {
@@ -516,7 +604,6 @@ export function insertDataRows(connectionId: string, rowIds?: string[]) {
   }))
 }
 
-
 export function replaceCustomCredentials(items: CustomCredential[]) {
   snapshot = {
     ...snapshot,
@@ -534,8 +621,8 @@ export async function createCustomCredential(
   }
   snapshot = {
     ...snapshot,
-    customCredentials: [...snapshot.customCredentials, result.data].sort((a, b) =>
-      a.name.localeCompare(b.name)
+    customCredentials: [...snapshot.customCredentials, result.data].sort(
+      (a, b) => a.name.localeCompare(b.name)
     ),
   }
   emit()
@@ -559,14 +646,18 @@ export async function updateCustomCredential(
   return result
 }
 
-export async function deleteCustomCredential(id: string): Promise<Result<{ id: string }>> {
+export async function deleteCustomCredential(
+  id: string
+): Promise<Result<{ id: string }>> {
   const result = await getIntegrationsAdapter().deleteCustomCredential(id)
   if (!result.ok) {
     return result
   }
   snapshot = {
     ...snapshot,
-    customCredentials: snapshot.customCredentials.filter((item) => item.id !== id),
+    customCredentials: snapshot.customCredentials.filter(
+      (item) => item.id !== id
+    ),
   }
   emit()
   return result

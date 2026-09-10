@@ -73,7 +73,9 @@ function isSheetLikeMethod(methodId: string): boolean {
   return /sheet|spreadsheet|insert|update|append|row/i.test(methodId)
 }
 
-function sheetLikePayload(input: Record<string, unknown>): Record<string, unknown> {
+function sheetLikePayload(
+  input: Record<string, unknown>
+): Record<string, unknown> {
   const sheetName = String(input.sheetName ?? "Sheet1")
   const spreadsheetId = String(input.spreadsheetId ?? "spreadsheet")
   return {
@@ -88,7 +90,9 @@ function sheetLikePayload(input: Record<string, unknown>): Record<string, unknow
 
 function appsForProvider(provider: string): string[] {
   return listApps()
-    .filter((app) => app.auth.kind === "oauth2" && app.auth.provider === provider)
+    .filter(
+      (app) => app.auth.kind === "oauth2" && app.auth.provider === provider
+    )
     .map((app) => app.id)
 }
 
@@ -96,11 +100,17 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   const connections = new Map<string, Connection>()
   const credentials = new Map<string, Credential>()
   const customCredentials = new Map<string, CustomCredential>()
-  const oauthStates = new Map<string, { provider: string; appId?: string; name?: string }>()
+  const oauthStates = new Map<
+    string,
+    { provider: string; appId?: string; name?: string }
+  >()
   const oauthCompletions = new Map<string, Promise<Result<Connection>>>()
   const idempotency = new Map<string, Result<Record<string, unknown>>>()
 
-  function putConnection(connection: Connection, credential: Credential): Connection {
+  function putConnection(
+    connection: Connection,
+    credential: Credential
+  ): Connection {
     connections.set(connection.id, connection)
     credentials.set(credential.id, credential)
     return connection
@@ -119,7 +129,11 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     }
     if (input.appId) {
       const app = getApp(input.appId)
-      if (!app || app.auth.kind !== "oauth2" || app.auth.provider !== input.provider) {
+      if (
+        !app ||
+        app.auth.kind !== "oauth2" ||
+        app.auth.provider !== input.provider
+      ) {
         return err({
           code: "not_found",
           message: `Unknown OAuth app: ${input.appId}`,
@@ -143,7 +157,9 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     return ok({ authorizeUrl, state })
   }
 
-  async function completeOAuth(input: CompleteOAuthInput): Promise<Result<Connection>> {
+  async function completeOAuth(
+    input: CompleteOAuthInput
+  ): Promise<Result<Connection>> {
     const cached = oauthCompletions.get(input.state)
     if (cached) {
       return cached
@@ -168,7 +184,8 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
       }
       oauthStates.delete(input.state)
 
-      const appId = pending.appId ?? appsForProvider(input.provider)[0] ?? input.provider
+      const appId =
+        pending.appId ?? appsForProvider(input.provider)[0] ?? input.provider
       const app = getApp(appId)
       const displayName = pending.name ?? app?.name ?? input.provider
       const createdAt = nowIso()
@@ -312,7 +329,10 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
       })
     }
 
-    if (app.auth.kind === "oauth2" && getOAuthApp(app.auth.provider)?.managed === true) {
+    if (
+      app.auth.kind === "oauth2" &&
+      getOAuthApp(app.auth.provider)?.managed === true
+    ) {
       return connectManaged(input.appId, input.name)
     }
 
@@ -349,39 +369,52 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     return ok(putConnection(connection, credential))
   }
 
-  async function connectApp(input: ConnectAppInput): Promise<Result<Connection>> {
-    if (input.connectionId) {
-      const existing = connections.get(input.connectionId)
-      if (!existing) {
-        return err({
-          code: "not_found",
-          message: `Connection not found: ${input.connectionId}`,
-        })
-      }
-      if (existing.appId !== input.appId) {
-        return err({
-          code: "validation",
-          message: "Connection app mismatch",
-          provider: input.appId,
-        })
-      }
-      const credential = credentials.get(existing.credentialId)
-      if (credential) {
-        credentials.set(credential.id, {
-          ...credential,
-          name: input.name ?? credential.name,
-          fields: input.fields ? { ...credential.fields, ...input.fields } : credential.fields,
-        })
-      }
-      const updated: Connection = {
-        ...existing,
-        name: input.name ?? existing.name,
-        updatedAt: nowIso(),
-      }
-      connections.set(updated.id, updated)
-      return ok(updated)
+  function reconnectExisting(
+    input: ConnectAppInput
+  ): Result<Connection> | undefined {
+    if (!input.connectionId) {
+      return undefined
     }
+    const existing = connections.get(input.connectionId)
+    if (!existing) {
+      return err({
+        code: "not_found",
+        message: `Connection not found: ${input.connectionId}`,
+      })
+    }
+    if (existing.appId !== input.appId) {
+      return err({
+        code: "validation",
+        message: "Connection app mismatch",
+        provider: input.appId,
+      })
+    }
+    const credential = credentials.get(existing.credentialId)
+    if (credential) {
+      credentials.set(credential.id, {
+        ...credential,
+        name: input.name ?? credential.name,
+        fields: input.fields
+          ? { ...credential.fields, ...input.fields }
+          : credential.fields,
+      })
+    }
+    const updated: Connection = {
+      ...existing,
+      name: input.name ?? existing.name,
+      updatedAt: nowIso(),
+    }
+    connections.set(updated.id, updated)
+    return ok(updated)
+  }
 
+  async function connectApp(
+    input: ConnectAppInput
+  ): Promise<Result<Connection>> {
+    const reconnected = reconnectExisting(input)
+    if (reconnected) {
+      return reconnected
+    }
     const app = getApp(input.appId)
     if (!app) {
       return err({
@@ -390,7 +423,8 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
       })
     }
     const managed =
-      app.auth.kind === "oauth2" && getOAuthApp(app.auth.provider)?.managed === true
+      app.auth.kind === "oauth2" &&
+      getOAuthApp(app.auth.provider)?.managed === true
     if (managed) {
       return connectManaged(input.appId, input.name)
     }
@@ -442,7 +476,8 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     }
 
     const app = getApp(connection.appId)
-    const methodKnown = app?.methods.some((method) => method.id === input.methodId) ?? false
+    const methodKnown =
+      app?.methods.some((method) => method.id === input.methodId) ?? false
     if (!methodKnown && !isSheetLikeMethod(input.methodId)) {
       const result = err<Record<string, unknown>>({
         code: "not_found",
@@ -476,7 +511,11 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   }
 
   async function listCustomCredentials(): Promise<Result<CustomCredential[]>> {
-    return ok([...customCredentials.values()].sort((a, b) => a.name.localeCompare(b.name)))
+    return ok(
+      [...customCredentials.values()].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      )
+    )
   }
 
   async function createCustomCredential(
@@ -512,11 +551,18 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
   ): Promise<Result<CustomCredential>> {
     const existing = customCredentials.get(input.id)
     if (!existing) {
-      return err({ code: "not_found", message: `Custom credential not found: ${input.id}` })
+      return err({
+        code: "not_found",
+        message: `Custom credential not found: ${input.id}`,
+      })
     }
     const kind = input.kind ?? existing.kind
     const name = input.name ?? existing.name
-    const fields = mergeCustomCredentialFields(existing.fields, input.fields ?? {}, kind)
+    const fields = mergeCustomCredentialFields(
+      existing.fields,
+      input.fields ?? {},
+      kind
+    )
     const fieldErrors = validateCustomCredentialInput({
       name,
       kind,
@@ -541,9 +587,14 @@ export function createMockIntegrationsAdapter(): IntegrationsAdapter {
     return ok(updated)
   }
 
-  async function deleteCustomCredential(id: string): Promise<Result<{ id: string }>> {
+  async function deleteCustomCredential(
+    id: string
+  ): Promise<Result<{ id: string }>> {
     if (!customCredentials.has(id)) {
-      return err({ code: "not_found", message: `Custom credential not found: ${id}` })
+      return err({
+        code: "not_found",
+        message: `Custom credential not found: ${id}`,
+      })
     }
     customCredentials.delete(id)
     return ok({ id })

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { Settings } from "lucide-react"
 import { useSearchParams } from "react-router"
 import { toast } from "sonner"
@@ -40,15 +40,248 @@ import {
   WorkspacePanel,
 } from "./ui/SettingsPanels"
 
+function resolveActiveSection(sectionParam: string | null): SettingsSectionId {
+  if (isSettingsSectionId(sectionParam)) {
+    return sectionParam
+  }
+  return "profile"
+}
+
+function nextSectionParams(
+  searchParams: URLSearchParams,
+  section: SettingsSectionId
+) {
+  const next = new URLSearchParams(searchParams)
+  if (section === "profile") {
+    next.delete("section")
+    return next
+  }
+  next.set("section", section)
+  return next
+}
+
+function sectionButtonClass(active: boolean) {
+  if (!active) {
+    return "justify-start whitespace-nowrap"
+  }
+  return "justify-start whitespace-nowrap bg-muted font-medium"
+}
+
+function currentPageAttr(active: boolean) {
+  if (!active) {
+    return undefined
+  }
+  return "page" as const
+}
+
+function saveProfileDraft(
+  profile: ProfileDraft,
+  setProfileErrors: (errors: { displayName?: string; email?: string }) => void,
+  setProfile: (profile: ProfileDraft) => void,
+  setSavedProfile: (profile: ProfileDraft) => void
+) {
+  const errors = validateProfile(profile)
+  setProfileErrors(errors)
+  if (Object.keys(errors).length > 0) {
+    toast.error("Fix the highlighted profile fields.")
+    return
+  }
+  const next = {
+    displayName: profile.displayName.trim(),
+    email: profile.email.trim(),
+  }
+  if (!setSession({ name: next.displayName, email: next.email })) {
+    toast.error("Could not save profile.")
+    return
+  }
+  setProfile(next)
+  setSavedProfile(next)
+  toast.success("Profile saved.")
+}
+
+function saveWorkspaceDraft(
+  workspaceDraft: string,
+  preferences: SettingsPreferences,
+  setWorkspaceError: (error: string | undefined) => void,
+  setWorkspaceDraft: (value: string) => void,
+  setPreferences: (value: SettingsPreferences) => void
+) {
+  const error = validateWorkspaceName(workspaceDraft)
+  setWorkspaceError(error)
+  if (error) {
+    toast.error(error)
+    return
+  }
+  const trimmed = workspaceDraft.trim()
+  const merged: SettingsPreferences = {
+    ...preferences,
+    displayName: trimmed,
+  }
+  setWorkspaceDraft(trimmed)
+  setPreferences(merged)
+  savePreferences(merged)
+  toast.success("Workspace settings saved.")
+}
+
+function persistComplianceState(
+  next: ComplianceState,
+  setCompliance: (value: ComplianceState) => void,
+  message?: string
+) {
+  setCompliance(next)
+  saveCompliance(next)
+  if (message) {
+    toast.success(message)
+  }
+}
+
+type SettingsSectionProps = {
+  activeSection: SettingsSectionId
+  profile: ProfileDraft
+  profileErrors: { displayName?: string; email?: string }
+  savedEmail: string
+  roleLabel: string
+  onProfileChange: (next: ProfileDraft) => void
+  onSaveProfile: () => void
+  preferences: SettingsPreferences
+  onPatchPreferences: (
+    patch: Partial<SettingsPreferences>,
+    message: string
+  ) => void
+  compliance: ComplianceState
+  onCompliance: (next: ComplianceState, message?: string) => void
+  workspaceDraft: string
+  workspaceError: string | undefined
+  onWorkspaceDraft: (value: string) => void
+  onSaveWorkspace: () => void
+}
+
+function ProfileSection({
+  profile,
+  profileErrors,
+  savedEmail,
+  roleLabel,
+  onProfileChange,
+  onSaveProfile,
+}: SettingsSectionProps) {
+  return (
+    <ProfilePanel
+      profile={profile}
+      profileErrors={profileErrors}
+      savedEmail={savedEmail}
+      roleLabel={roleLabel}
+      onChange={onProfileChange}
+      onSave={onSaveProfile}
+    />
+  )
+}
+
+function AppearanceSection({
+  preferences,
+  onPatchPreferences,
+}: SettingsSectionProps) {
+  return (
+    <AppearancePanel preferences={preferences} onPatch={onPatchPreferences} />
+  )
+}
+
+function NotificationsSection({
+  preferences,
+  onPatchPreferences,
+}: SettingsSectionProps) {
+  return (
+    <NotificationsPanel
+      preferences={preferences}
+      onPatch={onPatchPreferences}
+    />
+  )
+}
+
+function BillingSection({ compliance, onCompliance }: SettingsSectionProps) {
+  return <BillingPanel compliance={compliance} onCompliance={onCompliance} />
+}
+
+function PrivacySection({
+  preferences,
+  compliance,
+  onPatchPreferences,
+  onCompliance,
+}: SettingsSectionProps) {
+  return (
+    <PrivacyPanel
+      preferences={preferences}
+      compliance={compliance}
+      onPatch={onPatchPreferences}
+      onCompliance={onCompliance}
+    />
+  )
+}
+
+function SecuritySection({
+  preferences,
+  compliance,
+  onPatchPreferences,
+  onCompliance,
+}: SettingsSectionProps) {
+  return (
+    <SecurityPanel
+      preferences={preferences}
+      compliance={compliance}
+      onPatch={onPatchPreferences}
+      onCompliance={onCompliance}
+    />
+  )
+}
+
+function WorkspaceSection({
+  preferences,
+  workspaceDraft,
+  workspaceError,
+  onWorkspaceDraft,
+  onSaveWorkspace,
+  onPatchPreferences,
+}: SettingsSectionProps) {
+  return (
+    <WorkspacePanel
+      preferences={preferences}
+      workspaceDraft={workspaceDraft}
+      workspaceError={workspaceError}
+      onWorkspaceDraft={onWorkspaceDraft}
+      onSaveWorkspace={onSaveWorkspace}
+      onPatch={onPatchPreferences}
+    />
+  )
+}
+
+function ComplianceSection({ compliance, onCompliance }: SettingsSectionProps) {
+  return <CompliancePanel compliance={compliance} onCompliance={onCompliance} />
+}
+
+const SETTINGS_SECTION_RENDERERS: Record<
+  SettingsSectionId,
+  (props: SettingsSectionProps) => ReactNode
+> = {
+  profile: ProfileSection,
+  appearance: AppearanceSection,
+  notifications: NotificationsSection,
+  billing: BillingSection,
+  privacy: PrivacySection,
+  security: SecuritySection,
+  workspace: WorkspaceSection,
+  compliance: ComplianceSection,
+}
+
+function SettingsSectionPanel(props: SettingsSectionProps) {
+  const Renderer = SETTINGS_SECTION_RENDERERS[props.activeSection]
+  return <Renderer {...props} />
+}
+
 export function SettingsPage() {
   const { title, subtitle } = getPageCopy("/settings")
   const catalogUser = getCurrentUser()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const sectionParam = searchParams.get("section")
-  const activeSection: SettingsSectionId = isSettingsSectionId(sectionParam)
-    ? sectionParam
-    : "profile"
+  const activeSection = resolveActiveSection(searchParams.get("section"))
 
   const [profile, setProfile] = useState<ProfileDraft>(() => defaultProfile())
   const [profileErrors, setProfileErrors] = useState<{
@@ -73,33 +306,7 @@ export function SettingsPage() {
   const roleLabel = useMemo(() => catalogUser.role, [catalogUser.role])
 
   function selectSection(section: SettingsSectionId) {
-    const next = new URLSearchParams(searchParams)
-    if (section === "profile") {
-      next.delete("section")
-    } else {
-      next.set("section", section)
-    }
-    setSearchParams(next, { replace: true })
-  }
-
-  function handleSaveProfile() {
-    const errors = validateProfile(profile)
-    setProfileErrors(errors)
-    if (Object.keys(errors).length > 0) {
-      toast.error("Fix the highlighted profile fields.")
-      return
-    }
-    const next = {
-      displayName: profile.displayName.trim(),
-      email: profile.email.trim(),
-    }
-    if (!setSession({ name: next.displayName, email: next.email })) {
-      toast.error("Could not save profile.")
-      return
-    }
-    setProfile(next)
-    setSavedProfile(next)
-    toast.success("Profile saved.")
+    setSearchParams(nextSectionParams(searchParams, section), { replace: true })
   }
 
   function patchPreferences(
@@ -115,37 +322,11 @@ export function SettingsPage() {
     toast.success(message)
   }
 
-  function handleSaveWorkspace() {
-    const error = validateWorkspaceName(workspaceDraft)
-    setWorkspaceError(error)
-    if (error) {
-      toast.error(error)
-      return
-    }
-    const trimmed = workspaceDraft.trim()
-    const merged: SettingsPreferences = {
-      ...preferences,
-      displayName: trimmed,
-    }
-    setWorkspaceDraft(trimmed)
-    setPreferences(merged)
-    savePreferences(merged)
-    toast.success("Workspace settings saved.")
-  }
-
-  function persistCompliance(next: ComplianceState, message?: string) {
-    setCompliance(next)
-    saveCompliance(next)
-    if (message) {
-      toast.success(message)
-    }
-  }
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title={title} subtitle={subtitle} icon={Settings} />
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 lg:flex-row lg:items-start sm:px-6">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:items-start">
           <nav
             aria-label="Settings sections"
             className="flex shrink-0 flex-row gap-1 overflow-x-auto lg:w-48 lg:flex-col lg:overflow-visible"
@@ -156,11 +337,8 @@ export function SettingsPage() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className={cn(
-                  "justify-start whitespace-nowrap",
-                  activeSection === section.id && "bg-muted font-medium"
-                )}
-                aria-current={activeSection === section.id ? "page" : undefined}
+                className={cn(sectionButtonClass(activeSection === section.id))}
+                aria-current={currentPageAttr(activeSection === section.id)}
                 onClick={() => selectSection(section.id)}
               >
                 {section.label}
@@ -169,66 +347,40 @@ export function SettingsPage() {
           </nav>
 
           <div className="min-w-0 flex-1">
-            {activeSection === "profile" ? (
-              <ProfilePanel
-                profile={profile}
-                profileErrors={profileErrors}
-                savedEmail={savedProfile.email}
-                roleLabel={roleLabel}
-                onChange={setProfile}
-                onSave={handleSaveProfile}
-              />
-            ) : null}
-            {activeSection === "appearance" ? (
-              <AppearancePanel
-                preferences={preferences}
-                onPatch={patchPreferences}
-              />
-            ) : null}
-            {activeSection === "notifications" ? (
-              <NotificationsPanel
-                preferences={preferences}
-                onPatch={patchPreferences}
-              />
-            ) : null}
-            {activeSection === "billing" ? (
-              <BillingPanel
-                compliance={compliance}
-                onCompliance={persistCompliance}
-              />
-            ) : null}
-            {activeSection === "privacy" ? (
-              <PrivacyPanel
-                preferences={preferences}
-                compliance={compliance}
-                onPatch={patchPreferences}
-                onCompliance={persistCompliance}
-              />
-            ) : null}
-            {activeSection === "security" ? (
-              <SecurityPanel
-                preferences={preferences}
-                compliance={compliance}
-                onPatch={patchPreferences}
-                onCompliance={persistCompliance}
-              />
-            ) : null}
-            {activeSection === "workspace" ? (
-              <WorkspacePanel
-                preferences={preferences}
-                workspaceDraft={workspaceDraft}
-                workspaceError={workspaceError}
-                onWorkspaceDraft={setWorkspaceDraft}
-                onSaveWorkspace={handleSaveWorkspace}
-                onPatch={patchPreferences}
-              />
-            ) : null}
-            {activeSection === "compliance" ? (
-              <CompliancePanel
-                compliance={compliance}
-                onCompliance={persistCompliance}
-              />
-            ) : null}
+            <SettingsSectionPanel
+              activeSection={activeSection}
+              profile={profile}
+              profileErrors={profileErrors}
+              savedEmail={savedProfile.email}
+              roleLabel={roleLabel}
+              onProfileChange={setProfile}
+              onSaveProfile={() =>
+                saveProfileDraft(
+                  profile,
+                  setProfileErrors,
+                  setProfile,
+                  setSavedProfile
+                )
+              }
+              preferences={preferences}
+              onPatchPreferences={patchPreferences}
+              compliance={compliance}
+              onCompliance={(next, message) =>
+                persistComplianceState(next, setCompliance, message)
+              }
+              workspaceDraft={workspaceDraft}
+              workspaceError={workspaceError}
+              onWorkspaceDraft={setWorkspaceDraft}
+              onSaveWorkspace={() =>
+                saveWorkspaceDraft(
+                  workspaceDraft,
+                  preferences,
+                  setWorkspaceError,
+                  setWorkspaceDraft,
+                  setPreferences
+                )
+              }
+            />
           </div>
         </div>
       </div>

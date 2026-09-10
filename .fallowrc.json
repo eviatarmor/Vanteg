@@ -1,0 +1,76 @@
+{
+  // This file is JSONC: fallow reads these comments; generic JSON tools may not.
+  "$schema": "./node_modules/fallow/schema.json",
+  // Per-workspace src/index and src/main, plus Vite's chat plugin (loaded from vite.config.ts).
+  "entry": [
+    "src/index.{ts,tsx,js,jsx}",
+    "src/main.{ts,tsx,js,jsx}",
+    "client/src/server/vite-chat-plugin.ts",
+    "infra/integrations/export-terraform.ts",
+    "infra/integrations/oauth-apps.ts"
+  ],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.turbo/**",
+    "**/coverage/**",
+    "**/*.d.ts"
+  ],
+  "workspaces": {
+    "patterns": ["client", "packages/*"]
+  },
+  // shadcn/Radix UI kit consumed via package.json exports globs, not a closed barrel.
+  "publicPackages": ["@workspace/ui"],
+  "duplicates": {
+    // Hide pair-only clones; focus on widespread copy-paste.
+    "minOccurrences": 3
+  },
+  "health": {
+    "maxCyclomatic": 20,
+    "maxCognitive": 15,
+    // Estimated CRAP without Istanbul coverage is noisy (cyc=20 ≈ CRAP 100+).
+    "maxCrap": 250,
+    // React page components routinely exceed the 60-line default.
+    "maxUnitSize": 250,
+    "thresholdOverrides": [
+      {
+        "files": [
+          "**/*.test.ts",
+          "**/*.test.tsx",
+          "**/*.spec.ts",
+          "**/*.spec.tsx"
+        ],
+        "maxCyclomatic": 40,
+        "maxCognitive": 40,
+        "maxCrap": 500,
+        "maxUnitSize": 500,
+        "reason": "Vitest describe/it blocks are long by design"
+      },
+      {
+        "files": [
+          "client/src/hooks/use-data-grid.ts",
+          "client/src/lib/data-grid.ts",
+          "client/src/components/data-grid/**",
+          "client/src/components/ai-elements/**",
+          "packages/ui/src/components/time-picker.tsx",
+          "packages/ui/src/components/key-value.tsx",
+          "**/visually-hidden-input.tsx"
+        ],
+        "maxCyclomatic": 200,
+        "maxCognitive": 300,
+        "maxCrap": 8000,
+        "maxUnitSize": 800,
+        "reason": "Copied data-grid, time-picker, ai-elements, and key-value kits; product logic lives in features/"
+      }
+    ]
+  },
+  // Local/PR gate: `npx fallow audit --base origin/master` (repo default branch is master).
+  "audit": {
+    "gate": "new-only"
+  },
+  "rules": {
+    // shadcn copies in client import UI-kit packages that live on @workspace/ui.
+    "unused-dependencies": "warn",
+    "unlisted-dependencies": "warn"
+  }
+}

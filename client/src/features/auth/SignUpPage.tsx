@@ -14,6 +14,207 @@ import { useMockAuthSubmit } from "./model/use-mock-auth-submit"
 import { validateSignUp, type FieldErrors } from "./model/validation"
 import { AuthLayout } from "./ui/AuthLayout"
 
+function errorDescribedBy(id: string, error?: string) {
+  if (!error) {
+    return undefined
+  }
+  return id
+}
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) {
+    return null
+  }
+  return (
+    <p id={id} className="text-sm text-destructive" role="alert">
+      {message}
+    </p>
+  )
+}
+
+function FormAlert({ message }: { message: string | null }) {
+  if (!message) {
+    return null
+  }
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
+  )
+}
+
+function LoginSwitch({ pending }: { pending: boolean }) {
+  if (pending) {
+    return <span className="font-medium text-muted-foreground">Log in</span>
+  }
+  return (
+    <Link
+      to="/login"
+      className="font-medium text-foreground underline-offset-4 hover:underline"
+    >
+      Log in
+    </Link>
+  )
+}
+
+function SignUpSubmitLabel({ pending }: { pending: boolean }) {
+  if (!pending) {
+    return "Sign up"
+  }
+  return (
+    <>
+      <Spinner data-icon="inline-start" />
+      Creating account…
+    </>
+  )
+}
+
+async function submitSignUpForm({
+  event,
+  name,
+  email,
+  password,
+  confirmPassword,
+  setFormError,
+  setErrors,
+  setPending,
+  waitThenFinish,
+}: {
+  event: FormEvent<HTMLFormElement>
+  name: string
+  email: string
+  password: string
+  confirmPassword: string
+  setFormError: (value: string | null) => void
+  setErrors: (value: FieldErrors) => void
+  setPending: (value: boolean) => void
+  waitThenFinish: (
+    finish: () => boolean
+  ) => Promise<"ok" | "cancelled" | "failed">
+}) {
+  event.preventDefault()
+  setFormError(null)
+  const nextErrors = validateSignUp({
+    name,
+    email,
+    password,
+    confirmPassword,
+  })
+  setErrors(nextErrors)
+  if (Object.keys(nextErrors).length > 0) {
+    return
+  }
+
+  setPending(true)
+  const result = await waitThenFinish(() =>
+    setSession({
+      email: email.trim(),
+      name: name.trim(),
+    })
+  )
+  if (result === "failed") {
+    setFormError("Something went wrong. Try again.")
+  }
+  if (result !== "cancelled") {
+    setPending(false)
+  }
+}
+
+function SignUpFields({
+  name,
+  email,
+  password,
+  confirmPassword,
+  errors,
+  pending,
+  onNameChange,
+  onEmailChange,
+  onPasswordChange,
+  onConfirmPasswordChange,
+}: {
+  name: string
+  email: string
+  password: string
+  confirmPassword: string
+  errors: FieldErrors
+  pending: boolean
+  onNameChange: (value: string) => void
+  onEmailChange: (value: string) => void
+  onPasswordChange: (value: string) => void
+  onConfirmPasswordChange: (value: string) => void
+}) {
+  return (
+    <>
+      <div className="grid gap-2">
+        <Label htmlFor="signup-name">Name</Label>
+        <Input
+          id="signup-name"
+          type="text"
+          autoComplete="name"
+          value={name}
+          aria-invalid={Boolean(errors.name)}
+          aria-describedby={errorDescribedBy("signup-name-error", errors.name)}
+          onChange={(event) => onNameChange(event.target.value)}
+          disabled={pending}
+        />
+        <FieldError id="signup-name-error" message={errors.name} />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="signup-email">Email</Label>
+        <Input
+          id="signup-email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errorDescribedBy(
+            "signup-email-error",
+            errors.email
+          )}
+          onChange={(event) => onEmailChange(event.target.value)}
+          disabled={pending}
+        />
+        <FieldError id="signup-email-error" message={errors.email} />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="signup-password">Password</Label>
+        <SecretInput
+          id="signup-password"
+          value={password}
+          onValueChange={onPasswordChange}
+          autoComplete="new-password"
+          aria-invalid={Boolean(errors.password)}
+          aria-describedby={errorDescribedBy(
+            "signup-password-error",
+            errors.password
+          )}
+          disabled={pending}
+        />
+        <FieldError id="signup-password-error" message={errors.password} />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="signup-confirm-password">Confirm password</Label>
+        <SecretInput
+          id="signup-confirm-password"
+          value={confirmPassword}
+          onValueChange={onConfirmPasswordChange}
+          autoComplete="new-password"
+          aria-invalid={Boolean(errors.confirmPassword)}
+          aria-describedby={errorDescribedBy(
+            "signup-confirm-password-error",
+            errors.confirmPassword
+          )}
+          disabled={pending}
+        />
+        <FieldError
+          id="signup-confirm-password-error"
+          message={errors.confirmPassword}
+        />
+      </div>
+    </>
+  )
+}
+
 export function SignUpPage() {
   const { returnTo, waitThenFinish } = useMockAuthSubmit()
   const [name, setName] = useState("")
@@ -28,152 +229,48 @@ export function SignUpPage() {
     return <Navigate to={returnTo} replace />
   }
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setFormError(null)
-    const nextErrors = validateSignUp({
-      name,
-      email,
-      password,
-      confirmPassword,
-    })
-    setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) return
-
-    setPending(true)
-    const result = await waitThenFinish(() =>
-      setSession({
-        email: email.trim(),
-        name: name.trim(),
-      })
-    )
-    if (result === "failed") {
-      setFormError("Something went wrong. Try again.")
-    }
-    if (result !== "cancelled") {
-      setPending(false)
-    }
-  }
-
   return (
     <AuthLayout
       title="Create account"
       description="Mock sign-up — no identity provider yet."
       footer={
         <p>
-          Already have an account?{" "}
-          {pending ? (
-            <span className="font-medium text-muted-foreground">Log in</span>
-          ) : (
-            <Link
-              to="/login"
-              className="font-medium text-foreground underline-offset-4 hover:underline"
-            >
-              Log in
-            </Link>
-          )}
+          Already have an account? <LoginSwitch pending={pending} />
         </p>
       }
     >
-      <form className="grid gap-4" onSubmit={onSubmit} noValidate>
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
-        <div className="grid gap-2">
-          <Label htmlFor="signup-name">Name</Label>
-          <Input
-            id="signup-name"
-            type="text"
-            autoComplete="name"
-            value={name}
-            aria-invalid={Boolean(errors.name)}
-            aria-describedby={errors.name ? "signup-name-error" : undefined}
-            onChange={(event) => setName(event.target.value)}
-            disabled={pending}
-          />
-          {errors.name ? (
-            <p id="signup-name-error" className="text-sm text-destructive" role="alert">
-              {errors.name}
-            </p>
-          ) : null}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="signup-email">Email</Label>
-          <Input
-            id="signup-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby={errors.email ? "signup-email-error" : undefined}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={pending}
-          />
-          {errors.email ? (
-            <p id="signup-email-error" className="text-sm text-destructive" role="alert">
-              {errors.email}
-            </p>
-          ) : null}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="signup-password">Password</Label>
-          <SecretInput
-            id="signup-password"
-            value={password}
-            onValueChange={setPassword}
-            autoComplete="new-password"
-            aria-invalid={Boolean(errors.password)}
-            aria-describedby={
-              errors.password ? "signup-password-error" : undefined
-            }
-            disabled={pending}
-          />
-          {errors.password ? (
-            <p
-              id="signup-password-error"
-              className="text-sm text-destructive"
-              role="alert"
-            >
-              {errors.password}
-            </p>
-          ) : null}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="signup-confirm-password">Confirm password</Label>
-          <SecretInput
-            id="signup-confirm-password"
-            value={confirmPassword}
-            onValueChange={setConfirmPassword}
-            autoComplete="new-password"
-            aria-invalid={Boolean(errors.confirmPassword)}
-            aria-describedby={
-              errors.confirmPassword
-                ? "signup-confirm-password-error"
-                : undefined
-            }
-            disabled={pending}
-          />
-          {errors.confirmPassword ? (
-            <p
-              id="signup-confirm-password-error"
-              className="text-sm text-destructive"
-              role="alert"
-            >
-              {errors.confirmPassword}
-            </p>
-          ) : null}
-        </div>
+      <form
+        className="grid gap-4"
+        onSubmit={(event) =>
+          void submitSignUpForm({
+            event,
+            name,
+            email,
+            password,
+            confirmPassword,
+            setFormError,
+            setErrors,
+            setPending,
+            waitThenFinish,
+          })
+        }
+        noValidate
+      >
+        <FormAlert message={formError} />
+        <SignUpFields
+          name={name}
+          email={email}
+          password={password}
+          confirmPassword={confirmPassword}
+          errors={errors}
+          pending={pending}
+          onNameChange={setName}
+          onEmailChange={setEmail}
+          onPasswordChange={setPassword}
+          onConfirmPasswordChange={setConfirmPassword}
+        />
         <Button type="submit" className="w-full" size="lg" disabled={pending}>
-          {pending ? (
-            <>
-              <Spinner data-icon="inline-start" />
-              Creating account…
-            </>
-          ) : (
-            "Sign up"
-          )}
+          <SignUpSubmitLabel pending={pending} />
         </Button>
       </form>
     </AuthLayout>

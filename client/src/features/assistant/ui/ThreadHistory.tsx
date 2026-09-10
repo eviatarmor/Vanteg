@@ -61,12 +61,7 @@ function ThreadRow({
   }
 
   return (
-    <div
-      className={cn(
-        "group relative rounded-lg",
-        selected && "bg-muted"
-      )}
-    >
+    <div className={cn("group relative rounded-lg", selected && "bg-muted")}>
       {renaming ? (
         <form onSubmit={submitRename} className="flex flex-col gap-2 p-2">
           <Label htmlFor={`rename-${conversation.id}`} className="sr-only">
@@ -156,6 +151,223 @@ function ThreadRow({
   )
 }
 
+function deleteConversationDescription(
+  conversation: AssistantConversation | null
+) {
+  if (!conversation) {
+    return null
+  }
+  const count = conversation.messages.length
+  const plural = count === 1 ? "" : "s"
+  return `“${conversation.title}” has ${count} message${plural}. This cannot be undone.`
+}
+
+function confirmPendingDelete(
+  pendingDelete: AssistantConversation | null,
+  selectedId: string | undefined,
+  navigate: (path: string) => void,
+  setPendingDelete: (value: AssistantConversation | null) => void
+) {
+  if (!pendingDelete) {
+    return
+  }
+  const id = pendingDelete.id
+  deleteConversation(id)
+  setPendingDelete(null)
+  if (selectedId === id) {
+    navigate("/assistant")
+  }
+}
+
+function closeDeleteDialog(
+  open: boolean,
+  setPendingDelete: (value: AssistantConversation | null) => void
+) {
+  if (open) {
+    return
+  }
+  setPendingDelete(null)
+}
+
+function HistorySaveWarning({
+  saveWarning,
+  hasConversations,
+}: {
+  saveWarning: string | null
+  hasConversations: boolean
+}) {
+  if (!saveWarning || !hasConversations) {
+    return null
+  }
+  return (
+    <div
+      className="border-b border-border px-3 py-2 text-sm text-destructive"
+      role="status"
+    >
+      {saveWarning}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="ml-2"
+        onClick={() => retryConversationStore()}
+      >
+        Retry
+      </Button>
+    </div>
+  )
+}
+
+function HistoryLoading() {
+  return (
+    <div
+      className="flex min-h-0 flex-1 flex-col gap-2 p-3"
+      role="status"
+      aria-label="Loading history"
+    >
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Spinner />
+        Loading history…
+      </div>
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+    </div>
+  )
+}
+
+function HistoryError({ error }: { error: string | null }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-center">
+      <p className="text-sm font-medium">Could not load history</p>
+      <p className="text-sm text-muted-foreground">
+        {error ?? "Something went wrong reading saved chats."}
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => retryConversationStore()}
+        >
+          Retry
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => clearConversationStoreError()}
+        >
+          Clear data
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function HistoryList({
+  conversations,
+  selectedId,
+  onRequestDelete,
+}: {
+  conversations: AssistantConversation[]
+  selectedId?: string
+  onRequestDelete: (conversation: AssistantConversation) => void
+}) {
+  return (
+    <ScrollFade className="min-h-0 flex-1">
+      <nav aria-label="Conversations" className="flex flex-col gap-1 p-2">
+        {conversations.map((conversation) => (
+          <ThreadRow
+            key={conversation.id}
+            conversation={conversation}
+            selected={selectedId === conversation.id}
+            onRequestDelete={onRequestDelete}
+          />
+        ))}
+      </nav>
+    </ScrollFade>
+  )
+}
+
+function HistoryBody({
+  status,
+  error,
+  conversations,
+  selectedId,
+  onCreate,
+  onRequestDelete,
+}: {
+  status: string
+  error: string | null
+  conversations: AssistantConversation[]
+  selectedId?: string
+  onCreate: () => void
+  onRequestDelete: (conversation: AssistantConversation) => void
+}) {
+  if (status === "loading") {
+    return <HistoryLoading />
+  }
+  if (status === "error") {
+    return <HistoryError error={error} />
+  }
+  if (conversations.length === 0) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EmptyState
+          icon={Sparkles}
+          title="No chats yet"
+          description="Start a conversation with Vanteg. History is saved in this browser."
+          actionLabel="New chat"
+          onCreate={onCreate}
+          className="min-h-0 flex-1"
+        />
+      </div>
+    )
+  }
+  return (
+    <HistoryList
+      conversations={conversations}
+      selectedId={selectedId}
+      onRequestDelete={onRequestDelete}
+    />
+  )
+}
+
+function DeleteConversationDialog({
+  pendingDelete,
+  onOpenChange,
+  onConfirm,
+}: {
+  pendingDelete: AssistantConversation | null
+  onOpenChange: (open: boolean) => void
+  onConfirm: () => void
+}) {
+  return (
+    <Dialog open={pendingDelete != null} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete conversation?</DialogTitle>
+          <DialogDescription>
+            {deleteConversationDescription(pendingDelete)}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="button" variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function ThreadHistory({
   selectedId,
   onCreate,
@@ -168,22 +380,14 @@ export function ThreadHistory({
   const error = useConversationStoreError()
   const saveWarning = useConversationSaveWarning()
   const navigate = useNavigate()
-  const [pendingDelete, setPendingDelete] = useState<AssistantConversation | null>(null)
-
-  function confirmDelete() {
-    if (!pendingDelete) {
-      return
-    }
-    const id = pendingDelete.id
-    deleteConversation(id)
-    setPendingDelete(null)
-    if (selectedId === id) {
-      navigate("/assistant")
-    }
-  }
+  const [pendingDelete, setPendingDelete] =
+    useState<AssistantConversation | null>(null)
 
   return (
-    <aside className="flex h-full min-h-0 w-full flex-col" aria-label="Chat history">
+    <aside
+      className="flex h-full min-h-0 w-full flex-col"
+      aria-label="Chat history"
+    >
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
         <p className="min-w-0 flex-1 truncate text-sm font-medium">History</p>
         <Button type="button" variant="ghost" size="sm" onClick={onCreate}>
@@ -192,92 +396,31 @@ export function ThreadHistory({
         </Button>
       </div>
 
-      {saveWarning && conversations.length > 0 ? (
-        <div className="border-b border-border px-3 py-2 text-sm text-destructive" role="status">
-          {saveWarning}
-          <Button type="button" size="sm" variant="outline" className="ml-2" onClick={() => retryConversationStore()}>
-            Retry
-          </Button>
-        </div>
-      ) : null}
-      {status === "loading" ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-2 p-3" role="status" aria-label="Loading history">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Spinner />
-            Loading history…
-          </div>
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : status === "error" ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-center">
-          <p className="text-sm font-medium">Could not load history</p>
-          <p className="text-sm text-muted-foreground">
-            {error ?? "Something went wrong reading saved chats."}
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button type="button" size="sm" onClick={() => retryConversationStore()}>
-              Retry
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => clearConversationStoreError()}
-            >
-              Clear data
-            </Button>
-          </div>
-        </div>
-      ) : conversations.length === 0 ? (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <EmptyState
-            icon={Sparkles}
-            title="No chats yet"
-            description="Start a conversation with Vanteg. History is saved in this browser."
-            actionLabel="New chat"
-            onCreate={onCreate}
-            className="min-h-0 flex-1"
-          />
-        </div>
-      ) : (
-        <ScrollFade className="min-h-0 flex-1">
-          <nav aria-label="Conversations" className="flex flex-col gap-1 p-2">
-            {conversations.map((conversation) => (
-              <ThreadRow
-                key={conversation.id}
-                conversation={conversation}
-                selected={selectedId === conversation.id}
-                onRequestDelete={setPendingDelete}
-              />
-            ))}
-          </nav>
-        </ScrollFade>
-      )}
+      <HistorySaveWarning
+        saveWarning={saveWarning}
+        hasConversations={conversations.length > 0}
+      />
+      <HistoryBody
+        status={status}
+        error={error}
+        conversations={conversations}
+        selectedId={selectedId}
+        onCreate={onCreate}
+        onRequestDelete={setPendingDelete}
+      />
 
-      <Dialog open={pendingDelete != null} onOpenChange={(open) => !open && setPendingDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete conversation?</DialogTitle>
-            <DialogDescription>
-              {pendingDelete
-                ? `“${pendingDelete.title}” has ${pendingDelete.messages.length} message${
-                    pendingDelete.messages.length === 1 ? "" : "s"
-                  }. This cannot be undone.`
-                : null}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setPendingDelete(null)}>
-              Cancel
-            </Button>
-            <Button type="button" variant="destructive" onClick={confirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConversationDialog
+        pendingDelete={pendingDelete}
+        onOpenChange={(open) => closeDeleteDialog(open, setPendingDelete)}
+        onConfirm={() =>
+          confirmPendingDelete(
+            pendingDelete,
+            selectedId,
+            navigate,
+            setPendingDelete
+          )
+        }
+      />
     </aside>
   )
 }

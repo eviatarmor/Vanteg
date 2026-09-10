@@ -16,6 +16,316 @@ const PANE_MOTION = "duration-200 ease-linear"
 const PANE_SURFACE =
   "flex min-h-0 flex-col overflow-hidden bg-card [--scroll-fade-from:var(--card)]"
 
+type SidebarSide = "left" | "right"
+type DragState = { x: number; width: number }
+
+function resizeDelta(side: SidebarSide, delta: number) {
+  if (side === "right") {
+    return -delta
+  }
+  return delta
+}
+
+function clampSidebarWidth(
+  next: number,
+  parentWidth: number | undefined,
+  minWidth: number,
+  maxRatio: number
+) {
+  if (!parentWidth) {
+    return Math.min(480, Math.max(minWidth, next))
+  }
+  const max = Math.max(minWidth, Math.round(parentWidth * maxRatio))
+  return Math.min(max, Math.max(minWidth, next))
+}
+
+function sidebarPaneWidth(isCollapsed: boolean, width: number) {
+  if (isCollapsed) {
+    return 0
+  }
+  return width
+}
+
+function shouldAnimatePane(collapsible: boolean, dragging: boolean) {
+  return collapsible && !dragging
+}
+
+function collapsedState(isCollapsed: boolean) {
+  if (isCollapsed) {
+    return "collapsed" as const
+  }
+  return "expanded" as const
+}
+
+function collapsedAttr(isCollapsed: boolean) {
+  if (isCollapsed) {
+    return true
+  }
+  return undefined
+}
+
+function paneAnchorClass(side: SidebarSide) {
+  if (side === "right") {
+    return "right-0"
+  }
+  return "left-0"
+}
+
+function widthTransitionClass(animate: boolean) {
+  if (!animate) {
+    return undefined
+  }
+  return `transition-[width] ${PANE_MOTION}`
+}
+
+function handleWidthClass(isCollapsed: boolean) {
+  if (isCollapsed) {
+    return "pointer-events-none w-0 overflow-hidden"
+  }
+  return "w-px"
+}
+
+function handleTabIndex(isCollapsed: boolean) {
+  if (isCollapsed) {
+    return -1
+  }
+  return undefined
+}
+
+function resizeStepForKey(key: string) {
+  if (key === "ArrowRight") {
+    return 16
+  }
+  if (key === "ArrowLeft") {
+    return -16
+  }
+  return null
+}
+
+function beginResize(
+  event: PointerEvent<HTMLButtonElement>,
+  isCollapsed: boolean,
+  width: number,
+  drag: { current: DragState | null },
+  setDragging: (value: boolean) => void
+) {
+  if (isCollapsed) {
+    return
+  }
+  event.preventDefault()
+  event.currentTarget.setPointerCapture(event.pointerId)
+  setDragging(true)
+  drag.current = { x: event.clientX, width }
+}
+
+function moveResize(
+  event: PointerEvent<HTMLButtonElement>,
+  side: SidebarSide,
+  drag: { current: DragState | null },
+  setWidth: (width: number) => void,
+  clamp: (next: number) => number
+) {
+  if (!drag.current) {
+    return
+  }
+  const delta = event.clientX - drag.current.x
+  setWidth(clamp(drag.current.width + resizeDelta(side, delta)))
+}
+
+function applyResizeKey(
+  event: KeyboardEvent<HTMLButtonElement>,
+  isCollapsed: boolean,
+  side: SidebarSide,
+  setWidth: (updater: (current: number) => number) => void,
+  clamp: (next: number) => number
+) {
+  const step = resizeStepForKey(event.key)
+  if (isCollapsed || step === null) {
+    return
+  }
+  event.preventDefault()
+  setWidth((current) => clamp(current + resizeDelta(side, step)))
+}
+
+function CollapsibleSidebarPane({
+  isCollapsed,
+  paneWidth,
+  width,
+  animate,
+  side,
+  sidebarClassName,
+  sidebar,
+}: {
+  isCollapsed: boolean
+  paneWidth: number
+  width: number
+  animate: boolean
+  side: SidebarSide
+  sidebarClassName?: string
+  sidebar: ReactNode
+}) {
+  return (
+    <div
+      data-slot="resizable-sidebar-pane"
+      data-state={collapsedState(isCollapsed)}
+      aria-hidden={collapsedAttr(isCollapsed)}
+      inert={collapsedAttr(isCollapsed)}
+      style={{ width: paneWidth }}
+      className={cn(
+        "relative h-full min-h-0 shrink-0 overflow-hidden",
+        widthTransitionClass(animate)
+      )}
+    >
+      <div
+        style={{ width }}
+        className={cn(
+          "absolute inset-y-0",
+          PANE_SURFACE,
+          paneAnchorClass(side),
+          sidebarClassName
+        )}
+      >
+        {sidebar}
+      </div>
+    </div>
+  )
+}
+
+function StaticSidebarPane({
+  width,
+  sidebarClassName,
+  sidebar,
+}: {
+  width: number
+  sidebarClassName?: string
+  sidebar: ReactNode
+}) {
+  return (
+    <div
+      style={{ width }}
+      className={cn("min-w-0 shrink-0", PANE_SURFACE, sidebarClassName)}
+    >
+      {sidebar}
+    </div>
+  )
+}
+
+function SidebarPane({
+  collapsible,
+  isCollapsed,
+  paneWidth,
+  width,
+  animate,
+  side,
+  sidebarClassName,
+  sidebar,
+}: {
+  collapsible: boolean
+  isCollapsed: boolean
+  paneWidth: number
+  width: number
+  animate: boolean
+  side: SidebarSide
+  sidebarClassName?: string
+  sidebar: ReactNode
+}) {
+  if (!collapsible) {
+    return (
+      <StaticSidebarPane
+        width={width}
+        sidebarClassName={sidebarClassName}
+        sidebar={sidebar}
+      />
+    )
+  }
+  return (
+    <CollapsibleSidebarPane
+      isCollapsed={isCollapsed}
+      paneWidth={paneWidth}
+      width={width}
+      animate={animate}
+      side={side}
+      sidebarClassName={sidebarClassName}
+      sidebar={sidebar}
+    />
+  )
+}
+
+function SidebarResizeHandle({
+  minWidth,
+  width,
+  isCollapsed,
+  animate,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onKeyDown,
+}: {
+  minWidth: number
+  width: number
+  isCollapsed: boolean
+  animate: boolean
+  onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void
+  onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void
+  onPointerUp: () => void
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void
+}) {
+  return (
+    <button
+      type="button"
+      role="separator"
+      aria-label="Resize panel"
+      aria-orientation="vertical"
+      aria-valuemin={minWidth}
+      aria-valuemax={480}
+      aria-valuenow={width}
+      aria-hidden={collapsedAttr(isCollapsed)}
+      tabIndex={handleTabIndex(isCollapsed)}
+      className={cn(
+        "relative flex shrink-0 cursor-col-resize items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 hover:bg-ring focus-visible:bg-ring focus-visible:outline-hidden",
+        handleWidthClass(isCollapsed),
+        widthTransitionClass(animate)
+      )}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onKeyDown={onKeyDown}
+    >
+      <span className="pointer-events-none z-10 h-6 w-1 rounded-lg bg-border" />
+    </button>
+  )
+}
+
+function SplitLayout({
+  side,
+  pane,
+  handle,
+  main,
+}: {
+  side: SidebarSide
+  pane: ReactNode
+  handle: ReactNode
+  main: ReactNode
+}) {
+  if (side === "left") {
+    return (
+      <>
+        {pane}
+        {handle}
+        {main}
+      </>
+    )
+  }
+  return (
+    <>
+      {main}
+      {handle}
+      {pane}
+    </>
+  )
+}
+
 export function ResizableSidebar({
   id,
   sidebar,
@@ -30,7 +340,7 @@ export function ResizableSidebar({
   id: string
   sidebar: ReactNode
   children: ReactNode
-  side?: "left" | "right"
+  side?: SidebarSide
   defaultWidth?: number
   minWidth?: number
   maxRatio?: number
@@ -38,121 +348,22 @@ export function ResizableSidebar({
   sidebarClassName?: string
 }) {
   const groupRef = useRef<HTMLDivElement>(null)
-  const drag = useRef<{ x: number; width: number } | null>(null)
+  const drag = useRef<DragState | null>(null)
   const [width, setWidth] = useState(defaultWidth)
   const [dragging, setDragging] = useState(false)
   const collapsible = collapsed !== undefined
   const isCollapsed = collapsed === true
-  const paneWidth = isCollapsed ? 0 : width
-  const animate = collapsible && !dragging
+  const paneWidth = sidebarPaneWidth(isCollapsed, width)
+  const animate = shouldAnimatePane(collapsible, dragging)
 
-  function clamp(next: number): number {
-    const parentWidth = groupRef.current?.getBoundingClientRect().width
-    const max = parentWidth
-      ? Math.max(minWidth, Math.round(parentWidth * maxRatio))
-      : 480
-    return Math.min(max, Math.max(minWidth, next))
+  function clamp(next: number) {
+    return clampSidebarWidth(
+      next,
+      groupRef.current?.getBoundingClientRect().width,
+      minWidth,
+      maxRatio
+    )
   }
-
-  function onPointerDown(event: PointerEvent<HTMLButtonElement>) {
-    if (isCollapsed) {
-      return
-    }
-    event.preventDefault()
-    event.currentTarget.setPointerCapture(event.pointerId)
-    setDragging(true)
-    drag.current = { x: event.clientX, width }
-  }
-
-  function onPointerMove(event: PointerEvent<HTMLButtonElement>) {
-    if (!drag.current) {
-      return
-    }
-    const delta = event.clientX - drag.current.x
-    setWidth(clamp(drag.current.width + (side === "right" ? -delta : delta)))
-  }
-
-  function onPointerUp() {
-    drag.current = null
-    setDragging(false)
-  }
-
-  function onKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (
-      isCollapsed ||
-      (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
-    ) {
-      return
-    }
-    event.preventDefault()
-    const step = event.key === "ArrowRight" ? 16 : -16
-    setWidth((current) => clamp(current + (side === "right" ? -step : step)))
-  }
-
-  const pane = collapsible ? (
-    <div
-      data-slot="resizable-sidebar-pane"
-      data-state={isCollapsed ? "collapsed" : "expanded"}
-      aria-hidden={isCollapsed || undefined}
-      inert={isCollapsed || undefined}
-      style={{ width: paneWidth }}
-      className={cn(
-        "relative h-full min-h-0 shrink-0 overflow-hidden",
-        animate && `transition-[width] ${PANE_MOTION}`
-      )}
-    >
-      <div
-        style={{ width }}
-        className={cn(
-          "absolute inset-y-0",
-          PANE_SURFACE,
-          side === "right" ? "right-0" : "left-0",
-          sidebarClassName
-        )}
-      >
-        {sidebar}
-      </div>
-    </div>
-  ) : (
-    <div
-      style={{ width }}
-      className={cn("min-w-0 shrink-0", PANE_SURFACE, sidebarClassName)}
-    >
-      {sidebar}
-    </div>
-  )
-
-  const handle = (
-    <button
-      type="button"
-      role="separator"
-      aria-label="Resize panel"
-      aria-orientation="vertical"
-      aria-valuemin={minWidth}
-      aria-valuemax={480}
-      aria-valuenow={width}
-      aria-hidden={isCollapsed || undefined}
-      tabIndex={isCollapsed ? -1 : undefined}
-      className={cn(
-        "relative flex shrink-0 cursor-col-resize items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 hover:bg-ring focus-visible:bg-ring focus-visible:outline-hidden",
-        isCollapsed ? "pointer-events-none w-0 overflow-hidden" : "w-px",
-        animate && `transition-[width] ${PANE_MOTION}`
-      )}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      onKeyDown={onKeyDown}
-    >
-      <span className="pointer-events-none z-10 h-6 w-1 rounded-lg bg-border" />
-    </button>
-  )
-
-  const main = (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      {children}
-    </div>
-  )
 
   return (
     <div
@@ -160,9 +371,47 @@ export function ResizableSidebar({
       data-sidebar-split={id}
       className="flex min-h-0 min-w-0 flex-1"
     >
-      {side === "left" ? pane : main}
-      {handle}
-      {side === "left" ? main : pane}
+      <SplitLayout
+        side={side}
+        pane={
+          <SidebarPane
+            collapsible={collapsible}
+            isCollapsed={isCollapsed}
+            paneWidth={paneWidth}
+            width={width}
+            animate={animate}
+            side={side}
+            sidebarClassName={sidebarClassName}
+            sidebar={sidebar}
+          />
+        }
+        handle={
+          <SidebarResizeHandle
+            minWidth={minWidth}
+            width={width}
+            isCollapsed={isCollapsed}
+            animate={animate}
+            onPointerDown={(event) =>
+              beginResize(event, isCollapsed, width, drag, setDragging)
+            }
+            onPointerMove={(event) =>
+              moveResize(event, side, drag, setWidth, clamp)
+            }
+            onPointerUp={() => {
+              drag.current = null
+              setDragging(false)
+            }}
+            onKeyDown={(event) =>
+              applyResizeKey(event, isCollapsed, side, setWidth, clamp)
+            }
+          />
+        }
+        main={
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {children}
+          </div>
+        }
+      />
     </div>
   )
 }
