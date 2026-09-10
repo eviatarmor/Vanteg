@@ -64,7 +64,6 @@ export function oauth(provider: string, scopes: readonly string[] = []): AppAuth
 export const apiKey: AppAuth = { kind: "api-key" }
 export const jwt: AppAuth = { kind: "jwt" }
 export const basic: AppAuth = { kind: "basic" }
-export const bearer: AppAuth = { kind: "bearer" }
 export const serviceAccount: AppAuth = { kind: "service-account" }
 
 export function templateOperations(app: IntegrationApp): string[] {

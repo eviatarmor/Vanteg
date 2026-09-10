@@ -479,7 +479,7 @@ function envName(id: string): string {
   return id.toUpperCase().replace(/[^A-Z0-9]+/g, "_")
 }
 
-export const OAUTH_PROVIDERS: OAuthProviderDef[] = providerDefs.map((item) => ({
+const OAUTH_PROVIDERS: OAuthProviderDef[] = providerDefs.map((item) => ({
   id: item.id,
   name: item.name,
   authorizeUrl: item.authorizeUrl,
