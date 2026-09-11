@@ -1,5 +1,16 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Settings } from "lucide-react"
+import {
+  Bell,
+  Building2,
+  CreditCard,
+  Lock,
+  Palette,
+  Scale,
+  Settings,
+  Shield,
+  User,
+  type LucideIcon,
+} from "lucide-react"
 import { useSearchParams } from "react-router"
 import { toast } from "sonner"
 
@@ -40,6 +51,42 @@ import {
   WorkspacePanel,
 } from "./ui/SettingsPanels"
 
+const SETTINGS_NAV_GROUPS = [
+  {
+    label: "Account",
+    ids: [
+      "profile",
+      "appearance",
+      "notifications",
+      "security",
+      "privacy",
+    ] as const satisfies readonly SettingsSectionId[],
+  },
+  {
+    label: "Workspace",
+    ids: [
+      "workspace",
+      "billing",
+      "compliance",
+    ] as const satisfies readonly SettingsSectionId[],
+  },
+] as const
+
+const SECTION_ICONS: Record<SettingsSectionId, LucideIcon> = {
+  profile: User,
+  appearance: Palette,
+  notifications: Bell,
+  billing: CreditCard,
+  privacy: Shield,
+  security: Lock,
+  workspace: Building2,
+  compliance: Scale,
+}
+
+const SECTION_BY_ID = new Map(
+  SETTINGS_SECTIONS.map((section) => [section.id, section])
+)
+
 function resolveActiveSection(sectionParam: string | null): SettingsSectionId {
   if (isSettingsSectionId(sectionParam)) {
     return sectionParam
@@ -62,9 +109,9 @@ function nextSectionParams(
 
 function sectionButtonClass(active: boolean) {
   if (!active) {
-    return "justify-start whitespace-nowrap"
+    return "h-9 justify-start gap-2.5 whitespace-nowrap text-muted-foreground hover:text-foreground"
   }
-  return "justify-start whitespace-nowrap bg-muted font-medium"
+  return "h-9 justify-start gap-2.5 whitespace-nowrap bg-accent font-medium text-accent-foreground"
 }
 
 function currentPageAttr(active: boolean) {
@@ -326,23 +373,44 @@ export function SettingsPage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title={title} subtitle={subtitle} icon={Settings} />
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:items-start">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:items-start lg:gap-10">
           <nav
             aria-label="Settings sections"
-            className="flex shrink-0 flex-row gap-1 overflow-x-auto lg:w-48 lg:flex-col lg:overflow-visible"
+            className="flex w-full shrink-0 flex-col gap-5 border-b pb-6 lg:sticky lg:top-8 lg:w-52 lg:border-0 lg:pb-0"
           >
-            {SETTINGS_SECTIONS.map((section) => (
-              <Button
-                key={section.id}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={cn(sectionButtonClass(activeSection === section.id))}
-                aria-current={currentPageAttr(activeSection === section.id)}
-                onClick={() => selectSection(section.id)}
-              >
-                {section.label}
-              </Button>
+            {SETTINGS_NAV_GROUPS.map((group) => (
+              <div key={group.label} className="flex min-w-0 flex-col gap-1.5">
+                <p className="px-2.5 text-xs font-medium text-muted-foreground">
+                  {group.label}
+                </p>
+                <div className="flex flex-row flex-wrap gap-1 lg:flex-col lg:flex-nowrap">
+                  {group.ids.map((id) => {
+                    const section = SECTION_BY_ID.get(id)
+                    if (!section) {
+                      return null
+                    }
+                    const Icon = SECTION_ICONS[section.id]
+                    const active = activeSection === section.id
+                    return (
+                      <Button
+                        key={section.id}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className={cn(sectionButtonClass(active))}
+                        aria-current={currentPageAttr(active)}
+                        onClick={() => selectSection(section.id)}
+                      >
+                        <Icon
+                          className="size-3.5 shrink-0 text-muted-foreground"
+                          aria-hidden
+                        />
+                        {section.label}
+                      </Button>
+                    )
+                  })}
+                </div>
+              </div>
             ))}
           </nav>
 

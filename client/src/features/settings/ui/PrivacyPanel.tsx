@@ -4,14 +4,6 @@ import { toast } from "sonner"
 
 import { Button } from "@workspace/ui/components/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -31,6 +23,16 @@ import {
   type ComplianceState,
 } from "../model/compliance"
 import { type SettingsPreferences } from "../model/preferences"
+
+import {
+  SettingsContent,
+  SettingsDescription,
+  SettingsFooter,
+  SettingsHeader,
+  SettingsLayout,
+  SettingsSection,
+  SettingsTitle,
+} from "./SettingsLayout"
 
 type PrivacyPanelProps = {
   preferences: SettingsPreferences
@@ -87,15 +89,15 @@ export function PrivacyPanel({
 
   return (
     <>
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Data export</CardTitle>
-            <CardDescription>
+      <SettingsLayout>
+        <SettingsSection>
+          <SettingsHeader>
+            <SettingsTitle>Data export</SettingsTitle>
+            <SettingsDescription>
               Request a JSON package of mock workspace data (GDPR-style access).
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 pt-(--card-spacing)">
+            </SettingsDescription>
+          </SettingsHeader>
+          <SettingsContent className="grid gap-3">
             {compliance.exportStatus === "idle" ? (
               <p className="text-sm text-muted-foreground">
                 No export in progress. Requests stay in this browser only.
@@ -120,8 +122,8 @@ export function PrivacyPanel({
                 {compliance.exportError ?? "Export failed."}
               </p>
             ) : null}
-          </CardContent>
-          <CardFooter className="justify-end gap-2">
+          </SettingsContent>
+          <SettingsFooter>
             {compliance.exportStatus === "ready" ? (
               <Button type="button" onClick={downloadExport}>
                 <Download className="size-4" aria-hidden />
@@ -136,17 +138,17 @@ export function PrivacyPanel({
                 Request export
               </Button>
             )}
-          </CardFooter>
-        </Card>
+          </SettingsFooter>
+        </SettingsSection>
 
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Consent</CardTitle>
-            <CardDescription>
+        <SettingsSection>
+          <SettingsHeader>
+            <SettingsTitle>Consent</SettingsTitle>
+            <SettingsDescription>
               Cookie and analytics preferences for this workspace demo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 pt-(--card-spacing)">
+            </SettingsDescription>
+          </SettingsHeader>
+          <SettingsContent className="grid gap-4">
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-1">
                 <Label htmlFor="settings-cookie-consent">Cookie consent</Label>
@@ -158,7 +160,10 @@ export function PrivacyPanel({
                 id="settings-cookie-consent"
                 checked={preferences.cookieConsent}
                 onCheckedChange={(checked) =>
-                  onPatch({ cookieConsent: checked }, "Consent preferences saved.")
+                  onPatch(
+                    { cookieConsent: checked },
+                    "Consent preferences saved."
+                  )
                 }
               />
             </div>
@@ -182,35 +187,37 @@ export function PrivacyPanel({
                 }
               />
             </div>
-          </CardContent>
-        </Card>
+          </SettingsContent>
+        </SettingsSection>
 
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Retention</CardTitle>
-            <CardDescription>How long Vanteg keeps demo data.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 pt-(--card-spacing) text-sm text-muted-foreground">
+        <SettingsSection>
+          <SettingsHeader>
+            <SettingsTitle>Retention</SettingsTitle>
+            <SettingsDescription>
+              How long Vanteg keeps demo data.
+            </SettingsDescription>
+          </SettingsHeader>
+          <SettingsContent className="space-y-2 text-sm text-muted-foreground">
             <p>
               Active workspace data is retained while the account is open.
               Soft-deleted records purge after 30 days. Audit logs retain for 12
               months for security investigations.
             </p>
             <p>
-              This copy is informational for the mock Settings surface — production
-              retention is defined in the customer DPA.
+              This copy is informational for the mock Settings surface —
+              production retention is defined in the customer DPA.
             </p>
-          </CardContent>
-        </Card>
+          </SettingsContent>
+        </SettingsSection>
 
-        <Card className="border-destructive/40">
-          <CardHeader className="border-b">
-            <CardTitle>Delete account</CardTitle>
-            <CardDescription>
+        <SettingsSection>
+          <SettingsHeader>
+            <SettingsTitle>Delete account</SettingsTitle>
+            <SettingsDescription>
               Permanently remove this mock account from local storage.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-(--card-spacing)">
+            </SettingsDescription>
+          </SettingsHeader>
+          <SettingsContent>
             {compliance.accountDeletionPending ? (
               <p className="text-sm text-destructive" role="status">
                 Account deletion is pending. Sign out and contact support to
@@ -221,8 +228,8 @@ export function PrivacyPanel({
                 This cannot be undone in the demo. Confirm before continuing.
               </p>
             )}
-          </CardContent>
-          <CardFooter className="justify-end">
+          </SettingsContent>
+          <SettingsFooter>
             <Button
               type="button"
               variant="destructive"
@@ -231,9 +238,9 @@ export function PrivacyPanel({
             >
               Delete account
             </Button>
-          </CardFooter>
-        </Card>
-      </div>
+          </SettingsFooter>
+        </SettingsSection>
+      </SettingsLayout>
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>

@@ -3,14 +3,6 @@ import { useState } from "react"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -29,6 +21,16 @@ import {
   usagePercent,
 } from "../model/compliance"
 
+import {
+  SettingsContent,
+  SettingsDescription,
+  SettingsFooter,
+  SettingsHeader,
+  SettingsLayout,
+  SettingsSection,
+  SettingsTitle,
+} from "./SettingsLayout"
+
 type BillingPanelProps = {
   compliance: ComplianceState
   onCompliance: (next: ComplianceState, message?: string) => void
@@ -46,20 +48,22 @@ export function BillingPanel({ compliance, onCompliance }: BillingPanelProps) {
 
   return (
     <>
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Current plan</CardTitle>
-            <CardDescription>
+      <SettingsLayout>
+        <SettingsSection>
+          <SettingsHeader>
+            <SettingsTitle>Current plan</SettingsTitle>
+            <SettingsDescription>
               Mock billing for demos — no real charges.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 pt-(--card-spacing)">
+            </SettingsDescription>
+          </SettingsHeader>
+          <SettingsContent className="grid gap-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-2xl font-semibold capitalize">
                 {compliance.plan}
               </span>
-              <Badge variant={compliance.plan === "pro" ? "default" : "secondary"}>
+              <Badge
+                variant={compliance.plan === "pro" ? "default" : "secondary"}
+              >
                 {compliance.plan === "pro" ? "Active" : "Free tier"}
               </Badge>
             </div>
@@ -83,13 +87,16 @@ export function BillingPanel({ compliance, onCompliance }: BillingPanelProps) {
                 <Progress value={seatsPct} aria-label="Seat usage" />
               </div>
             </div>
-          </CardContent>
-          <CardFooter className="justify-end gap-2">
+          </SettingsContent>
+          <SettingsFooter>
             {compliance.plan === "free" ? (
               <Button
                 type="button"
                 onClick={() =>
-                  onCompliance(upgradePlan(compliance), "Upgraded to Pro (mock).")
+                  onCompliance(
+                    upgradePlan(compliance),
+                    "Upgraded to Pro (mock)."
+                  )
                 }
               >
                 Upgrade to Pro
@@ -99,27 +106,30 @@ export function BillingPanel({ compliance, onCompliance }: BillingPanelProps) {
                 Pro includes higher limits and priority support.
               </p>
             )}
-          </CardFooter>
-        </Card>
+          </SettingsFooter>
+        </SettingsSection>
 
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Payment method</CardTitle>
-            <CardDescription>
-              Display-only mock card — use Update payment to change the last four.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-(--card-spacing)">
+        <SettingsSection>
+          <SettingsHeader>
+            <SettingsTitle>Payment method</SettingsTitle>
+            <SettingsDescription>
+              Display-only mock card — use Update payment to change the last
+              four.
+            </SettingsDescription>
+          </SettingsHeader>
+          <SettingsContent>
             {compliance.paymentLast4 ? (
               <p className="font-medium">
                 {compliance.paymentBrand ?? "Card"} ending in{" "}
                 <span className="font-mono">{compliance.paymentLast4}</span>
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">No payment method on file.</p>
+              <p className="text-sm text-muted-foreground">
+                No payment method on file.
+              </p>
             )}
-          </CardContent>
-          <CardFooter className="justify-end">
+          </SettingsContent>
+          <SettingsFooter>
             <Button
               type="button"
               variant="outline"
@@ -130,15 +140,17 @@ export function BillingPanel({ compliance, onCompliance }: BillingPanelProps) {
             >
               Update payment
             </Button>
-          </CardFooter>
-        </Card>
+          </SettingsFooter>
+        </SettingsSection>
 
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Invoices</CardTitle>
-            <CardDescription>Recent billing history (stub).</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-(--card-spacing)">
+        <SettingsSection>
+          <SettingsHeader>
+            <SettingsTitle>Invoices</SettingsTitle>
+            <SettingsDescription>
+              Recent billing history (stub).
+            </SettingsDescription>
+          </SettingsHeader>
+          <SettingsContent>
             {compliance.invoices.length === 0 ? (
               <p className="text-sm text-muted-foreground">No invoices yet.</p>
             ) : (
@@ -160,16 +172,17 @@ export function BillingPanel({ compliance, onCompliance }: BillingPanelProps) {
                 ))}
               </ul>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </SettingsContent>
+        </SettingsSection>
+      </SettingsLayout>
 
       <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Update payment method</DialogTitle>
             <DialogDescription>
-              Mock only — enter the last four digits. No card processor is called.
+              Mock only — enter the last four digits. No card processor is
+              called.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">

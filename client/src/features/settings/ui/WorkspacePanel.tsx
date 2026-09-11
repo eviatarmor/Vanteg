@@ -1,12 +1,4 @@
 import { Button } from "@workspace/ui/components/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
 import {
@@ -22,6 +14,16 @@ import {
   WORKSPACE_LOCALES,
   WORKSPACE_TIMEZONES,
 } from "../model/preferences"
+
+import {
+  SettingsContent,
+  SettingsDescription,
+  SettingsField,
+  SettingsFooter,
+  SettingsHeader,
+  SettingsSection,
+  SettingsTitle,
+} from "./SettingsLayout"
 
 type WorkspacePanelProps = {
   preferences: SettingsPreferences
@@ -41,38 +43,44 @@ export function WorkspacePanel({
   onPatch,
 }: WorkspacePanelProps) {
   return (
-    <Card>
-      <CardHeader className="border-b">
-        <CardTitle>Workspace</CardTitle>
-        <CardDescription>
+    <SettingsSection>
+      <SettingsHeader>
+        <SettingsTitle>Workspace</SettingsTitle>
+        <SettingsDescription>
           Display name, timezone, and default locale for this workspace.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 pt-(--card-spacing)">
-        <div className="grid gap-2">
-          <Label htmlFor="settings-workspace-name">Display name</Label>
-          <Input
-            id="settings-workspace-name"
-            value={workspaceDraft}
-            onChange={(event) => onWorkspaceDraft(event.target.value)}
-            aria-invalid={Boolean(workspaceError)}
-            autoComplete="organization"
-          />
-          {workspaceError ? (
-            <p className="text-sm text-destructive" role="alert">
-              {workspaceError}
-            </p>
-          ) : null}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="settings-timezone">Timezone</Label>
+        </SettingsDescription>
+      </SettingsHeader>
+      <SettingsContent className="grid gap-4">
+        <SettingsField>
+          <Label htmlFor="settings-workspace-name" className="sm:w-40">
+            Display name
+          </Label>
+          <div className="grid max-w-sm gap-2">
+            <Input
+              id="settings-workspace-name"
+              value={workspaceDraft}
+              onChange={(event) => onWorkspaceDraft(event.target.value)}
+              aria-invalid={Boolean(workspaceError)}
+              autoComplete="organization"
+            />
+            {workspaceError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {workspaceError}
+              </p>
+            ) : null}
+          </div>
+        </SettingsField>
+        <SettingsField>
+          <Label htmlFor="settings-timezone" className="sm:w-40">
+            Timezone
+          </Label>
           <Select
             value={preferences.timezone}
             onValueChange={(value) =>
               onPatch({ timezone: value }, "Timezone saved.")
             }
           >
-            <SelectTrigger id="settings-timezone" className="w-full sm:w-72">
+            <SelectTrigger id="settings-timezone" className="w-full max-w-sm">
               <SelectValue placeholder="Select timezone" />
             </SelectTrigger>
             <SelectContent>
@@ -83,16 +91,18 @@ export function WorkspacePanel({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="settings-locale">Default locale</Label>
+        </SettingsField>
+        <SettingsField>
+          <Label htmlFor="settings-locale" className="sm:w-40">
+            Default locale
+          </Label>
           <Select
             value={preferences.locale}
             onValueChange={(value) =>
               onPatch({ locale: value }, "Locale saved.")
             }
           >
-            <SelectTrigger id="settings-locale" className="w-full sm:w-72">
+            <SelectTrigger id="settings-locale" className="w-full max-w-sm">
               <SelectValue placeholder="Select locale" />
             </SelectTrigger>
             <SelectContent>
@@ -103,13 +113,13 @@ export function WorkspacePanel({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-end">
+        </SettingsField>
+      </SettingsContent>
+      <SettingsFooter>
         <Button type="button" onClick={onSaveWorkspace}>
           Save workspace
         </Button>
-      </CardFooter>
-    </Card>
+      </SettingsFooter>
+    </SettingsSection>
   )
 }

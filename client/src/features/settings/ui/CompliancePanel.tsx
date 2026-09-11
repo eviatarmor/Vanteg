@@ -2,13 +2,6 @@ import { ExternalLink, Shield } from "lucide-react"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
 
 import {
   DPA_HREF,
@@ -17,6 +10,15 @@ import {
   type ComplianceState,
   type PrivacyRequestType,
 } from "../model/compliance"
+
+import {
+  SettingsContent,
+  SettingsDescription,
+  SettingsHeader,
+  SettingsLayout,
+  SettingsSection,
+  SettingsTitle,
+} from "./SettingsLayout"
 
 type CompliancePanelProps = {
   compliance: ComplianceState
@@ -35,15 +37,15 @@ export function CompliancePanel({
   onCompliance,
 }: CompliancePanelProps) {
   return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Data processing agreement</CardTitle>
-          <CardDescription>
+    <SettingsLayout>
+      <SettingsSection>
+        <SettingsHeader>
+          <SettingsTitle>Data processing agreement</SettingsTitle>
+          <SettingsDescription>
             Review the stub DPA covering controller / processor terms.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-(--card-spacing)">
+          </SettingsDescription>
+        </SettingsHeader>
+        <SettingsContent>
           <a
             href={DPA_HREF}
             target="_blank"
@@ -53,17 +55,17 @@ export function CompliancePanel({
             View DPA
             <ExternalLink className="size-3.5" aria-hidden />
           </a>
-        </CardContent>
-      </Card>
+        </SettingsContent>
+      </SettingsSection>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Subprocessors</CardTitle>
-          <CardDescription>
+      <SettingsSection>
+        <SettingsHeader>
+          <SettingsTitle>Subprocessors</SettingsTitle>
+          <SettingsDescription>
             Vendors that may process customer data on Vanteg&apos;s behalf.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-(--card-spacing)">
+          </SettingsDescription>
+        </SettingsHeader>
+        <SettingsContent>
           <ul className="divide-y divide-border rounded-lg border">
             {SUBPROCESSORS.map((vendor) => (
               <li key={vendor.id} className="grid gap-0.5 px-3 py-2.5">
@@ -71,19 +73,23 @@ export function CompliancePanel({
                   <span className="text-sm font-medium">{vendor.name}</span>
                   <Badge variant="outline">{vendor.region}</Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">{vendor.purpose}</p>
+                <p className="text-xs text-muted-foreground">
+                  {vendor.purpose}
+                </p>
               </li>
             ))}
           </ul>
-        </CardContent>
-      </Card>
+        </SettingsContent>
+      </SettingsSection>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Audit log</CardTitle>
-          <CardDescription>Recent security-relevant events (mock).</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-(--card-spacing)">
+      <SettingsSection>
+        <SettingsHeader>
+          <SettingsTitle>Audit log</SettingsTitle>
+          <SettingsDescription>
+            Recent security-relevant events (mock).
+          </SettingsDescription>
+        </SettingsHeader>
+        <SettingsContent>
           {compliance.auditLog.length === 0 ? (
             <p className="text-sm text-muted-foreground">No audit events.</p>
           ) : (
@@ -91,9 +97,14 @@ export function CompliancePanel({
               {compliance.auditLog.map((row) => (
                 <li key={row.id} className="grid gap-0.5 px-3 py-2.5 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Shield className="size-3.5 text-muted-foreground" aria-hidden />
+                    <Shield
+                      className="size-3.5 text-muted-foreground"
+                      aria-hidden
+                    />
                     <span className="font-medium">{row.action}</span>
-                    <span className="text-muted-foreground">→ {row.target}</span>
+                    <span className="text-muted-foreground">
+                      → {row.target}
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {row.actor} · {new Date(row.at).toLocaleString()}
@@ -102,17 +113,18 @@ export function CompliancePanel({
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
+        </SettingsContent>
+      </SettingsSection>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>GDPR / CCPA requests</CardTitle>
-          <CardDescription>
-            Queue access, export, delete, or rectify requests with status tracking.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 pt-(--card-spacing)">
+      <SettingsSection>
+        <SettingsHeader>
+          <SettingsTitle>GDPR / CCPA requests</SettingsTitle>
+          <SettingsDescription>
+            Queue access, export, delete, or rectify requests with status
+            tracking.
+          </SettingsDescription>
+        </SettingsHeader>
+        <SettingsContent className="grid gap-4">
           <div className="flex flex-wrap gap-2">
             {PRIVACY_TYPES.map((item) => (
               <Button
@@ -132,7 +144,9 @@ export function CompliancePanel({
             ))}
           </div>
           {compliance.privacyRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No privacy requests yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No privacy requests yet.
+            </p>
           ) : (
             <ul className="divide-y divide-border rounded-lg border">
               {compliance.privacyRequests.map((request) => (
@@ -142,7 +156,9 @@ export function CompliancePanel({
                 >
                   <div>
                     <p className="font-medium capitalize">{request.type}</p>
-                    <p className="text-xs text-muted-foreground">{request.note}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {request.note}
+                    </p>
                   </div>
                   <Badge
                     variant={
@@ -156,8 +172,8 @@ export function CompliancePanel({
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </SettingsContent>
+      </SettingsSection>
+    </SettingsLayout>
   )
 }

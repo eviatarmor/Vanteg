@@ -3,24 +3,24 @@ import { toast } from "sonner"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
 import { Label } from "@workspace/ui/components/label"
 import { Switch } from "@workspace/ui/components/switch"
 
 import { SecretInput } from "@/components/secret-input"
 
-import {
-  signOutOtherSessions,
-  type ComplianceState,
-} from "../model/compliance"
+import { signOutOtherSessions, type ComplianceState } from "../model/compliance"
 import { type SettingsPreferences } from "../model/preferences"
+
+import {
+  SettingsContent,
+  SettingsDescription,
+  SettingsField,
+  SettingsFooter,
+  SettingsHeader,
+  SettingsLayout,
+  SettingsSection,
+  SettingsTitle,
+} from "./SettingsLayout"
 
 type SecurityPanelProps = {
   preferences: SettingsPreferences
@@ -64,15 +64,15 @@ export function SecurityPanel({
   }
 
   return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Sessions</CardTitle>
-          <CardDescription>
+    <SettingsLayout>
+      <SettingsSection>
+        <SettingsHeader>
+          <SettingsTitle>Sessions</SettingsTitle>
+          <SettingsDescription>
             Devices signed in to this workspace (mock list).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-(--card-spacing)">
+          </SettingsDescription>
+        </SettingsHeader>
+        <SettingsContent>
           {compliance.sessions.length === 0 ? (
             <p className="text-sm text-muted-foreground">No active sessions.</p>
           ) : (
@@ -97,8 +97,8 @@ export function SecurityPanel({
               ))}
             </ul>
           )}
-        </CardContent>
-        <CardFooter className="justify-end">
+        </SettingsContent>
+        <SettingsFooter>
           <Button
             type="button"
             variant="outline"
@@ -111,17 +111,17 @@ export function SecurityPanel({
           >
             Sign out all other sessions
           </Button>
-        </CardFooter>
-      </Card>
+        </SettingsFooter>
+      </SettingsSection>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Two-factor authentication</CardTitle>
-          <CardDescription>
+      <SettingsSection>
+        <SettingsHeader>
+          <SettingsTitle>Two-factor authentication</SettingsTitle>
+          <SettingsDescription>
             Stub toggle — wire a real authenticator later.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-between gap-4 pt-(--card-spacing)">
+          </SettingsDescription>
+        </SettingsHeader>
+        <SettingsContent className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <Label htmlFor="settings-2fa">Require 2FA</Label>
             <p className="text-sm text-muted-foreground">
@@ -138,56 +138,66 @@ export function SecurityPanel({
               )
             }
           />
-        </CardContent>
-      </Card>
+        </SettingsContent>
+      </SettingsSection>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Change password</CardTitle>
-          <CardDescription>
+      <SettingsSection>
+        <SettingsHeader>
+          <SettingsTitle>Change password</SettingsTitle>
+          <SettingsDescription>
             Uses SecretInput — never a native password field.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 pt-(--card-spacing)">
-          <div className="grid gap-2">
-            <Label htmlFor="settings-current-password">Current password</Label>
+          </SettingsDescription>
+        </SettingsHeader>
+        <SettingsContent className="grid gap-4">
+          <SettingsField>
+            <Label htmlFor="settings-current-password" className="sm:w-40">
+              Current password
+            </Label>
             <SecretInput
               id="settings-current-password"
+              className="max-w-sm"
               value={currentPassword}
               onValueChange={setCurrentPassword}
               autoComplete="current-password"
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="settings-new-password">New password</Label>
+          </SettingsField>
+          <SettingsField>
+            <Label htmlFor="settings-new-password" className="sm:w-40">
+              New password
+            </Label>
             <SecretInput
               id="settings-new-password"
+              className="max-w-sm"
               value={nextPassword}
               onValueChange={setNextPassword}
               autoComplete="new-password"
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="settings-confirm-password">Confirm new password</Label>
-            <SecretInput
-              id="settings-confirm-password"
-              value={confirmPassword}
-              onValueChange={setConfirmPassword}
-              autoComplete="new-password"
-            />
-          </div>
-          {passwordError ? (
-            <p className="text-sm text-destructive" role="alert">
-              {passwordError}
-            </p>
-          ) : null}
-        </CardContent>
-        <CardFooter className="justify-end">
+          </SettingsField>
+          <SettingsField>
+            <Label htmlFor="settings-confirm-password" className="sm:w-40">
+              Confirm new password
+            </Label>
+            <div className="grid max-w-sm gap-2">
+              <SecretInput
+                id="settings-confirm-password"
+                value={confirmPassword}
+                onValueChange={setConfirmPassword}
+                autoComplete="new-password"
+              />
+              {passwordError ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {passwordError}
+                </p>
+              ) : null}
+            </div>
+          </SettingsField>
+        </SettingsContent>
+        <SettingsFooter>
           <Button type="button" onClick={handlePasswordChange}>
             Update password
           </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        </SettingsFooter>
+      </SettingsSection>
+    </SettingsLayout>
   )
 }
