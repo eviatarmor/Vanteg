@@ -1,5 +1,7 @@
 import type { AgentModel } from "@/features/agents/model/types"
 
+import type { AssistantAccessMode, AssistantEffort } from "./settings"
+
 export type AssistantRole = "user" | "assistant"
 
 export interface AssistantStartFile {
@@ -13,6 +15,8 @@ export interface AssistantStartPayload {
   text: string
   files?: AssistantStartFile[]
   model: AgentModel
+  access: AssistantAccessMode
+  effort: AssistantEffort
 }
 
 export interface AssistantMessage {

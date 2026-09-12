@@ -9,10 +9,12 @@ import {
 } from "ai"
 
 import { buildSystemPrompt } from "../features/assistant/model/chat-context"
-import type {
-  AssistantChatContext,
-  WorkflowChatContext,
-} from "../features/assistant/model/types"
+import {
+  assistantRequestErrorResponse,
+  parseChatRequestBody,
+} from "../features/assistant/model/request"
+import { modelSupportsEffort } from "../features/assistant/model/settings"
+import type { AssistantChatContext } from "../features/assistant/model/types"
 
 function lastUserText(messages: UIMessage[]): string {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
@@ -57,28 +59,34 @@ export async function handleChatRequest(
   request: Request,
   options: { apiKey?: string } = {}
 ): Promise<Response> {
-  const body = (await request.json()) as {
-    messages?: UIMessage[]
-    context?: AssistantChatContext
-    workflow?: WorkflowChatContext
+  let raw: unknown
+  try {
+    raw = await request.json()
+  } catch {
+    return assistantRequestErrorResponse("Request body must be JSON.")
   }
-  const messages = body.messages ?? []
-  const context: AssistantChatContext | undefined = body.context ??
-    (body.workflow
-      ? {
-          path: "/workflows",
-          pageTitle: "Workflows",
-          workflow: body.workflow,
-        }
-      : undefined)
-  const system = buildSystemPrompt(context)
+
+  const parsed = parseChatRequestBody(raw)
+  if (!parsed.ok) {
+    return assistantRequestErrorResponse(parsed.error)
+  }
+
+  const { messages, context, model, access, effort } = parsed.value
+  const system = buildSystemPrompt(context, access)
 
   if (options.apiKey) {
     const xai = createXai({ apiKey: options.apiKey })
     const result = streamText({
-      model: xai("grok-4.6"),
+      model: xai(model),
       system,
       messages: await convertToModelMessages(messages),
+      ...(modelSupportsEffort(model)
+        ? {
+            providerOptions: {
+              xai: { reasoningEffort: effort },
+            },
+          }
+        : {}),
     })
     return createUIMessageStreamResponse({
       stream: toUIMessageStream({ stream: result.stream }),
