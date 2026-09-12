@@ -1,22 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useChat } from "@ai-sdk/react"
-import { DefaultChatTransport, type UIMessage } from "ai"
-import { Sparkles } from "lucide-react"
+import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai"
 
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation"
 import { Message, MessageContent } from "@/components/ai-elements/message"
 import { Shimmer } from "@/components/ai-elements/shimmer"
-import { Suggestion } from "@/components/ai-elements/suggestion"
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input"
+import { cn } from "@workspace/ui/lib/utils"
 
-import { getAgentModel, type AgentModel } from "@/features/agents/model/types"
+import type { AgentModel } from "@/features/agents/model/types"
 
 import { suggestionsForPath } from "../model/chat-context"
+import {
+  getAssistantSettings,
+  isXaiAssistantModel,
+  type AssistantAccessMode,
+  type AssistantEffort,
+} from "../model/settings"
 import {
   getConversation,
   saveConversation,
@@ -33,6 +37,10 @@ import {
   AssistantMessageParts,
   type AssistantRenderPart,
 } from "./AssistantMessageParts"
+import {
+  AssistantWelcome,
+  assistantChatColumnClassName,
+} from "./AssistantWelcome"
 
 function toUIMessages(messages: AssistantMessage[]): UIMessage[] {
   return messages.map((message) => ({
@@ -64,7 +72,34 @@ function persist(conversationId: string, messages: UIMessage[]) {
   saveConversation(conversationId, patch)
 }
 
-export function partsFromUIMessage(message: UIMessage): AssistantRenderPart[] {
+function toFileUIParts(
+  files: AssistantStartFile[] | undefined
+): FileUIPart[] | undefined {
+  if (!files?.length) {
+    return undefined
+  }
+  return files.map((file) => ({
+    type: "file",
+    url: file.url,
+    mediaType: file.mediaType ?? "application/octet-stream",
+    filename: file.filename,
+  }))
+}
+
+function snapshotBody(overrides?: {
+  model?: AgentModel
+  access?: AssistantAccessMode
+  effort?: AssistantEffort
+}) {
+  const current = getAssistantSettings()
+  return {
+    model: overrides?.model ?? current.model,
+    access: overrides?.access ?? current.access,
+    effort: overrides?.effort ?? current.effort,
+  }
+}
+
+function partsFromUIMessage(message: UIMessage): AssistantRenderPart[] {
   const parts: AssistantRenderPart[] = []
   const sources: { href: string; title: string }[] = []
   for (const part of message.parts) {
@@ -118,29 +153,31 @@ export function ChatThread({
   initialPrompt,
   initialFiles,
   initialModel,
+  initialAccess,
+  initialEffort,
   onInitialPromptConsumed,
+  compact = false,
 }: {
   conversation: AssistantConversation
   context: AssistantChatContext
   initialPrompt?: string
   initialFiles?: AssistantStartFile[]
   initialModel?: AgentModel
+  initialAccess?: AssistantAccessMode
+  initialEffort?: AssistantEffort
   onInitialPromptConsumed?: () => void
+  compact?: boolean
 }) {
-  const [model, setModel] = useState<AgentModel>(
-    initialModel ?? getAgentModel("not-a-real-model").value
-  )
-  const [queued, setQueued] = useState<string[]>([])
   const suggestions = suggestionsForPath(context.path)
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { context, model },
+        body: { context },
       }),
-    [context, model]
+    [context]
   )
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, status, stop, error, regenerate } = useChat({
     id: conversation.id,
     messages: toUIMessages(conversation.messages),
     transport,
@@ -152,24 +189,19 @@ export function ChatThread({
 
   async function submit(text: string, files?: PromptInputMessage["files"]) {
     const trimmed = text.trim()
-    if ((!trimmed && !files?.length) || busy) {
-      if (trimmed && busy) {
-        setQueued((current) => [...current, trimmed])
-      }
+    const snapshot = snapshotBody()
+    if (
+      (!trimmed && !files?.length) ||
+      busy ||
+      !isXaiAssistantModel(snapshot.model)
+    ) {
       return
     }
-    await sendMessage({ text: trimmed || "Sent with attachments", files })
+    await sendMessage(
+      { text: trimmed || "Sent with attachments", files },
+      { body: snapshot }
+    )
   }
-
-  useEffect(() => {
-    if (!busy && queued.length > 0) {
-      const [next, ...rest] = queued
-      setQueued(rest)
-      if (next) {
-        void sendMessage({ text: next })
-      }
-    }
-  }, [busy, queued, sendMessage])
 
   useEffect(() => {
     const hasText = Boolean(initialPrompt?.trim())
@@ -179,11 +211,30 @@ export function ChatThread({
     }
     sentInitial.current = true
     onInitialPromptConsumed?.()
-    void sendMessage({
-      text: initialPrompt?.trim() || "Sent with attachments",
-      files: initialFiles,
+    const body = snapshotBody({
+      model: initialModel,
+      access: initialAccess,
+      effort: initialEffort,
     })
-  }, [initialPrompt, initialFiles, sendMessage, onInitialPromptConsumed])
+    if (!isXaiAssistantModel(body.model)) {
+      return
+    }
+    void sendMessage(
+      {
+        text: initialPrompt?.trim() || "Sent with attachments",
+        files: toFileUIParts(initialFiles),
+      },
+      { body }
+    )
+  }, [
+    initialPrompt,
+    initialFiles,
+    initialModel,
+    initialAccess,
+    initialEffort,
+    sendMessage,
+    onInitialPromptConsumed,
+  ])
 
   function onSubmit(message: PromptInputMessage) {
     void submit(message.text, message.files)
@@ -192,27 +243,17 @@ export function ChatThread({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <Conversation className="min-h-0">
-        <ConversationContent className="gap-4 p-3">
+        <ConversationContent
+          className={cn(
+            assistantChatColumnClassName,
+            "flex min-h-full flex-col gap-4 px-4 py-6"
+          )}
+        >
           {messages.length === 0 ? (
-            <>
-              <ConversationEmptyState
-                className="p-2"
-                icon={<Sparkles className="size-8" />}
-                title="Ask Vanteg"
-                description="Start a conversation, or pick a prompt below."
-              />
-              <Shimmer>Ready when you are</Shimmer>
-              <div className="flex w-full flex-col gap-2">
-                {suggestions.map((suggestion) => (
-                  <Suggestion
-                    key={suggestion}
-                    suggestion={suggestion}
-                    onClick={(value) => void submit(value)}
-                    className="h-auto w-full justify-start rounded-lg py-2 whitespace-normal"
-                  />
-                ))}
-              </div>
-            </>
+            <AssistantWelcome
+              suggestions={suggestions}
+              onSelect={(value) => void submit(value)}
+            />
           ) : (
             messages.map((message, index) => (
               <Message
@@ -236,17 +277,21 @@ export function ChatThread({
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
-      <AssistantComposer
-        status={status}
-        onSubmit={onSubmit}
-        onStop={stop}
-        queued={queued}
-        onRemoveQueued={(index) =>
-          setQueued((current) => current.filter((_, item) => item !== index))
-        }
-        model={model}
-        onModelChange={setModel}
-      />
+      <div
+        className={cn(
+          assistantChatColumnClassName,
+          compact ? "px-2 pt-1.5 pb-2" : "px-3 pt-2 pb-3"
+        )}
+      >
+        <AssistantComposer
+          compact={compact}
+          status={status}
+          onSubmit={onSubmit}
+          onStop={stop}
+          error={error}
+          onRetry={() => void regenerate({ body: snapshotBody() })}
+        />
+      </div>
     </div>
   )
 }

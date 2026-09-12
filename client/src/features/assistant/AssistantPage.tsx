@@ -5,11 +5,9 @@ import { Sparkles } from "lucide-react"
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
 } from "@/components/ai-elements/conversation"
-import { Shimmer } from "@/components/ai-elements/shimmer"
-import { Suggestion } from "@/components/ai-elements/suggestion"
 import { Spinner } from "@workspace/ui/components/spinner"
+import { cn } from "@workspace/ui/lib/utils"
 
 import { EmptyState } from "@/features/empty-state/EmptyState"
 import { ResizableSidebar } from "@/features/layout/ResizableSidebar"
@@ -17,9 +15,8 @@ import { PageHeader } from "@/features/page-header/PageHeader"
 import { getPageCopy } from "@/features/shell/model/catalog"
 import { useWorkflows } from "@/features/workflows/model/store"
 
-import { getAgentModel } from "@/features/agents/model/types"
-
 import { buildAssistantContext, suggestionsForPath } from "./model/chat-context"
+import { getAssistantSettings, isXaiAssistantModel } from "./model/settings"
 import {
   createConversation,
   getConversation,
@@ -34,24 +31,35 @@ import type {
 import { AssistantComposer } from "./ui/AssistantComposer"
 import { ChatThread } from "./ui/ChatThread"
 import { ThreadHistory } from "./ui/ThreadHistory"
+import {
+  AssistantWelcome,
+  assistantChatColumnClassName,
+} from "./ui/AssistantWelcome"
 
 type PendingStart = AssistantStartPayload & { id: string }
+
+function snapshotStart(
+  start?: string | AssistantStartPayload
+): AssistantStartPayload | null {
+  if (!start) {
+    return null
+  }
+  const settings = getAssistantSettings()
+  if (typeof start === "string") {
+    return { text: start, ...settings }
+  }
+  return { ...settings, ...start }
+}
 
 function nextPending(
   conversationId: string,
   start?: string | AssistantStartPayload
 ): PendingStart | null {
-  if (!start) {
+  const payload = snapshotStart(start)
+  if (!payload) {
     return null
   }
-  if (typeof start === "string") {
-    return {
-      id: conversationId,
-      text: start,
-      model: getAgentModel("not-a-real-model").value,
-    }
-  }
-  return { id: conversationId, ...start }
+  return { id: conversationId, ...payload }
 }
 
 function pendingFor(
@@ -94,35 +102,34 @@ function AssistantEmpty({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <Conversation className="min-h-0">
-        <ConversationContent className="gap-4 p-3">
-          <ConversationEmptyState
-            className="min-h-40 p-2"
-            icon={<Sparkles className="size-8" />}
-            title="Ask Vanteg"
-            description="Start a conversation, or pick a prompt."
+        <ConversationContent
+          className={cn(
+            assistantChatColumnClassName,
+            "flex min-h-full flex-col gap-4 px-4 py-6"
+          )}
+        >
+          <AssistantWelcome
+            suggestions={suggestions}
+            onSelect={(value) => {
+              if (!isXaiAssistantModel(getAssistantSettings().model)) {
+                return
+              }
+              onStart(value)
+            }}
           />
-          <Shimmer>Ready when you are</Shimmer>
-          <div className="flex w-full flex-col gap-2">
-            {suggestions.map((suggestion) => (
-              <Suggestion
-                key={suggestion}
-                suggestion={suggestion}
-                onClick={(value) => onStart(value)}
-                className="h-auto w-full justify-start rounded-lg py-2 whitespace-normal"
-              />
-            ))}
-          </div>
         </ConversationContent>
       </Conversation>
-      <AssistantComposer
-        onSubmit={(message, model) => {
-          const text = message.text.trim()
-          if (!(text || message.files?.length)) {
-            return
-          }
-          onStart({ text, files: message.files, model })
-        }}
-      />
+      <div className={cn(assistantChatColumnClassName, "px-3 pt-2 pb-3")}>
+        <AssistantComposer
+          onSubmit={(message) => {
+            const text = message.text.trim()
+            if (!(text || message.files?.length)) {
+              return
+            }
+            onStart({ text, files: message.files, ...getAssistantSettings() })
+          }}
+        />
+      </div>
     </div>
   )
 }
@@ -172,6 +179,8 @@ function AssistantChatPane({
         initialPrompt={start?.text}
         initialFiles={start?.files}
         initialModel={start?.model}
+        initialAccess={start?.access}
+        initialEffort={start?.effort}
         onInitialPromptConsumed={onInitialPromptConsumed}
       />
     )

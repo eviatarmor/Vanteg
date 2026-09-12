@@ -4,6 +4,7 @@ import { getPageTitle } from "../../shell/model/catalog"
 import { toChatContext } from "../../workflows/model/chat-context"
 import { getWorkflow } from "../../workflows/model/store"
 
+import { accessGuidance, type AssistantAccessMode } from "./settings"
 import {
   defaultAssistantSuggestions,
   workflowAssistantSuggestions,
@@ -54,11 +55,15 @@ export function suggestionsForPath(pathname: string): readonly string[] {
   return defaultAssistantSuggestions
 }
 
-export function buildSystemPrompt(context?: AssistantChatContext): string {
+export function buildSystemPrompt(
+  context?: AssistantChatContext,
+  access: AssistantAccessMode = "supervised"
+): string {
   const lines = [
     "You are Vanteg, an assistant for the Vanteg workspace.",
     "Help with workflows, data, integrations, memory, agents, and the rest of the product.",
     "Be concise.",
+    accessGuidance(access),
   ]
 
   if (context) {

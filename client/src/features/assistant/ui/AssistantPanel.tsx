@@ -1,16 +1,14 @@
 import { useMemo, useState } from "react"
-import { History, Maximize2, Plus, Sparkles, X } from "lucide-react"
+import { History, Maximize2, Plus, X } from "lucide-react"
 import { Link, useLocation } from "react-router"
 
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
 } from "@/components/ai-elements/conversation"
-import { Shimmer } from "@/components/ai-elements/shimmer"
-import { Suggestion } from "@/components/ai-elements/suggestion"
 import { Button } from "@workspace/ui/components/button"
 import { ScrollFade } from "@workspace/ui/components/scroll-fade"
+import { cn } from "@workspace/ui/lib/utils"
 
 import { useWorkflows } from "@/features/workflows/model/store"
 
@@ -19,12 +17,29 @@ import {
   suggestionsForPath,
 } from "../model/chat-context"
 import { setAssistantOpen } from "../model/open-store"
-import { getAgentModel } from "@/features/agents/model/types"
+import { getAssistantSettings, isXaiAssistantModel } from "../model/settings"
 
 import type { AssistantStartPayload } from "../model/types"
 import { createConversation, useConversations } from "../model/store"
 import { AssistantComposer } from "./AssistantComposer"
 import { ChatThread } from "./ChatThread"
+import {
+  AssistantWelcome,
+  assistantChatColumnClassName,
+} from "./AssistantWelcome"
+
+function snapshotStart(
+  start?: string | AssistantStartPayload
+): AssistantStartPayload | null {
+  if (!start) {
+    return null
+  }
+  const settings = getAssistantSettings()
+  if (typeof start === "string") {
+    return { text: start, ...settings }
+  }
+  return { ...settings, ...start }
+}
 
 export function AssistantPanel() {
   useWorkflows()
@@ -45,16 +60,7 @@ export function AssistantPanel() {
   function startNew(start?: string | AssistantStartPayload) {
     const conversation = createConversation()
     setActiveId(conversation.id)
-    if (!start) {
-      setPending(null)
-    } else if (typeof start === "string") {
-      setPending({
-        text: start,
-        model: getAgentModel("not-a-real-model").value,
-      })
-    } else {
-      setPending(start)
-    }
+    setPending(snapshotStart(start))
     setView("chat")
   }
 
@@ -134,45 +140,52 @@ export function AssistantPanel() {
       ) : active ? (
         <ChatThread
           key={active.id}
+          compact
           conversation={active}
           context={context}
           initialPrompt={pending?.text}
           initialFiles={pending?.files}
           initialModel={pending?.model}
+          initialAccess={pending?.access}
+          initialEffort={pending?.effort}
           onInitialPromptConsumed={() => setPending(null)}
         />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
           <Conversation className="min-h-0">
-            <ConversationContent className="gap-4 p-3">
-              <ConversationEmptyState
-                className="min-h-40 p-2"
-                icon={<Sparkles className="size-8" />}
-                title="Ask Vanteg"
-                description="Start a conversation, or pick a prompt."
+            <ConversationContent
+              className={cn(
+                assistantChatColumnClassName,
+                "flex min-h-full flex-col gap-4 px-3 py-6"
+              )}
+            >
+              <AssistantWelcome
+                suggestions={suggestions}
+                onSelect={(value) => {
+                  if (!isXaiAssistantModel(getAssistantSettings().model)) {
+                    return
+                  }
+                  startNew(value)
+                }}
               />
-              <Shimmer>Ready when you are</Shimmer>
-              <div className="flex w-full flex-col gap-2">
-                {suggestions.map((suggestion) => (
-                  <Suggestion
-                    key={suggestion}
-                    suggestion={suggestion}
-                    onClick={(value) => startNew(value)}
-                    className="h-auto w-full justify-start rounded-lg py-2 whitespace-normal"
-                  />
-                ))}
-              </div>
             </ConversationContent>
           </Conversation>
-          <AssistantComposer
-            onSubmit={(message, model) => {
-              const text = message.text.trim()
-              if (!(text || message.files?.length)) {
-                return
-              }
-              startNew({ text, files: message.files, model })
-            }}
-          />
+          <div className={cn(assistantChatColumnClassName, "px-2 pt-1.5 pb-2")}>
+            <AssistantComposer
+              compact
+              onSubmit={(message) => {
+                const text = message.text.trim()
+                if (!(text || message.files?.length)) {
+                  return
+                }
+                startNew({
+                  text,
+                  files: message.files,
+                  ...getAssistantSettings(),
+                })
+              }}
+            />
+          </div>
         </div>
       )}
     </aside>
