@@ -126,7 +126,12 @@ function AssistantEmpty({
             if (!(text || message.files?.length)) {
               return
             }
-            onStart({ text, files: message.files, ...getAssistantSettings() })
+            onStart({
+              text,
+              files: message.files,
+              references: message.references,
+              ...getAssistantSettings(),
+            })
           }}
         />
       </div>
@@ -181,6 +186,7 @@ function AssistantChatPane({
         initialModel={start?.model}
         initialAccess={start?.access}
         initialEffort={start?.effort}
+        initialReferences={start?.references}
         onInitialPromptConsumed={onInitialPromptConsumed}
       />
     )

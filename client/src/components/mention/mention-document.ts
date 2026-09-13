@@ -10,6 +10,10 @@ export function mentionItemValue(item: Pick<MentionItem, "kind" | "id">): string
   return mentionKey(item)
 }
 
+export function mentionOptionId(item: Pick<MentionItem, "kind" | "id">): string {
+  return `mention-option-${mentionItemValue(item)}`
+}
+
 export function emptyMentionDocument(): MentionSegment[] {
   return [{ type: "text", text: "" }]
 }
@@ -98,6 +102,67 @@ export function removeMention(
       (segment) => segment.type !== "mention" || segment.uid !== uid
     )
   )
+}
+
+export function insertTextAtCaret(
+  segments: MentionSegment[],
+  caret: { segmentIndex: number; offset: number },
+  text: string
+): { segments: MentionSegment[]; caret: { segmentIndex: number; offset: number } } {
+  const segment = segments[caret.segmentIndex]
+  if (!segment || segment.type !== "text" || !text) {
+    return { segments, caret }
+  }
+  const nextText =
+    segment.text.slice(0, caret.offset) + text + segment.text.slice(caret.offset)
+  const next = segments.map((entry, index) =>
+    index === caret.segmentIndex ? { type: "text" as const, text: nextText } : entry
+  )
+  return {
+    segments: normalizeMentionDocument(next),
+    caret: {
+      segmentIndex: caret.segmentIndex,
+      offset: caret.offset + text.length,
+    },
+  }
+}
+
+export function deleteAtCaret(
+  segments: MentionSegment[],
+  caret: { segmentIndex: number; offset: number }
+): { segments: MentionSegment[]; caret: { segmentIndex: number; offset: number } } {
+  const segment = segments[caret.segmentIndex]
+  if (!segment || segment.type !== "text") {
+    return { segments, caret }
+  }
+  if (caret.offset > 0) {
+    const nextText =
+      segment.text.slice(0, caret.offset - 1) + segment.text.slice(caret.offset)
+    const next = segments.map((entry, index) =>
+      index === caret.segmentIndex ? { type: "text" as const, text: nextText } : entry
+    )
+    return {
+      segments: normalizeMentionDocument(next),
+      caret: { segmentIndex: caret.segmentIndex, offset: caret.offset - 1 },
+    }
+  }
+  if (caret.segmentIndex === 0) {
+    return { segments, caret }
+  }
+  const previous = segments[caret.segmentIndex - 1]
+  if (previous?.type === "mention") {
+    const next = removeMention(segments, previous.uid)
+    const index = Math.max(caret.segmentIndex - 2, 0)
+    const at = next[index]
+    return {
+      segments: next,
+      caret: {
+        segmentIndex: index,
+        offset: at?.type === "text" ? at.text.length : 0,
+      },
+    }
+  }
+  return { segments, caret }
 }
 
 export function findMentionQueryInDocument(

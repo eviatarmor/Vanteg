@@ -71,8 +71,8 @@ export async function handleChatRequest(
     return assistantRequestErrorResponse(parsed.error)
   }
 
-  const { messages, context, model, access, effort } = parsed.value
-  const system = buildSystemPrompt(context, access)
+  const { messages, context, model, access, effort, references } = parsed.value
+  const system = buildSystemPrompt(context, access, references)
 
   if (options.apiKey) {
     const xai = createXai({ apiKey: options.apiKey })

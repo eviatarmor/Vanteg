@@ -2,7 +2,6 @@ import type { UIMessage } from "ai"
 
 import { getAgentModel, type AgentModel } from "../../agents/model/types"
 
-import type { AssistantChatContext, WorkflowChatContext } from "./types"
 import {
   defaultAssistantSettings,
   isAgentModelValue,
@@ -12,10 +11,41 @@ import {
   modelSupportsEffort,
   type AssistantSettings,
 } from "./settings"
+import type {
+  AssistantChatContext,
+  AssistantReference,
+  AssistantReferenceKind,
+  WorkflowChatContext,
+} from "./types"
+
+export const MAX_CHAT_REFERENCES = 12
+export const MAX_REFERENCE_IDENTITY_LENGTH = 200
+export const MAX_REFERENCE_CONTEXT_LENGTH = 8_000
+export const MAX_REFERENCE_CONTEXT_TOTAL = 32_000
+
+const REFERENCE_KINDS = new Set<AssistantReferenceKind>([
+  "agent",
+  "team",
+  "workflow",
+  "table",
+  "variable-group",
+  "memory",
+  "knowledge",
+  "connector",
+])
+
+const REFERENCE_WIRE_KEYS = new Set([
+  "kind",
+  "id",
+  "label",
+  "description",
+  "context",
+])
 
 export interface ParsedChatRequest extends AssistantSettings {
   messages: UIMessage[]
   context?: AssistantChatContext
+  references: AssistantReference[]
 }
 
 export type ParseChatRequestResult =
@@ -163,6 +193,145 @@ function parseMessagePart(
   return { ok: true }
 }
 
+function isReferenceKind(value: unknown): value is AssistantReferenceKind {
+  return (
+    typeof value === "string" &&
+    REFERENCE_KINDS.has(value as AssistantReferenceKind)
+  )
+}
+
+function parseIdentityField(
+  value: unknown,
+  field: "id" | "label" | "description",
+  index: number
+): { ok: true; value: string } | { ok: false; error: string } {
+  if (typeof value !== "string") {
+    return {
+      ok: false,
+      error: `references[${index}].${field} must be a string.`,
+    }
+  }
+  if (value.length > MAX_REFERENCE_IDENTITY_LENGTH) {
+    return {
+      ok: false,
+      error: `references[${index}].${field} must be at most ${MAX_REFERENCE_IDENTITY_LENGTH} characters.`,
+    }
+  }
+  return { ok: true, value }
+}
+
+function parseReference(
+  value: unknown,
+  index: number
+): { ok: true; value: AssistantReference } | { ok: false; error: string } {
+  const record = asRecord(value)
+  if (!record) {
+    return {
+      ok: false,
+      error: `references[${index}] must be an object.`,
+    }
+  }
+
+  for (const key of Object.keys(record)) {
+    if (!REFERENCE_WIRE_KEYS.has(key)) {
+      return {
+        ok: false,
+        error: `references[${index}] contains unsupported fields.`,
+      }
+    }
+  }
+
+  if (!isReferenceKind(record.kind)) {
+    return {
+      ok: false,
+      error: `references[${index}].kind must be a known reference kind.`,
+    }
+  }
+
+  const id = parseIdentityField(record.id, "id", index)
+  if (!id.ok) {
+    return id
+  }
+  const label = parseIdentityField(record.label, "label", index)
+  if (!label.ok) {
+    return label
+  }
+
+  let description: string | undefined
+  if (record.description !== undefined) {
+    const parsedDescription = parseIdentityField(
+      record.description,
+      "description",
+      index
+    )
+    if (!parsedDescription.ok) {
+      return parsedDescription
+    }
+    description = parsedDescription.value
+  }
+
+  if (typeof record.context !== "string") {
+    return {
+      ok: false,
+      error: `references[${index}].context must be a string.`,
+    }
+  }
+  if (record.context.length > MAX_REFERENCE_CONTEXT_LENGTH) {
+    return {
+      ok: false,
+      error: `references[${index}].context must be at most ${MAX_REFERENCE_CONTEXT_LENGTH} characters.`,
+    }
+  }
+
+  const reference: AssistantReference = {
+    kind: record.kind,
+    id: id.value,
+    label: label.value,
+    context: record.context,
+  }
+  if (description !== undefined) {
+    reference.description = description
+  }
+  return { ok: true, value: reference }
+}
+
+function parseReferences(
+  value: unknown
+):
+  | { ok: true; references: AssistantReference[] }
+  | { ok: false; error: string } {
+  if (value === undefined) {
+    return { ok: true, references: [] }
+  }
+  if (!Array.isArray(value)) {
+    return { ok: false, error: "references must be an array." }
+  }
+  if (value.length > MAX_CHAT_REFERENCES) {
+    return {
+      ok: false,
+      error: `At most ${MAX_CHAT_REFERENCES} references are allowed.`,
+    }
+  }
+
+  const references: AssistantReference[] = []
+  let totalContext = 0
+  for (const [index, entry] of value.entries()) {
+    const parsed = parseReference(entry, index)
+    if (!parsed.ok) {
+      return parsed
+    }
+    totalContext += parsed.value.context.length
+    if (totalContext > MAX_REFERENCE_CONTEXT_TOTAL) {
+      return {
+        ok: false,
+        error: `Referenced context exceeds the ${MAX_REFERENCE_CONTEXT_TOTAL} character limit.`,
+      }
+    }
+    references.push(parsed.value)
+  }
+  return { ok: true, references }
+}
+
 export function parseChatRequestBody(body: unknown): ParseChatRequestResult {
   const record = asRecord(body)
   if (!record) {
@@ -174,6 +343,15 @@ export function parseChatRequestBody(body: unknown): ParseChatRequestResult {
     return parsedMessages
   }
   const messages = parsedMessages.messages
+
+  const parsedReferences = parseReferences(
+    record.assistantReferences !== undefined
+      ? record.assistantReferences
+      : record.references
+  )
+  if (!parsedReferences.ok) {
+    return parsedReferences
+  }
 
   const defaults = defaultAssistantSettings()
   if (record.model !== undefined && !isAgentModelValue(record.model)) {
@@ -219,6 +397,7 @@ export function parseChatRequestBody(body: unknown): ParseChatRequestResult {
       model,
       access,
       effort,
+      references: parsedReferences.references,
     },
   }
 }

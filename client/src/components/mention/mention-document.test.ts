@@ -2,11 +2,13 @@ import { Bot, Workflow, type LucideIcon } from "lucide-react"
 import { describe, expect, it } from "vitest"
 
 import {
+  deleteAtCaret,
   emptyMentionDocument,
   filterMentionItems,
   flattenGroupedMentionItems,
   groupedMentionItems,
   insertMention,
+  insertTextAtCaret,
   mentionItemValue,
   mentionKey,
   normalizeMentionDocument,
@@ -104,6 +106,30 @@ describe("removeMention", () => {
     expect(serializeMentionDocument(removeMention(segments, "uid-1"))).toBe(
       "Ask  please"
     )
+  })
+})
+
+describe("insertTextAtCaret", () => {
+  it("inserts characters into the active text segment", () => {
+    const result = insertTextAtCaret(
+      [{ type: "text", text: "Ask " }],
+      { segmentIndex: 0, offset: 4 },
+      "@"
+    )
+    expect(serializeMentionDocument(result.segments)).toBe("Ask @")
+    expect(result.caret).toEqual({ segmentIndex: 0, offset: 5 })
+  })
+})
+
+describe("deleteAtCaret", () => {
+  it("deletes the mention immediately before the caret", () => {
+    const segments: MentionSegment[] = [
+      { type: "text", text: "Ask " },
+      { type: "mention", item: ops, uid: "uid-1" },
+      { type: "text", text: "" },
+    ]
+    const result = deleteAtCaret(segments, { segmentIndex: 2, offset: 0 })
+    expect(serializeMentionDocument(result.segments)).toBe("Ask ")
   })
 })
 

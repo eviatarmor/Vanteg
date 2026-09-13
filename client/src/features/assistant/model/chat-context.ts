@@ -9,6 +9,7 @@ import {
   defaultAssistantSuggestions,
   workflowAssistantSuggestions,
   type AssistantChatContext,
+  type AssistantReference,
 } from "./types"
 
 export function buildAssistantContext(pathname: string): AssistantChatContext {
@@ -57,7 +58,8 @@ export function suggestionsForPath(pathname: string): readonly string[] {
 
 export function buildSystemPrompt(
   context?: AssistantChatContext,
-  access: AssistantAccessMode = "supervised"
+  access: AssistantAccessMode = "supervised",
+  references: AssistantReference[] = []
 ): string {
   const lines = [
     "You are Vanteg, an assistant for the Vanteg workspace.",
@@ -86,6 +88,14 @@ export function buildSystemPrompt(
       "Steps:",
       stepList
     )
+  }
+
+  if (references.length > 0) {
+    lines.push("Referenced context")
+    for (const reference of references) {
+      lines.push(`<<< ${reference.kind}: ${reference.label} >>>`)
+      lines.push(reference.context)
+    }
   }
 
   return lines.join("\n")

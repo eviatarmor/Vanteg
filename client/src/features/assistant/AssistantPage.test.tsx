@@ -372,7 +372,7 @@ describe("AssistantPage", () => {
     const box = screen.getByRole("textbox", { name: "Message" })
     await user.type(box, "hold this draft")
     await user.keyboard("{Enter}")
-    expect(box).toHaveValue("hold this draft")
+    expect(box).toHaveTextContent("hold this draft")
     expect(requests).toHaveLength(1)
     expect(screen.getByText(/keep drafting/i)).toBeInTheDocument()
     release()
@@ -442,7 +442,9 @@ describe("AssistantPage", () => {
         screen.getByText("Could not complete that reply")
       ).toBeInTheDocument()
     })
-    expect(screen.getAllByText("hello").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByRole("region", { name: "Assistant chat" })).toHaveTextContent(
+      "hello"
+    )
 
     const box = screen.getByRole("textbox", { name: "Message" })
     await user.type(box, "keep me")
@@ -450,8 +452,10 @@ describe("AssistantPage", () => {
     await waitFor(() => {
       expect(requests.length).toBe(2)
     })
-    expect(box).toHaveValue("keep me")
-    expect(screen.getAllByText("hello").length).toBeGreaterThanOrEqual(1)
+    expect(box).toHaveTextContent("keep me")
+    expect(screen.getByRole("region", { name: "Assistant chat" })).toHaveTextContent(
+      "hello"
+    )
   })
 
   it("shows the full model catalog with unsupported models disabled", async () => {
@@ -601,5 +605,125 @@ describe("AssistantPage", () => {
       access: "full-access",
       effort: "low",
     })
+  })
+
+  it("opens Mentions when typing @ and inserts Support copilot at the caret", async () => {
+    const { user } = renderAssistant()
+    const box = screen.getByRole("textbox", { name: "Message" })
+
+    await user.type(box, "Ask @")
+    const mentions = await screen.findByRole("listbox", { name: "Mentions" })
+    expect(
+      within(mentions).getByRole("option", { name: "Support copilot" })
+    ).toBeInTheDocument()
+
+    await user.click(
+      within(mentions).getByRole("option", { name: "Support copilot" })
+    )
+
+    expect(
+      within(box).getByRole("button", { name: "Remove Support copilot" })
+    ).toBeInTheDocument()
+    expect(box).toHaveTextContent(/Ask\s+Support copilot/)
+    expect(
+      screen.queryByRole("listbox", { name: "Mentions" })
+    ).not.toBeInTheDocument()
+  })
+
+  it("selects the next mention with ArrowDown then Enter", async () => {
+    const { user } = renderAssistant()
+    const box = screen.getByRole("textbox", { name: "Message" })
+
+    await user.type(box, "@")
+    await screen.findByRole("listbox", { name: "Mentions" })
+    await user.keyboard("{ArrowDown}{Enter}")
+
+    expect(
+      within(box).getByRole("button", { name: "Remove Research analyst" })
+    ).toBeInTheDocument()
+  })
+
+  it("allows a second chip of the same entity and sends one reference", async () => {
+    const { requests } = installChatSpy()
+    const { user } = renderAssistant()
+    const box = screen.getByRole("textbox", { name: "Message" })
+
+    await user.type(box, "@")
+    await user.click(
+      await screen.findByRole("option", { name: "Support copilot" })
+    )
+    await user.type(box, " @")
+    await user.click(
+      await screen.findByRole("option", { name: "Support copilot" })
+    )
+    expect(
+      screen.getAllByRole("button", { name: "Remove Support copilot" })
+    ).toHaveLength(2)
+
+    await user.click(screen.getByRole("button", { name: "Send" }))
+    await waitFor(() => {
+      expect(requests.length).toBeGreaterThan(0)
+    })
+    expect(requests[0]).toMatchObject({
+      assistantReferences: [expect.objectContaining({ id: "agent-support" })],
+    })
+  })
+
+  it("enables Send for a chip-only draft", async () => {
+    const { requests } = installChatSpy()
+    const { user } = renderAssistant()
+    const box = screen.getByRole("textbox", { name: "Message" })
+
+    await user.type(box, "@")
+    await user.click(
+      await screen.findByRole("option", { name: "Support copilot" })
+    )
+
+    const send = screen.getByRole("button", { name: "Send" })
+    expect(send).not.toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("button", { name: "Model" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Access" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Effort" })).toBeEnabled()
+
+    await user.click(send)
+    await waitFor(() => {
+      expect(requests.length).toBeGreaterThan(0)
+    })
+  })
+
+  it("removes an inline chip with Backspace", async () => {
+    const { user } = renderAssistant()
+    const box = screen.getByRole("textbox", { name: "Message" })
+
+    await user.type(box, "@")
+    await user.click(
+      await screen.findByRole("option", { name: "Support copilot" })
+    )
+    expect(
+      within(box).getByRole("button", { name: "Remove Support copilot" })
+    ).toBeInTheDocument()
+
+    await user.keyboard("{Backspace}")
+    expect(
+      within(box).queryByRole("button", { name: "Remove Support copilot" })
+    ).not.toBeInTheDocument()
+  })
+
+  it("places a paperclip Add attachments control immediately before Send", async () => {
+    const { user } = renderAssistant()
+
+    expect(screen.queryByRole("menuitem", { name: /photos or files/i })).not.toBeInTheDocument()
+
+    const add = screen.getByRole("button", { name: "Add attachments" })
+    const send = screen.getByRole("button", { name: "Send" })
+    expect(add.compareDocumentPosition(send) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(add.nextElementSibling).toBe(send)
+    expect(add.querySelector("svg")).not.toBeNull()
+
+    const input = screen.getByLabelText("Upload files")
+    const clickSpy = vi.spyOn(input, "click")
+    await user.click(add)
+    expect(clickSpy).toHaveBeenCalled()
+    clickSpy.mockRestore()
   })
 })

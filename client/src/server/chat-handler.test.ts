@@ -170,4 +170,87 @@ describe("chat handler", () => {
     const streamed = streamTextMock.mock.calls[0]?.[0]
     expect(streamed?.system).not.toMatch(/tool approval|enforced/i)
   })
+
+  it("includes referenced context in the provider system prompt", async () => {
+    const request = chatRequest({
+      messages: [
+        {
+          id: "1",
+          role: "user",
+          parts: [{ type: "text", text: "Use the agent guidance" }],
+        },
+      ],
+      model: "grok-4.5",
+      access: "supervised",
+      effort: "medium",
+      context: { path: "/agents", pageTitle: "Agents" },
+      references: [
+        {
+          kind: "agent",
+          id: "agent-1",
+          label: "Research Agent",
+          context: "Instructions: Prefer cited sources.",
+        },
+        {
+          kind: "workflow",
+          id: "wf-1",
+          label: "Lead alerts",
+          context: "Status: active\nSteps: Webhook, Send email",
+        },
+      ],
+    })
+
+    const response = await handleChatRequest(request, { apiKey: "test-key" })
+    expect(response.status).toBe(200)
+    const system = streamTextMock.mock.calls[0]?.[0]?.system ?? ""
+    expect(system).toContain("Referenced context")
+    expect(system).toMatch(/<<<\s*agent:\s*Research Agent\s*>>>/)
+    expect(system).toContain("Instructions: Prefer cited sources.")
+    expect(system).toMatch(/<<<\s*workflow:\s*Lead alerts\s*>>>/)
+    expect(system).toContain("Status: active")
+  })
+
+  it("rejects malformed references with HTTP 400", async () => {
+    const unknownKind = await handleChatRequest(
+      chatRequest({
+        messages: [
+          {
+            id: "1",
+            role: "user",
+            parts: [{ type: "text", text: "Hello" }],
+          },
+        ],
+        references: [
+          {
+            kind: "secret-group",
+            id: "sg-1",
+            label: "Prod",
+            context: "hidden",
+          },
+        ],
+      })
+    )
+    expect(unknownKind.status).toBe(400)
+    expect(await unknownKind.text()).toMatch(/known reference kind/i)
+
+    const tooMany = await handleChatRequest(
+      chatRequest({
+        messages: [
+          {
+            id: "1",
+            role: "user",
+            parts: [{ type: "text", text: "Hello" }],
+          },
+        ],
+        references: Array.from({ length: 13 }, (_, index) => ({
+          kind: "memory",
+          id: `m-${index}`,
+          label: `Memory ${index}`,
+          context: "entry summary",
+        })),
+      })
+    )
+    expect(tooMany.status).toBe(400)
+    expect(await tooMany.text()).toMatch(/at most 12 references/i)
+  })
 })

@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -15,10 +14,12 @@ import { nanoid } from "nanoid"
 import { cn } from "@workspace/ui/lib/utils"
 
 import {
+  deleteAtCaret,
   filterMentionItems,
   findMentionQueryInDocument,
   flattenGroupedMentionItems,
   insertMention,
+  insertTextAtCaret,
   mentionItemValue,
   normalizeMentionDocument,
   removeMention,
@@ -26,7 +27,8 @@ import {
 } from "./mention-document"
 import type { MentionQuery } from "./mention-query"
 import { MentionChip } from "./MentionChip"
-import { mentionOptionId, MentionPicker } from "./MentionPicker"
+import { mentionOptionId } from "./mention-document"
+import { MentionPicker } from "./MentionPicker"
 import type { MentionItem, MentionKindMeta, MentionSegment } from "./types"
 
 const ZWSP = "\u200b"
@@ -178,6 +180,7 @@ export function MentionInput({
 }: MentionInputProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const caretRef = useRef<Caret | null>(null)
+  const segmentsRef = useRef(segments)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [highlighted, setHighlighted] = useState("")
@@ -199,16 +202,16 @@ export function MentionInput({
 
   const empty = serializeMentionDocument(segments).trim() === ""
   const open = pickerOpen && query !== null && !disabled && !composing
+  const activeHighlight =
+    filtered.length === 0
+      ? ""
+      : filtered.some((item) => mentionItemValue(item) === highlighted)
+        ? highlighted
+        : mentionItemValue(filtered[0]!)
 
-  useEffect(() => {
-    if (filtered.length === 0) {
-      setHighlighted("")
-      return
-    }
-    if (!filtered.some((item) => mentionItemValue(item) === highlighted)) {
-      setHighlighted(mentionItemValue(filtered[0]!))
-    }
-  }, [filtered, highlighted])
+  useLayoutEffect(() => {
+    segmentsRef.current = segments
+  }, [segments])
 
   useLayoutEffect(() => {
     const root = editorRef.current
@@ -243,12 +246,31 @@ export function MentionInput({
 
   const emitSegments = useCallback(
     (next: MentionSegment[], caret: Caret | null) => {
+      segmentsRef.current = next
       caretRef.current = caret
       onSegmentsChange(next)
       syncQuery(next, caret)
     },
     [onSegmentsChange, syncQuery]
   )
+
+  function fallbackCaret(): Caret {
+    const root = editorRef.current
+    const fromDom = root ? caretFromSelection(root) : null
+    if (caretRef.current) {
+      return caretRef.current
+    }
+    if (fromDom) {
+      return fromDom
+    }
+    const current = segmentsRef.current
+    const last = current.length - 1
+    const segment = current[last]
+    return {
+      segmentIndex: Math.max(last, 0),
+      offset: segment?.type === "text" ? segment.text.length : 0,
+    }
+  }
 
   function handleInput() {
     const root = editorRef.current
@@ -260,6 +282,20 @@ export function MentionInput({
     emitSegments(next, caret)
   }
 
+  function applyInsert(text: string) {
+    const result = insertTextAtCaret(
+      segmentsRef.current,
+      fallbackCaret(),
+      text
+    )
+    emitSegments(result.segments, result.caret)
+  }
+
+  function applyDelete() {
+    const result = deleteAtCaret(segmentsRef.current, fallbackCaret())
+    emitSegments(result.segments, result.caret)
+  }
+
   function selectItem(item: MentionItem) {
     if (!query) {
       setPickerOpen(false)
@@ -267,7 +303,7 @@ export function MentionInput({
     }
     const uid = createMentionUid()
     const next = insertMention(
-      segments,
+      segmentsRef.current,
       query.segmentIndex,
       query,
       item,
@@ -298,7 +334,7 @@ export function MentionInput({
       return
     }
     const current = filtered.findIndex(
-      (item) => mentionItemValue(item) === highlighted
+      (item) => mentionItemValue(item) === activeHighlight
     )
     const index = current < 0 ? 0 : current
     const next = (index + delta + filtered.length) % filtered.length
@@ -323,7 +359,7 @@ export function MentionInput({
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault()
         const item = filtered.find(
-          (entry) => mentionItemValue(entry) === highlighted
+          (entry) => mentionItemValue(entry) === activeHighlight
         )
         if (item) {
           selectItem(item)
@@ -338,23 +374,20 @@ export function MentionInput({
       }
     }
     if (event.key === "Backspace") {
-      const caret = caretRef.current ?? caretFromSelection(editorRef.current!)
-      if (caret && caret.offset === 0 && caret.segmentIndex > 0) {
-        const previous = segments[caret.segmentIndex - 1]
-        if (previous?.type === "mention") {
-          event.preventDefault()
-          const next = removeMention(segments, previous.uid)
-          emitSegments(next, {
-            segmentIndex: Math.max(caret.segmentIndex - 2, 0),
-            offset:
-              next[Math.max(caret.segmentIndex - 2, 0)]?.type === "text"
-                ? (next[Math.max(caret.segmentIndex - 2, 0)] as { text: string })
-                    .text.length
-                : 0,
-          })
-          return
-        }
-      }
+      event.preventDefault()
+      applyDelete()
+      onKeyDown?.(event)
+      return
+    }
+    if (
+      event.key.length === 1 &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+      event.preventDefault()
+      applyInsert(event.key)
+      return
     }
     if (event.key === "Enter" && !event.shiftKey) {
       onKeyDown?.(event)
@@ -416,7 +449,7 @@ export function MentionInput({
   }
 
   const highlightedItem = filtered.find(
-    (item) => mentionItemValue(item) === highlighted
+    (item) => mentionItemValue(item) === activeHighlight
   )
 
   return (
@@ -426,7 +459,7 @@ export function MentionInput({
         kinds={kinds}
         open={open}
         search={search}
-        highlighted={highlighted}
+        highlighted={activeHighlight}
         onHighlightedChange={setHighlighted}
         onSelect={selectItem}
         onOpenChange={setPickerOpen}
@@ -456,9 +489,21 @@ export function MentionInput({
         )}
         onInput={(event: FormEvent<HTMLDivElement>) => {
           event.stopPropagation()
-          handleInput()
+          if (composing) {
+            handleInput()
+          }
         }}
         onKeyDown={handleKeyDown}
+        onFocus={() => {
+          const root = editorRef.current
+          if (!root) {
+            return
+          }
+          if (!caretFromSelection(root)) {
+            placeCaretAtEnd(root)
+          }
+          caretRef.current = caretFromSelection(root) ?? fallbackCaret()
+        }}
         onKeyUp={() => {
           const root = editorRef.current
           if (root) {

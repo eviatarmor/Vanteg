@@ -7,16 +7,19 @@ export type { MentionQuery } from "./mention-query"
 export { findMentionQuery } from "./mention-query"
 export { MentionChip } from "./MentionChip"
 export { MentionInput } from "./MentionInput"
-export { MentionPicker, mentionOptionId } from "./MentionPicker"
+export { MentionPicker } from "./MentionPicker"
 export {
+  deleteAtCaret,
   emptyMentionDocument,
   filterMentionItems,
   findMentionQueryInDocument,
   flattenGroupedMentionItems,
   groupedMentionItems,
   insertMention,
+  insertTextAtCaret,
   mentionItemValue,
   mentionKey,
+  mentionOptionId,
   normalizeMentionDocument,
   removeMention,
   serializeMentionDocument,

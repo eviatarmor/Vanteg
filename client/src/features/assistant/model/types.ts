@@ -2,6 +2,24 @@ import type { AgentModel } from "@/features/agents/model/types"
 
 import type { AssistantAccessMode, AssistantEffort } from "./settings"
 
+export type AssistantReferenceKind =
+  | "agent"
+  | "team"
+  | "workflow"
+  | "table"
+  | "variable-group"
+  | "memory"
+  | "knowledge"
+  | "connector"
+
+export interface AssistantReference {
+  kind: AssistantReferenceKind
+  id: string
+  label: string
+  description?: string
+  context: string
+}
+
 export type AssistantRole = "user" | "assistant"
 
 export interface AssistantStartFile {
@@ -17,6 +35,7 @@ export interface AssistantStartPayload {
   model: AgentModel
   access: AssistantAccessMode
   effort: AssistantEffort
+  references?: AssistantReference[]
 }
 
 export interface AssistantMessage {

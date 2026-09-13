@@ -148,6 +148,7 @@ export function AssistantPanel() {
           initialModel={pending?.model}
           initialAccess={pending?.access}
           initialEffort={pending?.effort}
+          initialReferences={pending?.references}
           onInitialPromptConsumed={() => setPending(null)}
         />
       ) : (
@@ -181,6 +182,7 @@ export function AssistantPanel() {
                 startNew({
                   text,
                   files: message.files,
+                  references: message.references,
                   ...getAssistantSettings(),
                 })
               }}

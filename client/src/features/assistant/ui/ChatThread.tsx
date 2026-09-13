@@ -9,7 +9,6 @@ import {
 } from "@/components/ai-elements/conversation"
 import { Message, MessageContent } from "@/components/ai-elements/message"
 import { Shimmer } from "@/components/ai-elements/shimmer"
-import type { PromptInputMessage } from "@/components/ai-elements/prompt-input"
 import { cn } from "@workspace/ui/lib/utils"
 
 import type { AgentModel } from "@/features/agents/model/types"
@@ -30,9 +29,13 @@ import type {
   AssistantChatContext,
   AssistantConversation,
   AssistantMessage,
+  AssistantReference,
   AssistantStartFile,
 } from "../model/types"
-import { AssistantComposer } from "./AssistantComposer"
+import {
+  AssistantComposer,
+  type AssistantComposerSubmitMessage,
+} from "./AssistantComposer"
 import {
   AssistantMessageParts,
   type AssistantRenderPart,
@@ -90,12 +93,14 @@ function snapshotBody(overrides?: {
   model?: AgentModel
   access?: AssistantAccessMode
   effort?: AssistantEffort
+  references?: AssistantReference[]
 }) {
   const current = getAssistantSettings()
   return {
     model: overrides?.model ?? current.model,
     access: overrides?.access ?? current.access,
     effort: overrides?.effort ?? current.effort,
+    assistantReferences: overrides?.references ?? [],
   }
 }
 
@@ -155,6 +160,7 @@ export function ChatThread({
   initialModel,
   initialAccess,
   initialEffort,
+  initialReferences,
   onInitialPromptConsumed,
   compact = false,
 }: {
@@ -165,6 +171,7 @@ export function ChatThread({
   initialModel?: AgentModel
   initialAccess?: AssistantAccessMode
   initialEffort?: AssistantEffort
+  initialReferences?: AssistantReference[]
   onInitialPromptConsumed?: () => void
   compact?: boolean
 }) {
@@ -187,9 +194,13 @@ export function ChatThread({
   const busy = status === "submitted" || status === "streaming"
   const sentInitial = useRef(false)
 
-  async function submit(text: string, files?: PromptInputMessage["files"]) {
+  async function submit(
+    text: string,
+    files?: AssistantComposerSubmitMessage["files"],
+    references: AssistantReference[] = []
+  ) {
     const trimmed = text.trim()
-    const snapshot = snapshotBody()
+    const snapshot = snapshotBody({ references })
     if (
       (!trimmed && !files?.length) ||
       busy ||
@@ -215,6 +226,7 @@ export function ChatThread({
       model: initialModel,
       access: initialAccess,
       effort: initialEffort,
+      references: initialReferences,
     })
     if (!isXaiAssistantModel(body.model)) {
       return
@@ -232,12 +244,13 @@ export function ChatThread({
     initialModel,
     initialAccess,
     initialEffort,
+    initialReferences,
     sendMessage,
     onInitialPromptConsumed,
   ])
 
-  function onSubmit(message: PromptInputMessage) {
-    void submit(message.text, message.files)
+  function onSubmit(message: AssistantComposerSubmitMessage) {
+    void submit(message.text, message.files, message.references)
   }
 
   return (

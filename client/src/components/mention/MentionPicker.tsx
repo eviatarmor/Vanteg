@@ -18,6 +18,7 @@ import {
   filterMentionItems,
   groupedMentionItems,
   mentionItemValue,
+  mentionOptionId,
 } from "./mention-document"
 import type { MentionItem, MentionKindMeta } from "./types"
 
@@ -30,10 +31,6 @@ export type MentionPickerProps = {
   onHighlightedChange: (value: string) => void
   onSelect: (item: MentionItem) => void
   onOpenChange: (open: boolean) => void
-}
-
-export function mentionOptionId(item: Pick<MentionItem, "kind" | "id">): string {
-  return `mention-option-${mentionItemValue(item)}`
 }
 
 export function MentionPicker({
