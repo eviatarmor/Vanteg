@@ -5,6 +5,7 @@ export type {
 } from "./types"
 export type { MentionQuery } from "./mention-query"
 export { findMentionQuery } from "./mention-query"
+export { MentionPicker, mentionOptionId } from "./MentionPicker"
 export {
   emptyMentionDocument,
   filterMentionItems,
