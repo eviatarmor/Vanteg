@@ -74,7 +74,11 @@ export function MentionPicker({
           onValueChange={onHighlightedChange}
           className="rounded-lg"
         >
-          <CommandList label="Mentions" className="max-h-48">
+          <CommandList
+            id="mention-picker-list"
+            label="Mentions"
+            className="max-h-48"
+          >
             <CommandEmpty>No mentions found.</CommandEmpty>
             {groups.map((group) => {
               const Icon = group.icon
