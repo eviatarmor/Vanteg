@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useLayoutEffect, useMemo, useRef } from "react"
 
 import {
   Command,
@@ -33,6 +33,22 @@ export type MentionPickerProps = {
   onOpenChange: (open: boolean) => void
 }
 
+function scrollHighlightedOptionIntoList(list: HTMLElement) {
+  const option = list.querySelector<HTMLElement>(
+    '[role="option"][aria-selected="true"]'
+  )
+  if (!option) {
+    return
+  }
+  const optionRect = option.getBoundingClientRect()
+  const listRect = list.getBoundingClientRect()
+  if (optionRect.bottom > listRect.bottom) {
+    list.scrollTop += optionRect.bottom - listRect.bottom
+  } else if (optionRect.top < listRect.top) {
+    list.scrollTop -= listRect.top - optionRect.top
+  }
+}
+
 export function MentionPicker({
   items,
   kinds,
@@ -43,6 +59,7 @@ export function MentionPicker({
   onSelect,
   onOpenChange,
 }: MentionPickerProps) {
+  const listRef = useRef<HTMLDivElement>(null)
   const groups = useMemo(() => {
     const filtered = filterMentionItems(items, search)
     return groupedMentionItems(filtered, kinds)
@@ -51,6 +68,16 @@ export function MentionPicker({
   const kindsByKind = useMemo(() => {
     return new Map(kinds.map((kind) => [kind.kind, kind]))
   }, [kinds])
+
+  useLayoutEffect(() => {
+    if (!open) {
+      return
+    }
+    const list = listRef.current
+    if (list) {
+      scrollHighlightedOptionIntoList(list)
+    }
+  }, [open, highlighted])
 
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
@@ -61,7 +88,7 @@ export function MentionPicker({
         side="top"
         align="start"
         sideOffset={6}
-        className="w-64 max-w-[min(16rem,calc(100vw-2rem))] p-0"
+        className="w-64 max-w-[min(16rem,calc(100vw-2rem))] overflow-hidden p-0"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <Command
@@ -69,12 +96,13 @@ export function MentionPicker({
           label="Mentions"
           value={highlighted}
           onValueChange={onHighlightedChange}
-          className="rounded-lg"
+          className="flex max-h-[min(12rem,var(--radix-popover-content-available-height,12rem))] min-h-0 flex-col overflow-hidden rounded-lg"
         >
           <CommandList
+            ref={listRef}
             id="mention-picker-list"
             label="Mentions"
-            className="max-h-48"
+            className="min-h-0 max-h-[min(12rem,var(--radix-popover-content-available-height,12rem))] overflow-y-auto overscroll-contain"
           >
             <CommandEmpty>No mentions found.</CommandEmpty>
             {groups.map((group) => {

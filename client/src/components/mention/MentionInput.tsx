@@ -452,8 +452,14 @@ export function MentionInput({
     (item) => mentionItemValue(item) === activeHighlight
   )
 
+  const editorClassName = cn(
+    "field-sizing-content max-h-48 min-h-16 w-full flex-1 overflow-y-auto rounded-none border-0 bg-transparent px-2.5 py-2 text-left shadow-none outline-none ring-0 focus-visible:ring-0",
+    disabled && "cursor-not-allowed opacity-50",
+    className
+  )
+
   return (
-    <div className="relative">
+    <div className="relative w-full min-w-0 self-stretch">
       <MentionPicker
         items={items}
         kinds={kinds}
@@ -464,6 +470,17 @@ export function MentionInput({
         onSelect={selectItem}
         onOpenChange={setPickerOpen}
       />
+      {empty && placeholder ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            editorClassName,
+            "pointer-events-none absolute inset-0 select-none text-muted-foreground"
+          )}
+        >
+          {placeholder}
+        </span>
+      ) : null}
       <div
         ref={editorRef}
         role="textbox"
@@ -481,12 +498,7 @@ export function MentionInput({
         data-slot="input-group-control"
         data-placeholder={placeholder}
         data-empty={empty ? "true" : undefined}
-        className={cn(
-          "field-sizing-content max-h-48 min-h-16 flex-1 overflow-y-auto rounded-none border-0 bg-transparent py-2 shadow-none outline-none ring-0 focus-visible:ring-0",
-          "data-[empty=true]:before:pointer-events-none data-[empty=true]:before:text-muted-foreground data-[empty=true]:before:content-[attr(data-placeholder)]",
-          disabled && "cursor-not-allowed opacity-50",
-          className
-        )}
+        className={cn("relative", editorClassName)}
         onInput={(event: FormEvent<HTMLDivElement>) => {
           event.stopPropagation()
           if (composing) {

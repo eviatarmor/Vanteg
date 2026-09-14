@@ -136,4 +136,93 @@ describe("MentionPicker", () => {
     )
     expect(props.onOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it("makes the mentions list a vertical scrollport", () => {
+    renderPicker()
+    const list = screen.getByRole("listbox", { name: "Mentions" })
+    expect(list).toHaveClass("overflow-y-auto", "min-h-0")
+    expect(list.className).toContain("max-h-[min(12rem,var(--radix-popover-content-available-height,12rem))]")
+  })
+
+  it("scrolls the list down when the highlighted option is below the visible area", () => {
+    const { rerender, props } = renderPicker()
+    const list = screen.getByRole("listbox", { name: "Mentions" })
+    let scrollTop = 0
+    Object.defineProperty(list, "scrollTop", {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value
+      },
+    })
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        if (this.getAttribute("role") === "listbox") {
+          return makeRect(0, 80)
+        }
+        if (this.getAttribute("aria-selected") === "true") {
+          return makeRect(120, 152)
+        }
+        return makeRect(0, 0)
+      }
+    )
+
+    rerender(
+      <MentionPicker
+        {...props}
+        highlighted={mentionItemValue(items[2]!)}
+      />
+    )
+
+    expect(scrollTop).toBe(72)
+  })
+
+  it("scrolls the list up when the highlighted option is above the visible area", () => {
+    const { rerender, props } = renderPicker({
+      highlighted: mentionItemValue(items[2]!),
+    })
+    const list = screen.getByRole("listbox", { name: "Mentions" })
+    let scrollTop = 90
+    Object.defineProperty(list, "scrollTop", {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value
+      },
+    })
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        if (this.getAttribute("role") === "listbox") {
+          return makeRect(80, 160)
+        }
+        if (this.getAttribute("aria-selected") === "true") {
+          return makeRect(40, 72)
+        }
+        return makeRect(0, 0)
+      }
+    )
+
+    rerender(
+      <MentionPicker
+        {...props}
+        highlighted={mentionItemValue(items[0]!)}
+      />
+    )
+
+    expect(scrollTop).toBe(50)
+  })
 })
+
+function makeRect(top: number, bottom: number): DOMRect {
+  return {
+    x: 0,
+    y: top,
+    top,
+    bottom,
+    left: 0,
+    right: 240,
+    width: 240,
+    height: bottom - top,
+    toJSON: () => ({}),
+  } as DOMRect
+}

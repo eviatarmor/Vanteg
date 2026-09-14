@@ -204,6 +204,22 @@ describe("MentionInput", () => {
     const box = screen.getByRole("textbox", { name: "Message" })
     expect(box).toHaveAttribute("data-placeholder", "Ask Vanteg…")
     expect(box).toHaveAttribute("data-empty", "true")
+    expect(box).toHaveClass("w-full", "text-left")
+    expect(box.parentElement).toHaveClass("w-full")
+    expect(box).not.toHaveTextContent("Ask Vanteg…")
+    const placeholder = screen.getByText("Ask Vanteg…")
+    expect(placeholder).toHaveAttribute("aria-hidden", "true")
+    expect(placeholder).toHaveClass("absolute", "inset-0")
+  })
+
+  it("hides the overlay placeholder once the field has text", async () => {
+    const { user } = renderInput()
+    const box = screen.getByRole("textbox", { name: "Message" })
+    await user.click(box)
+    await user.type(box, "s")
+    expect(box).not.toHaveAttribute("data-empty")
+    expect(screen.queryByText("Ask Vanteg…")).not.toBeInTheDocument()
+    expect(box).toHaveTextContent("s")
   })
 
   it("submits the ancestor form on Enter when the picker is closed", async () => {
