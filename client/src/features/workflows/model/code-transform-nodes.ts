@@ -8,6 +8,15 @@ import {
   setMappingField,
   transformExpressionField,
 } from "./code-transform-fields"
+import {
+  codeOutputs,
+  loopDoneOutputs,
+  loopEachOutputs,
+  mappingOutputs,
+  mergeOutputs,
+  preservedItem,
+  LOGIC_EXECUTION,
+} from "./io-contracts"
 
 /** Platform Code / Transform / Set / Merge / Loop nodes with polished Setup fields. */
 export const codeTransformNodes: WorkflowNodeType[] = [
@@ -17,7 +26,42 @@ export const codeTransformNodes: WorkflowNodeType[] = [
     description: "Run JavaScript or Python.",
     kind: "logic",
     category: "Logic",
-    fields: [codeLanguageField(), codeSnippetField()],
+    fields: [
+      codeLanguageField(),
+      codeSnippetField(),
+      {
+        key: "runMode",
+        label: "Run",
+        placeholder: "each",
+        control: "select",
+        section: "options",
+        mode: "fixed",
+        options: [
+          { value: "each", label: "Once per item" },
+          { value: "all", label: "All items" },
+        ],
+      },
+      {
+        key: "timeout",
+        label: "Timeout (ms)",
+        placeholder: "10000",
+        control: "number",
+        section: "options",
+        validation: [{ kind: "integer" }, { kind: "min", value: 1 }],
+      },
+      {
+        key: "outputSchema",
+        label: "Output schema",
+        placeholder: "",
+        control: "schema",
+        section: "options",
+        help: "Optional declared schema. Test output can fill gaps without replacing it.",
+      },
+    ],
+    inputs: [{ key: "item", label: "Item", type: "any" }],
+    outputs: codeOutputs,
+    executionOptions: [...LOGIC_EXECUTION],
+    testable: true,
   },
   {
     id: "set",
@@ -26,6 +70,9 @@ export const codeTransformNodes: WorkflowNodeType[] = [
     kind: "logic",
     category: "Logic",
     fields: [setMappingField()],
+    inputs: [preservedItem],
+    outputs: mappingOutputs,
+    executionOptions: [...LOGIC_EXECUTION],
   },
   {
     id: "merge",
@@ -33,7 +80,50 @@ export const codeTransformNodes: WorkflowNodeType[] = [
     description: "Combine branches.",
     kind: "logic",
     category: "Logic",
-    fields: [mergeModeField()],
+    fields: [
+      mergeModeField(),
+      {
+        key: "matchField",
+        label: "Match field",
+        placeholder: "id",
+        section: "parameters",
+        mode: "either",
+        showWhen: { key: "mode", equals: "matching" },
+      },
+      {
+        key: "position",
+        label: "Position",
+        placeholder: "0",
+        control: "number",
+        section: "parameters",
+        showWhen: { key: "mode", equals: "position" },
+        validation: [{ kind: "integer" }, { kind: "min", value: 0 }],
+      },
+      {
+        key: "chooseBranch",
+        label: "Branch",
+        placeholder: "a",
+        control: "select",
+        section: "parameters",
+        mode: "fixed",
+        showWhen: { key: "mode", equals: "chooseBranch" },
+        options: [
+          { value: "a", label: "A" },
+          { value: "b", label: "B" },
+        ],
+      },
+    ],
+    inputs: [
+      { key: "a", label: "A", type: "any" },
+      { key: "b", label: "B", type: "any" },
+    ],
+    outputs: mergeOutputs,
+    ports: [
+      { id: "a", type: "target", label: "A", color: "slate" },
+      { id: "b", type: "target", label: "B", color: "slate" },
+      { id: "out", type: "source", label: "Out", color: "sky" },
+    ],
+    executionOptions: [...LOGIC_EXECUTION],
   },
   {
     id: "loop",
@@ -41,7 +131,46 @@ export const codeTransformNodes: WorkflowNodeType[] = [
     description: "Iterate over items.",
     kind: "logic",
     category: "Logic",
-    fields: [loopItemsField(), loopConcurrencyField()],
+    fields: [
+      loopItemsField(),
+      {
+        key: "batchSize",
+        label: "Batch size",
+        placeholder: "1",
+        control: "number",
+        section: "options",
+        validation: [{ kind: "integer" }, { kind: "min", value: 1 }],
+      },
+      loopConcurrencyField(),
+      {
+        key: "continueOnItemError",
+        label: "Continue on item error",
+        placeholder: "false",
+        control: "boolean",
+        section: "options",
+        mode: "fixed",
+      },
+      {
+        key: "maxIterations",
+        label: "Max iterations",
+        placeholder: "1000",
+        control: "number",
+        section: "options",
+        validation: [{ kind: "integer" }, { kind: "min", value: 1 }],
+      },
+    ],
+    inputs: [{ key: "items", label: "Items", type: "array" }],
+    outputs: loopEachOutputs,
+    outputByPort: {
+      each: loopEachOutputs,
+      done: loopDoneOutputs,
+    },
+    ports: [
+      { id: "in", type: "target", label: "In", color: "slate" },
+      { id: "each", type: "source", label: "Each", color: "sky" },
+      { id: "done", type: "source", label: "Done", color: "amber" },
+    ],
+    executionOptions: [...LOGIC_EXECUTION],
   },
   {
     id: "transform",
@@ -50,5 +179,8 @@ export const codeTransformNodes: WorkflowNodeType[] = [
     kind: "logic",
     category: "Logic",
     fields: [transformExpressionField()],
+    inputs: [preservedItem],
+    outputs: mappingOutputs,
+    executionOptions: [...LOGIC_EXECUTION],
   },
 ]

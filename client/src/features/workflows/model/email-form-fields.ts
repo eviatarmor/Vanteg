@@ -8,6 +8,10 @@ export function emailToField(placeholder: string): NodeField {
     key: "to",
     label: "To",
     placeholder,
+    section: "parameters",
+    mode: "either",
+    required: true,
+    validation: [{ kind: "email" }, { kind: "required" }],
     help: EMAIL_RECIPIENT_HELP,
   }
 }
@@ -17,6 +21,9 @@ export function emailCcField(placeholder = "cc@example.com"): NodeField {
     key: "cc",
     label: "Cc",
     placeholder,
+    section: "parameters",
+    mode: "either",
+    validation: [{ kind: "email" }],
     help: EMAIL_RECIPIENT_HELP,
   }
 }
@@ -26,6 +33,8 @@ export function emailSubjectField(placeholder: string): NodeField {
     key: "subject",
     label: "Subject",
     placeholder,
+    section: "parameters",
+    mode: "either",
   }
 }
 
@@ -35,6 +44,8 @@ export function emailBodyField(placeholder: string, label = "Body"): NodeField {
     label,
     placeholder,
     control: "textarea",
+    section: "parameters",
+    mode: "either",
   }
 }
 
@@ -43,6 +54,10 @@ export function formIdField(placeholder = "contact-form"): NodeField {
     key: "formId",
     label: "Form ID",
     placeholder,
+    section: "parameters",
+    mode: "either",
+    control: "resource",
+    resourceType: "forms.form",
     help: "Form ID or slug from the form URL or settings (not the form title).",
   }
 }

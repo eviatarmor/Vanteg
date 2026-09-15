@@ -1,28 +1,14 @@
 import type { NodeField } from "./types"
 
-const LOGIC_OPERATORS = [
-  { value: "eq", label: "Equals" },
-  { value: "neq", label: "Does not equal" },
-  { value: "contains", label: "Contains" },
-  { value: "gt", label: "Greater than" },
-  { value: "lt", label: "Less than" },
-  { value: "empty", label: "Is empty" },
-  { value: "not_empty", label: "Is not empty" },
-] as const
-
-const DELAY_UNITS = [
-  { value: "seconds", label: "Seconds" },
-  { value: "minutes", label: "Minutes" },
-  { value: "hours", label: "Hours" },
-] as const
-
 export function logicConditionField(placeholder: string): NodeField {
   return {
-    key: "condition",
-    label: "Condition",
+    key: "conditions",
+    label: "Conditions",
     placeholder,
-    control: "textarea",
-    help: "Expression evaluated against the current item.",
+    control: "conditions",
+    section: "parameters",
+    mode: "expression",
+    help: "Rules evaluated against the current item. Unary operators hide Value 2.",
   }
 }
 
@@ -32,7 +18,17 @@ export function logicOperatorField(placeholder = "eq"): NodeField {
     label: "Operator",
     placeholder,
     control: "select",
-    options: LOGIC_OPERATORS.map((option) => ({ ...option })),
+    section: "parameters",
+    mode: "fixed",
+    options: [
+      { value: "eq", label: "Equals" },
+      { value: "neq", label: "Does not equal" },
+      { value: "contains", label: "Contains" },
+      { value: "gt", label: "Greater than" },
+      { value: "lt", label: "Less than" },
+      { value: "empty", label: "Is empty" },
+      { value: "not_empty", label: "Is not empty" },
+    ],
   }
 }
 
@@ -41,18 +37,22 @@ export function logicExpressionField(placeholder = "{{ status }}"): NodeField {
     key: "expression",
     label: "Expression",
     placeholder,
+    control: "expression",
+    section: "parameters",
+    mode: "expression",
     help: "Value used to match against cases.",
   }
 }
 
 export function logicCasesField(): NodeField {
   return {
-    key: "cases",
+    key: "routes",
     label: "Cases",
-    placeholder: '{\n  "open": "open",\n  "closed": "closed"\n}',
-    control: "code",
-    language: "json",
-    help: "Case map as a JSON object. Keys are case labels.",
+    placeholder: '[{"id":"a","name":"A","value":""},{"id":"b","name":"B","value":""}]',
+    control: "routes",
+    section: "parameters",
+    validation: [{ kind: "uniqueRouteName" }],
+    help: "Named cases with stable IDs. Renaming does not break edges.",
   }
 }
 
@@ -62,7 +62,10 @@ export function logicDurationField(placeholder = "5"): NodeField {
     label: "Duration",
     placeholder,
     control: "number",
-    help: "How long to wait before continuing. Leave empty and set Until for a timestamp.",
+    section: "parameters",
+    showWhen: { key: "delayMode", equals: "duration" },
+    validation: [{ kind: "integer" }, { kind: "min", value: 0 }],
+    help: "How long to wait before continuing.",
   }
 }
 
@@ -72,7 +75,17 @@ export function logicUnitField(placeholder = "minutes"): NodeField {
     label: "Unit",
     placeholder,
     control: "select",
-    options: DELAY_UNITS.map((option) => ({ ...option })),
+    section: "parameters",
+    mode: "fixed",
+    showWhen: { key: "delayMode", equals: "duration" },
+    options: [
+      { value: "seconds", label: "Seconds" },
+      { value: "minutes", label: "Minutes" },
+      { value: "hours", label: "Hours" },
+      { value: "days", label: "Days" },
+      { value: "weeks", label: "Weeks" },
+      { value: "months", label: "Months" },
+    ],
   }
 }
 
@@ -82,6 +95,36 @@ export function logicUntilField(placeholder = "2026-09-08T09:00"): NodeField {
     label: "Until",
     placeholder,
     control: "datetime",
+    section: "parameters",
+    showWhen: { key: "delayMode", equals: "until" },
     help: "Wait until this time instead of Duration.",
+  }
+}
+
+export function delayModeField(): NodeField {
+  return {
+    key: "delayMode",
+    label: "Wait",
+    placeholder: "duration",
+    control: "select",
+    section: "parameters",
+    mode: "fixed",
+    options: [
+      { value: "duration", label: "For a duration" },
+      { value: "until", label: "Until a timestamp" },
+      { value: "expression", label: "Until an expression" },
+    ],
+  }
+}
+
+export function delayExpressionField(): NodeField {
+  return {
+    key: "untilExpression",
+    label: "Resume at",
+    placeholder: "{{Webhook.body.resumeAt}}",
+    control: "expression",
+    section: "parameters",
+    mode: "expression",
+    showWhen: { key: "delayMode", equals: "expression" },
   }
 }

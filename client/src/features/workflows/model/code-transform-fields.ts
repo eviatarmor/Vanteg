@@ -1,23 +1,17 @@
 import type { NodeField } from "./types"
 
-const CODE_LANGUAGES = [
-  { value: "javascript", label: "JavaScript" },
-  { value: "python", label: "Python" },
-] as const
-
-const MERGE_MODES = [
-  { value: "append", label: "Append" },
-  { value: "combine", label: "Combine" },
-  { value: "chooseBranch", label: "Choose branch" },
-] as const
-
 export function codeLanguageField(placeholder = "javascript"): NodeField {
   return {
     key: "language",
     label: "Language",
     placeholder,
     control: "select",
-    options: CODE_LANGUAGES.map((option) => ({ ...option })),
+    section: "parameters",
+    mode: "fixed",
+    options: [
+      { value: "javascript", label: "JavaScript" },
+      { value: "python", label: "Python" },
+    ],
   }
 }
 
@@ -28,6 +22,7 @@ export function codeSnippetField(placeholder = "return items"): NodeField {
     placeholder,
     control: "code",
     language: "javascript",
+    section: "parameters",
     help: "Snippet that runs for each item. Return the data to pass downstream.",
   }
 }
@@ -37,8 +32,10 @@ export function setMappingField(placeholder = "name = first + last"): NodeField 
     key: "mapping",
     label: "Mapping",
     placeholder,
-    control: "textarea",
-    help: "Assign or rename fields, one mapping per line.",
+    control: "mapping",
+    section: "parameters",
+    mode: "either",
+    help: "Add, replace, rename, remove, pick, or omit fields. Dot-paths are supported.",
   }
 }
 
@@ -49,8 +46,10 @@ export function transformExpressionField(
     key: "expression",
     label: "Expression",
     placeholder,
-    control: "textarea",
-    help: "Expression used to map or pick values from the current item.",
+    control: "mapping",
+    section: "parameters",
+    mode: "either",
+    help: "Map, pick, or reshape values from the current item.",
   }
 }
 
@@ -60,7 +59,16 @@ export function mergeModeField(placeholder = "append"): NodeField {
     label: "Mode",
     placeholder,
     control: "select",
-    options: MERGE_MODES.map((option) => ({ ...option })),
+    section: "parameters",
+    mode: "fixed",
+    options: [
+      { value: "append", label: "Append" },
+      { value: "position", label: "Position" },
+      { value: "matching", label: "Matching field" },
+      { value: "cartesian", label: "Cartesian" },
+      { value: "chooseBranch", label: "Choose branch" },
+      { value: "waitForBoth", label: "Wait for both" },
+    ],
     help: "How incoming branches are combined before continuing.",
   }
 }
@@ -70,7 +78,10 @@ export function loopItemsField(placeholder = "$.rows"): NodeField {
     key: "items",
     label: "Items",
     placeholder,
-    control: "textarea",
+    control: "expression",
+    section: "parameters",
+    mode: "expression",
+    required: true,
     help: "Expression or path that resolves to the list to iterate over.",
   }
 }
@@ -80,6 +91,9 @@ export function loopConcurrencyField(placeholder = "1"): NodeField {
     key: "concurrency",
     label: "Concurrency",
     placeholder,
+    control: "number",
+    section: "options",
+    validation: [{ kind: "integer" }, { kind: "min", value: 1 }],
     help: "Optional max parallel iterations. Leave blank to run one at a time.",
   }
 }

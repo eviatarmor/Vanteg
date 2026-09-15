@@ -1,4 +1,5 @@
 import { getNodeType } from "./node-catalog"
+import { parseRoutes } from "./structured-fields"
 import type { NodeKind, NodePort, PortColor } from "./types"
 
 export const portColorValue: Record<PortColor, string> = {
@@ -36,43 +37,53 @@ function defaultPorts(kind: NodeKind): NodePort[] {
   return ports
 }
 
-export function getNodePorts(catalogId: string): NodePort[] {
-  const kind = getNodeType(catalogId)?.kind ?? "action"
+const ROUTE_COLORS: PortColor[] = ["violet", "sky", "emerald", "orange", "teal"]
 
-  switch (catalogId) {
-    case "if":
-      return [
-        { id: "in", type: "target", label: "In", color: "slate" },
-        { id: "true", type: "source", label: "True", color: "emerald" },
-        { id: "false", type: "source", label: "False", color: "rose" },
-      ]
-    case "switch":
-    case "paths":
-      return [
-        { id: "in", type: "target", label: "In", color: "slate" },
-        { id: "a", type: "source", label: "A", color: "violet" },
-        { id: "b", type: "source", label: "B", color: "sky" },
-        { id: "default", type: "source", label: "Default", color: "amber" },
-      ]
-    case "filter":
-      return [
-        { id: "in", type: "target", label: "In", color: "slate" },
-        { id: "pass", type: "source", label: "Pass", color: "emerald" },
-        { id: "drop", type: "source", label: "Drop", color: "rose" },
-      ]
-    case "merge":
-      return [
-        { id: "a", type: "target", label: "A", color: "slate" },
-        { id: "b", type: "target", label: "B", color: "slate" },
-        { id: "out", type: "source", label: "Out", color: "sky" },
-      ]
-    case "loop":
-      return [
-        { id: "in", type: "target", label: "In", color: "slate" },
-        { id: "each", type: "source", label: "Each", color: "sky" },
-        { id: "done", type: "source", label: "Done", color: "amber" },
-      ]
-    default:
-      return defaultPorts(kind)
+export function getNodePorts(
+  catalogId: string,
+  config: Record<string, string> = {}
+): NodePort[] {
+  const catalog = getNodeType(catalogId)
+  const kind = catalog?.kind ?? "action"
+  const declared = catalog?.ports
+  const dynamic = catalog?.dynamicPorts
+
+  let ports: NodePort[]
+  if (dynamic) {
+    const targets =
+      declared?.filter((port) => port.type === "target") ??
+      (kind === "trigger"
+        ? []
+        : [{ id: "in", type: "target" as const, label: "In", color: "slate" as const }])
+    const routes = parseRoutes(config[dynamic.fieldKey])
+    const routePorts: NodePort[] = routes.map((route, index) => ({
+      id: route.id,
+      type: dynamic.type,
+      label: route.name || `Route ${index + 1}`,
+      color: dynamic.color ?? ROUTE_COLORS[index % ROUTE_COLORS.length]!,
+    }))
+    const fallback =
+      routePorts.length > 0
+        ? routePorts
+        : dynamic.fallbackPorts
+    const extra = declared?.filter(
+      (port) => port.type !== "target" && !fallback.some((item) => item.id === port.id)
+    )
+    ports = [...targets, ...fallback, ...(extra ?? [])]
+  } else if (declared?.length) {
+    ports = [...declared]
+  } else {
+    ports = defaultPorts(kind)
   }
+
+  if (config.errorOutput === "true" && !ports.some((port) => port.id === "error")) {
+    ports.push({
+      id: "error",
+      type: "source",
+      label: "Error",
+      color: "rose",
+    })
+  }
+
+  return ports
 }

@@ -40,12 +40,17 @@ describe("auth-fields", () => {
   })
 
   it("augments HTTP auth nodes with credential fields for the editor", () => {
-    for (const id of ["http", "http-poll", "http-download", "webhook"] as const) {
+    for (const id of ["http", "http-poll", "http-download"] as const) {
       expect(nodeNeedsCustomCredential(id)).toBe(true)
       const keys = getNodeTypeForEditor(id)?.fields.map((field) => field.key) ?? []
       expect(keys).toContain("credentialId")
       expect(keys).toContain("token")
     }
+    expect(nodeNeedsCustomCredential("webhook")).toBe(true)
+    const webhookKeys = getNodeTypeForEditor("webhook")?.fields.map((field) => field.key) ?? []
+    expect(webhookKeys).toContain("credentialId")
+    expect(webhookKeys).toContain("secret")
+    expect(webhookKeys).not.toContain("token")
     expect(getNodeTypeForEditor("manual")?.fields.some((f) => f.key === "credentialId")).toBe(
       false
     )
