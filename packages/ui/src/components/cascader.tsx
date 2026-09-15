@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/component
 export type CascaderNode = {
   value: string
   label: string
+  icon?: React.ReactNode
   children?: CascaderNode[]
 }
 
@@ -49,6 +50,7 @@ function CascaderColumn({
   value,
   activeValue,
   labelledBy,
+  "aria-label": ariaLabel,
   onHover,
   onSelect,
 }: {
@@ -56,12 +58,14 @@ function CascaderColumn({
   value?: string
   activeValue?: string
   labelledBy?: string
+  "aria-label"?: string
   onHover: (item: CascaderNode) => void
   onSelect: (item: CascaderNode) => void
 }) {
   return (
     <div
       role="listbox"
+      aria-label={ariaLabel}
       aria-labelledby={labelledBy}
       className="flex min-w-36 flex-col p-1"
     >
@@ -82,6 +86,11 @@ function CascaderColumn({
             onFocus={() => onHover(item)}
             onClick={() => onSelect(item)}
           >
+            {item.icon ? (
+              <span className="pointer-events-none flex size-4 shrink-0 items-center justify-center [&_svg]:size-4 [&_svg]:shrink-0">
+                {item.icon}
+              </span>
+            ) : null}
             <span className="flex-1 truncate">{item.label}</span>
             {hasChildren ? (
               <ChevronRightIcon className="absolute right-2 size-4 text-muted-foreground" />
@@ -102,6 +111,9 @@ export function Cascader({
   placeholder = "Select",
   id,
   className,
+  open: openProp,
+  onOpenChange,
+  children,
   "aria-label": ariaLabel,
 }: {
   items: CascaderNode[]
@@ -110,13 +122,24 @@ export function Cascader({
   placeholder?: string
   id?: string
   className?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  children?: React.ReactNode
   "aria-label"?: string
 }) {
-  const [open, setOpen] = React.useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false)
+  const open = openProp ?? uncontrolledOpen
   const path = value ? findPath(items, value) : []
   const selected = path.at(-1)
   const defaultBranch = value ? parentOf(items, value) : null
   const [branch, setBranch] = React.useState<CascaderNode | null>(defaultBranch)
+
+  function setOpen(next: boolean) {
+    if (openProp === undefined) {
+      setUncontrolledOpen(next)
+    }
+    onOpenChange?.(next)
+  }
 
   React.useEffect(() => {
     if (open) {
@@ -141,32 +164,44 @@ export function Cascader({
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal>
-      <PopoverTrigger
-        id={id}
-        type="button"
-        aria-label={ariaLabel}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className={cn(
-          "flex h-8 w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-card py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-muted-foreground dark:bg-input/30 dark:hover:bg-input/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-          className
-        )}
-      >
-        <span className={cn("truncate", !selected && "text-muted-foreground")}>
-          {selected ? label : placeholder}
-        </span>
-        <ChevronDownIcon className="size-4 text-muted-foreground" />
-      </PopoverTrigger>
+      {children ? (
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
+      ) : (
+        <PopoverTrigger
+          id={id}
+          type="button"
+          aria-label={ariaLabel}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className={cn(
+            "flex h-8 w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-card py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-muted-foreground dark:bg-input/30 dark:hover:bg-input/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+            className
+          )}
+        >
+          <span className={cn("truncate", !selected && "text-muted-foreground")}>
+            {selected ? label : placeholder}
+          </span>
+          <ChevronDownIcon className="size-4 text-muted-foreground" />
+        </PopoverTrigger>
+      )}
       <PopoverContent
         align="start"
         side="bottom"
         className="flex w-auto flex-row gap-0 p-0"
+        onOpenAutoFocus={
+          children
+            ? (event) => {
+                event.preventDefault()
+              }
+            : undefined
+        }
       >
         <CascaderColumn
           items={items}
           value={value}
           activeValue={branch?.value}
-          labelledBy={id}
+          labelledBy={children ? undefined : id}
+          aria-label={children ? ariaLabel : undefined}
           onHover={hoverItem}
           onSelect={selectItem}
         />

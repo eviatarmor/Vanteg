@@ -1,5 +1,12 @@
 import { getNodeType } from "./node-catalog"
-import type { VantegNode, VantegNodeData, NodeKind, NodeField, NodeVar } from "./types"
+import type {
+  VantegNode,
+  VantegNodeData,
+  NodeKind,
+  NodeField,
+  NodeVar,
+  NodeVarType,
+} from "./types"
 
 /** Keys (and header names) treated as secret-sensitive workflow I/O. */
 const SECRET_KEY_TOKENS = new Set([
@@ -80,16 +87,80 @@ export function sanitizeIoVarValue(secret: boolean, value: string): string {
   return value
 }
 
+type IoShape = {
+  key: string
+  type: NodeVarType
+  secret?: boolean
+  children?: IoShape[]
+}
+
+const OBJECT_KEYS = new Set(["payload", "body", "headers", "query", "result", "data"])
+const NUMBER_KEYS = new Set(["status", "index", "concurrency", "amount", "timeout"])
+const BOOLEAN_KEYS = new Set(["ok"])
+
+export function nodeVarType(item: Pick<NodeVar, "key" | "type" | "children">): NodeVarType {
+  if (item.type) {
+    return item.type
+  }
+  if (item.children?.length) {
+    return "object"
+  }
+  if (BOOLEAN_KEYS.has(item.key)) {
+    return "boolean"
+  }
+  if (NUMBER_KEYS.has(item.key)) {
+    return "number"
+  }
+  if (OBJECT_KEYS.has(item.key)) {
+    return "object"
+  }
+  return "string"
+}
+
+function typeFromField(field: NodeField): NodeVarType {
+  if (field.control === "number") {
+    return "number"
+  }
+  if (field.control === "boolean") {
+    return "boolean"
+  }
+  if (field.language === "json") {
+    return "object"
+  }
+  return "string"
+}
+
 function makeVar(
   key: string,
   value = "",
-  options?: { secret?: boolean }
+  options?: { secret?: boolean; type?: NodeVarType; children?: NodeVar[] }
 ): NodeVar {
   const secret = options?.secret === true || isSecretIoKey(key)
   const safeValue = sanitizeIoVarValue(secret, value)
-  return secret
-    ? { id: crypto.randomUUID(), key, value: safeValue, secret: true }
-    : { id: crypto.randomUUID(), key, value: safeValue }
+  const type = options?.type ?? nodeVarType({ key, type: options?.type, children: options?.children })
+  const node: NodeVar = { id: crypto.randomUUID(), key, value: safeValue, type }
+  if (secret) {
+    node.secret = true
+  }
+  if (options?.children) {
+    node.children = options.children
+  }
+  return node
+}
+
+function cloneVarTree(item: NodeVar, value: string): NodeVar {
+  return makeVar(item.key, value, {
+    secret: isSecretNodeVar(item),
+    type: nodeVarType(item),
+    children: item.children?.map((child) =>
+      cloneVarTree(
+        child,
+        value.endsWith("}}")
+          ? `${value.slice(0, -2)}.${child.key}}}`
+          : value
+      )
+    ),
+  })
 }
 
 function uniqueKeys(keys: string[]): string[] {
@@ -105,36 +176,99 @@ function uniqueKeys(keys: string[]): string[] {
   return result
 }
 
-function extraOutKeys(catalogId: string, kind: NodeKind): string[] {
+function jsonObject(key: string, children: IoShape[] = []): IoShape {
+  return { key, type: "object", children }
+}
+
+function extraOutShapes(catalogId: string, kind: NodeKind): IoShape[] {
   if (catalogId === "webhook") {
-    return ["body", "headers", "query"]
+    return [
+      jsonObject("headers", [
+        { key: "content-type", type: "string" },
+        { key: "authorization", type: "string", secret: true },
+      ]),
+      jsonObject("query", [{ key: "id", type: "string" }]),
+      jsonObject("body", [
+        { key: "id", type: "string" },
+        jsonObject("data"),
+      ]),
+    ]
+  }
+  if (catalogId === "rss") {
+    return [
+      {
+        key: "items",
+        type: "array",
+        children: [
+          jsonObject("item", [
+            { key: "title", type: "string" },
+            { key: "url", type: "string" },
+            { key: "publishedAt", type: "string" },
+          ]),
+        ],
+      },
+    ]
   }
   if (catalogId.startsWith("slack")) {
-    return ["ts", "ok"]
+    return [
+      { key: "ok", type: "boolean" },
+      { key: "ts", type: "string" },
+    ]
   }
   if (catalogId === "http" || catalogId.startsWith("http-")) {
-    return ["status", "body", "ok"]
+    return [
+      { key: "status", type: "number" },
+      { key: "ok", type: "boolean" },
+      jsonObject("body", [
+        { key: "id", type: "string" },
+        jsonObject("data"),
+      ]),
+    ]
   }
-  return kind === "trigger" ? ["payload"] : ["result", "ok"]
+  if (catalogId === "loop") {
+    return [
+      jsonObject("item", [{ key: "id", type: "string" }]),
+      { key: "index", type: "number" },
+      { key: "ok", type: "boolean" },
+    ]
+  }
+  if (kind === "trigger") {
+    return [
+      jsonObject("payload", [
+        { key: "id", type: "string" },
+        jsonObject("data"),
+      ]),
+    ]
+  }
+  return [
+    { key: "ok", type: "boolean" },
+    jsonObject("result", [
+      { key: "id", type: "string" },
+      jsonObject("data"),
+    ]),
+  ]
 }
 
-function fieldSecretMap(fields: readonly NodeField[] | undefined): Map<string, boolean> {
-  const map = new Map<string, boolean>()
-  for (const field of fields ?? []) {
-    if (field.secret) {
-      map.set(field.key, true)
-    }
-  }
-  return map
-}
-
-function makeVarsFromKeys(
-  keys: string[],
-  fieldSecrets: Map<string, boolean>
-): NodeVar[] {
-  return keys.map((key) =>
-    makeVar(key, "", { secret: fieldSecrets.get(key) === true || isSecretIoKey(key) })
+function makeVarsFromShapes(shapes: IoShape[]): NodeVar[] {
+  return shapes.map((shape) =>
+    makeVar(shape.key, "", {
+      secret: shape.secret === true || isSecretIoKey(shape.key),
+      type: shape.type,
+      children: shape.children?.length
+        ? makeVarsFromShapes(shape.children)
+        : undefined,
+    })
   )
+}
+
+function makeVarsFromFields(fields: readonly NodeField[]): NodeVar[] {
+  return uniqueKeys(fields.map((field) => field.key)).map((key) => {
+    const field = fields.find((item) => item.key === key)
+    return makeVar(key, "", {
+      secret: field?.secret === true || isSecretIoKey(key),
+      type: field ? typeFromField(field) : "string",
+    })
+  })
 }
 
 export function defaultNodeIo(catalogId: string): {
@@ -144,22 +278,20 @@ export function defaultNodeIo(catalogId: string): {
   const catalog = getNodeType(catalogId)
   const kind = catalog?.kind ?? "action"
   const fields = catalog?.fields ?? []
-  const fieldKeys = fields.map((field) => field.key)
-  const fieldSecrets = fieldSecretMap(fields)
+  const extras = makeVarsFromShapes(extraOutShapes(catalogId, kind))
+  const extraKeys = new Set(extras.map((item) => item.key))
+  const fieldVars = makeVarsFromFields(fields).filter((item) => !extraKeys.has(item.key))
 
   if (kind === "trigger") {
     return {
       inVars: [],
-      outVars: makeVarsFromKeys(
-        uniqueKeys([...fieldKeys, ...extraOutKeys(catalogId, kind)]),
-        fieldSecrets
-      ),
+      outVars: [...fieldVars, ...extras],
     }
   }
 
   return {
-    inVars: makeVarsFromKeys(uniqueKeys(fieldKeys), fieldSecrets),
-    outVars: makeVarsFromKeys(uniqueKeys(extraOutKeys(catalogId, kind)), fieldSecrets),
+    inVars: fieldVars,
+    outVars: extras,
   }
 }
 
@@ -171,9 +303,7 @@ export function mapUpstreamOutputs(
   const mapped = source.data.outVars
     .filter((item) => item.key && !existing.has(item.key))
     .map((item) =>
-      makeVar(item.key, '{{' + source.data.label + '.' + item.key + '}}', {
-        secret: isSecretNodeVar(item),
-      })
+      cloneVarTree(item, "{{" + source.data.label + "." + item.key + "}}")
     )
 
   return {

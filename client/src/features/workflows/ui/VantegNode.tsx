@@ -68,12 +68,7 @@ export const VantegNode = memo(function VantegNode({
       ) : null}
       <div className="flex items-center gap-2">
         <NodeIcon catalogId={data.catalogId} className="size-4 shrink-0 opacity-80" />
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium tracking-wide uppercase opacity-70">
-            {catalog?.kind ?? "node"}
-          </p>
-          <p className="truncate text-sm font-medium">{data.label}</p>
-        </div>
+        <p className="min-w-0 truncate text-sm font-medium">{data.label}</p>
       </div>
       {sources.length > 1 ? (
         <div className="mt-1 flex justify-between gap-1 px-1">

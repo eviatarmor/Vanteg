@@ -32,7 +32,6 @@ export function createVantegNode(
     data: {
       catalogId,
       label: catalog?.label ?? catalogId,
-      notes: "",
       config: defaultConfig(catalog?.fields),
       inVars: io.inVars,
       outVars: io.outVars,
