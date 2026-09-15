@@ -1,7 +1,7 @@
 import type { ExplorerNode } from "@/features/data/ui/ExplorerTree"
 import { maskSecretLast, SECRET_MASK } from "@/features/data/model/mask-secret"
 
-import { isSecretNodeVar } from "../model/node-io"
+import { isSecretNodeVar, nodeVarType } from "../model/node-io"
 import type { VantegEdge, VantegNode, NodeVar } from "../model/types"
 
 function secretHint(item: NodeVar): string {
@@ -10,37 +10,42 @@ function secretHint(item: NodeVar): string {
     return SECRET_MASK
   }
   // Template paths are not secret material; still avoid leaking length of live secrets.
-  if (value.includes('{{') && value.includes('}}')) {
+  if (value.includes("{{") && value.includes("}}")) {
     return SECRET_MASK
   }
   // Credential ids and other opaque values: mask without revealing raw content.
   return maskSecretLast(value) || SECRET_MASK
 }
 
-function varLeaves(
-  vars: NodeVar[],
-  prefix: string,
-  hintFor?: (item: NodeVar) => string | undefined
-): ExplorerNode[] {
-  return vars
-    .filter((item) => item.key)
-    .map((item) => {
-      const secret = isSecretNodeVar(item)
-      return {
-        id: `${prefix}:${item.id}`,
-        label: item.key,
-        icon: secret ? ("secret" as const) : ("variable" as const),
-        hint: secret ? secretHint(item) : (hintFor?.(item) ?? (item.value || undefined)),
-      }
-    })
+function varNode(item: NodeVar, prefix: string): ExplorerNode {
+  const type = nodeVarType(item)
+  const secret = isSecretNodeVar(item)
+  const nested = (item.children ?? []).filter((child) => child.key)
+  const id = `${prefix}:${item.id}`
+  const hint = secret ? secretHint(item) : type
+  if (nested.length > 0) {
+    return {
+      id,
+      label: item.key,
+      icon: secret ? "secret" : "folder",
+      hint,
+      children: nested.map((child) => varNode(child, id)),
+    }
+  }
+  return {
+    id,
+    label: item.key,
+    icon: secret ? "secret" : "variable",
+    hint,
+  }
+}
+
+function varForest(vars: NodeVar[], prefix: string): ExplorerNode[] {
+  return vars.filter((item) => item.key).map((item) => varNode(item, prefix))
 }
 
 export function outExplorerNodes(node: VantegNode): ExplorerNode[] {
-  const children = varLeaves(
-    node.data.outVars,
-    `out:${node.id}`,
-    (item) => `{{${node.data.label}.${item.key}}}`
-  )
+  const children = varForest(node.data.outVars, `out:${node.id}`)
   if (children.length === 0) {
     return []
   }
@@ -78,15 +83,21 @@ export function inExplorerNodes(
       id: `in:${source.id}`,
       label: source.data.label,
       icon: "folder" as const,
-      children: varLeaves(
-        source.data.outVars,
-        `in:${source.id}`,
-        (item) => `{{${source.data.label}.${item.key}}}`
-      ),
+      children: varForest(source.data.outVars, `in:${source.id}`),
     }))
     .filter((group) => (group.children?.length ?? 0) > 0)
 }
 
 export function explorerGroupIds(nodes: ExplorerNode[]): string[] {
-  return nodes.filter((node) => (node.children?.length ?? 0) > 0).map((node) => node.id)
+  const ids: string[] = []
+  function walk(list: ExplorerNode[]) {
+    for (const node of list) {
+      if ((node.children?.length ?? 0) > 0) {
+        ids.push(node.id)
+        walk(node.children ?? [])
+      }
+    }
+  }
+  walk(nodes)
+  return ids
 }

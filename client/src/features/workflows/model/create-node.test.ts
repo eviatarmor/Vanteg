@@ -10,7 +10,6 @@ describe("createVantegNode", () => {
     expect(node.position).toEqual({ x: 12, y: 24 })
     expect(node.data.catalogId).toBe("webhook")
     expect(node.data.label).toBe("Webhook")
-    expect(node.data.notes).toBe("")
     expect(node.data.config).toEqual({ method: "POST" })
     expect(node.data.outVars.map((item) => item.key)).toContain("body")
   })

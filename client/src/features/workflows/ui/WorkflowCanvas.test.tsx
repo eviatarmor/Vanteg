@@ -46,20 +46,21 @@ describe("WorkflowCanvas", () => {
 
     openPaneMenu()
 
-    expect(screen.getByRole("menu")).toBeInTheDocument()
-    expect(screen.getByRole("menuitem", { name: "Webhook" })).toBeInTheDocument()
-    expect(screen.getByRole("menuitem", { name: "Inbound call" })).toBeInTheDocument()
-    expect(screen.getByRole("menuitem", { name: "If" })).toBeInTheDocument()
-    expect(screen.getByRole("menuitem", { name: "Send email" })).toBeInTheDocument()
-    expect(screen.getByRole("menuitem", { name: "More" })).toBeInTheDocument()
+    expect(screen.getByRole("listbox", { name: "Add a step" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Trigger" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Logic" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Connectors" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Others" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "Webhook" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "More" })).not.toBeInTheDocument()
   })
 
-  it("adds a node from the pane menu without opening the sheet", async () => {
-    const user = userEvent.setup()
+  it("adds a node from the pane menu without opening the sheet", () => {
     renderCanvas()
     openPaneMenu()
 
-    await user.click(screen.getByRole("menuitem", { name: "HTTP Request" }))
+    fireEvent.click(screen.getByRole("option", { name: "Connectors" }))
+    fireEvent.click(screen.getByRole("option", { name: "HTTP Request" }))
 
     expect(screen.queryByRole("dialog", { name: "HTTP Request" })).not.toBeInTheDocument()
     expect(screen.getByText("HTTP Request")).toBeInTheDocument()
@@ -76,7 +77,8 @@ describe("WorkflowCanvas", () => {
 
     expect(screen.getByRole("dialog", { name: "Manual" })).toBeInTheDocument()
     expect(screen.getByText("Ports")).toBeInTheDocument()
-    expect(screen.getByLabelText("Notes")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Notes")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("Name")).not.toBeInTheDocument()
   })
 
   it("opens a node menu with duplicate and delete", async () => {
@@ -102,7 +104,7 @@ describe("WorkflowCanvas", () => {
     renderCanvas()
     openPaneMenu()
 
-    await user.click(screen.getByRole("menuitem", { name: "More" }))
+    await user.click(screen.getByRole("option", { name: "Others" }))
 
     expect(screen.getByRole("dialog", { name: "Add a step" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Triggers" })).toBeInTheDocument()

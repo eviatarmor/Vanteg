@@ -1,6 +1,11 @@
 import { Badge } from "@workspace/ui/components/badge"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
+import {
+  Editable,
+  EditableArea,
+  EditableInput,
+  EditableLabel,
+  EditablePreview,
+} from "@workspace/ui/components/editable"
 import {
   Sheet,
   SheetContent,
@@ -15,7 +20,6 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
 import { ScrollFade } from "@workspace/ui/components/scroll-fade"
-import { Textarea } from "@workspace/ui/components/textarea"
 
 import { ExplorerTree } from "@/features/data/ui/ExplorerTree"
 
@@ -87,21 +91,43 @@ export function NodeSheet({
       >
         {node ? (
           <>
-            <SheetHeader>
+            <SheetHeader className="pr-12">
               <div className="flex items-start gap-3">
                 <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
                   <NodeIcon catalogId={node.data.catalogId} className="size-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <SheetTitle>{catalog?.label ?? node.data.label}</SheetTitle>
+                  <SheetTitle className="sr-only">{node.data.label}</SheetTitle>
+                  <Editable
+                    value={node.data.label}
+                    onSubmit={(value) => {
+                      const label =
+                        value.trim() || catalog?.label || node.data.label
+                      if (label !== node.data.label) {
+                        onChange(node.id, { label })
+                      }
+                    }}
+                    autosize
+                    placeholder={catalog?.label ?? "Step"}
+                    className="min-w-0 gap-0"
+                  >
+                    <EditableLabel className="sr-only">Step name</EditableLabel>
+                    <EditableArea>
+                      <EditablePreview className="py-0 font-heading text-base font-medium md:text-base" />
+                      <EditableInput
+                        aria-label="Step name"
+                        className="h-7 py-0 font-heading text-base font-medium shadow-none md:text-base"
+                      />
+                    </EditableArea>
+                  </Editable>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className="capitalize">
                       {catalog?.kind ?? "node"}
                     </Badge>
+                    <SheetDescription>
+                      {catalog?.description ?? "Configure this step."}
+                    </SheetDescription>
                   </div>
-                  <SheetDescription>
-                    {catalog?.description ?? "Configure this step."}
-                  </SheetDescription>
                 </div>
               </div>
             </SheetHeader>
@@ -160,20 +186,6 @@ export function NodeSheet({
                       ))}
                     </div>
                   </section>
-                  <section className="grid gap-2">
-                    <Label htmlFor="node-name">Name</Label>
-                    <Input
-                      id="node-name"
-                      value={node.data.label}
-                      placeholder="Step name"
-                      onChange={(event) =>
-                        onChange(node.id, { label: event.target.value })
-                      }
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Shown on the canvas. Does not change the step type.
-                    </p>
-                  </section>
                   {catalog ? (
                     <NodeConfigFields
                       node={node}
@@ -188,17 +200,6 @@ export function NodeSheet({
                       secret={node.data.config.secret}
                     />
                   ) : null}
-                  <section className="grid gap-2">
-                    <Label htmlFor="node-notes">Notes</Label>
-                    <Textarea
-                      id="node-notes"
-                      value={node.data.notes}
-                      placeholder="Why this step exists, edge cases, owners…"
-                      onChange={(event) =>
-                        onChange(node.id, { notes: event.target.value })
-                      }
-                    />
-                  </section>
                 </div>
                 </ScrollFade>
               </TabsContent>

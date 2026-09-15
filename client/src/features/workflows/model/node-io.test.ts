@@ -24,6 +24,12 @@ describe("node in/out", () => {
     expect(slack.data.outVars.map((item) => item.key)).toEqual(
       expect.arrayContaining(["ts", "ok"])
     )
+    expect(webhook.data.outVars.find((item) => item.key === "body")?.type).toBe("object")
+    expect(webhook.data.outVars.find((item) => item.key === "method")?.type).toBe("string")
+    expect(createVantegNode("http", { x: 0, y: 0 }).data.outVars.find((item) => item.key === "status")?.type).toBe(
+      "number"
+    )
+    expect(slack.data.outVars.find((item) => item.key === "ok")?.type).toBe("boolean")
   })
 
   it("maps upstream out keys onto the next node's in variables", () => {

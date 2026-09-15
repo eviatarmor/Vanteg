@@ -44,6 +44,23 @@ describe("NodeSheet", () => {
     resetIntegrationsStore()
   })
 
+  it("renames the step from the node title", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const node = createVantegNode("if", { x: 0, y: 0 })
+
+    renderSheet(node, onChange)
+
+    expect(screen.getByRole("dialog", { name: "If" })).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "If" }))
+    const input = screen.getByRole("textbox", { name: "Step name" })
+    await user.clear(input)
+    await user.type(input, "Is open")
+    await user.keyboard("{Enter}")
+
+    expect(onChange).toHaveBeenCalledWith(node.id, { label: "Is open" })
+  })
+
   it("opens from the right with the node fields", async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
@@ -56,12 +73,14 @@ describe("NodeSheet", () => {
       "sm:max-w-4xl",
       "data-[side=right]:sm:max-w-4xl"
     )
-    expect(screen.getByLabelText("Name")).toHaveValue("Webhook")
+    expect(screen.getByRole("button", { name: "Webhook" })).toBeInTheDocument()
+    expect(screen.getByText("trigger")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Name")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("Notes")).not.toBeInTheDocument()
     expect(screen.getByLabelText("Path")).toBeInTheDocument()
     expect(screen.getByLabelText("Method")).toBeInTheDocument()
     expect(screen.getByLabelText("Method")).toHaveTextContent("POST")
     expect(screen.getByText("Ports")).toBeInTheDocument()
-    expect(screen.getByLabelText("Notes")).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "In" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Out" })).toBeInTheDocument()
 
@@ -81,10 +100,12 @@ describe("NodeSheet", () => {
     const tree = screen.getByRole("tree", { name: "Out" })
     expect(tree).toHaveAttribute("aria-readonly", "true")
     expect(screen.getByRole("treeitem", { name: "Webhook" })).toBeInTheDocument()
-    expect(screen.getByText("body")).toBeInTheDocument()
+    expect(screen.getByRole("treeitem", { name: "body object" })).toBeInTheDocument()
+    expect(screen.getByRole("treeitem", { name: "method string" })).toBeInTheDocument()
     expect(tree.querySelector(".lucide-braces")).toBeInTheDocument()
     expect(tree.querySelector(".lucide-folder-open, .lucide-folder")).toBeInTheDocument()
-    expect(screen.getByText("{{Webhook.body}}")).toBeInTheDocument()
+    expect(screen.getAllByText("object").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("string").length).toBeGreaterThan(0)
   })
 
   it("groups incoming variables under previous nodes", async () => {
@@ -102,8 +123,7 @@ describe("NodeSheet", () => {
 
     expect(screen.getByRole("tree", { name: "In" })).toBeInTheDocument()
     expect(screen.getByRole("treeitem", { name: "Webhook" })).toBeInTheDocument()
-    expect(screen.getByText("body")).toBeInTheDocument()
-    expect(screen.getByText("{{Webhook.body}}")).toBeInTheDocument()
+    expect(screen.getByRole("treeitem", { name: "body object" })).toBeInTheDocument()
   })
 
   it("renders Slack message as a textarea and unfurl as a switch", async () => {
