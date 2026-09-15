@@ -30,6 +30,8 @@ export function notificationChannelField(placeholder = "ops"): NodeField {
     key: "channel",
     label: "Channel",
     placeholder,
+    section: "parameters",
+    mode: "either",
     help: "Destination channel or audience for the notification.",
   }
 }
@@ -39,6 +41,8 @@ export function notificationTitleField(placeholder = "Done"): NodeField {
     key: "title",
     label: "Title",
     placeholder,
+    section: "parameters",
+    mode: "either",
   }
 }
 
@@ -50,6 +54,8 @@ export function notificationMessageField(
     label: "Message",
     placeholder,
     control: "textarea",
+    section: "parameters",
+    mode: "either",
     help: "Body shown in the push or in-app notification.",
   }
 }
@@ -60,6 +66,8 @@ export function notificationSeverityField(placeholder = "info"): NodeField {
     label: "Severity",
     placeholder,
     control: "select",
+    section: "options",
+    mode: "fixed",
     options: NOTIFICATION_SEVERITIES.map((option) => ({ ...option })),
   }
 }
@@ -69,6 +77,9 @@ export function filePathField(placeholder = "/tmp/export.csv"): NodeField {
     key: "path",
     label: "Path",
     placeholder,
+    section: "parameters",
+    mode: "either",
+    required: true,
     help: "File or directory path to operate on.",
   }
 }
@@ -79,6 +90,8 @@ export function fileOperationField(placeholder = "read"): NodeField {
     label: "Operation",
     placeholder,
     control: "select",
+    section: "parameters",
+    mode: "fixed",
     options: FILE_OPERATIONS.map((option) => ({ ...option })),
   }
 }
@@ -89,7 +102,10 @@ export function fileContentField(placeholder = "id,name\n1,Ada"): NodeField {
     label: "Content",
     placeholder,
     control: "textarea",
-    help: "File contents used when Operation is write. Ignored for read, list, and delete.",
+    section: "parameters",
+    mode: "either",
+    showWhen: { key: "operation", equals: "write" },
+    help: "File contents used when Operation is write.",
   }
 }
 
@@ -99,6 +115,8 @@ export function respondWebhookStatusField(placeholder = "200"): NodeField {
     label: "Status",
     placeholder,
     control: "select",
+    section: "parameters",
+    mode: "fixed",
     options: WEBHOOK_STATUSES.map((option) => ({ ...option })),
     help: "HTTP status code returned to the webhook caller.",
   }
@@ -113,6 +131,10 @@ export function respondWebhookBodyField(
     placeholder,
     control: "code",
     language: "json",
+    section: "parameters",
+    mode: "either",
+    validation: [{ kind: "json" }],
+    showWhen: { key: "noBody", equals: "false" },
     help: "JSON payload returned to the caller.",
   }
 }
@@ -124,8 +146,9 @@ export function respondWebhookHeadersField(
     key: "headers",
     label: "Headers",
     placeholder,
-    control: "code",
-    language: "json",
-    help: "Optional response headers as a JSON object. Leave blank to omit.",
+    control: "keyValue",
+    section: "options",
+    mode: "either",
+    help: "Optional response headers. Leave blank to omit.",
   }
 }

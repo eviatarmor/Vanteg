@@ -1,3 +1,5 @@
+import { isSecretSetupKey, type IoSchemaField } from "@workspace/integrations"
+
 import { getNodeType } from "./node-catalog"
 import type {
   VantegNode,
@@ -24,6 +26,7 @@ const SECRET_KEY_TOKENS = new Set([
   "accesstoken",
   "refreshtoken",
   "sharedsecret",
+  "signingsecret",
 ])
 
 const TOKEN_PREFIX_DENY = new Set(["next", "page", "continuation", "cursor"])
@@ -47,7 +50,7 @@ export function isSecretIoKey(key: string): boolean {
   if (!compact) {
     return false
   }
-  if (SECRET_KEY_TOKENS.has(compact)) {
+  if (SECRET_KEY_TOKENS.has(compact) || isSecretSetupKey(key)) {
     return true
   }
   const parts = splitKeyTokens(key)
@@ -81,17 +84,10 @@ export function isSecretNodeVar(
 }
 
 export function sanitizeIoVarValue(secret: boolean, value: string): string {
-  if (secret && value && !(value.includes('{{') && value.includes('}}'))) {
+  if (secret && value && !(value.includes("{{") && value.includes("}}"))) {
     return ""
   }
   return value
-}
-
-type IoShape = {
-  key: string
-  type: NodeVarType
-  secret?: boolean
-  children?: IoShape[]
 }
 
 const OBJECT_KEYS = new Set(["payload", "body", "headers", "query", "result", "data"])
@@ -112,19 +108,6 @@ export function nodeVarType(item: Pick<NodeVar, "key" | "type" | "children">): N
     return "number"
   }
   if (OBJECT_KEYS.has(item.key)) {
-    return "object"
-  }
-  return "string"
-}
-
-function typeFromField(field: NodeField): NodeVarType {
-  if (field.control === "number") {
-    return "number"
-  }
-  if (field.control === "boolean") {
-    return "boolean"
-  }
-  if (field.language === "json") {
     return "object"
   }
   return "string"
@@ -163,112 +146,21 @@ function cloneVarTree(item: NodeVar, value: string): NodeVar {
   })
 }
 
-function uniqueKeys(keys: string[]): string[] {
-  const seen = new Set<string>()
-  const result: string[] = []
-  for (const key of keys) {
-    if (!key || seen.has(key)) {
-      continue
-    }
-    seen.add(key)
-    result.push(key)
-  }
-  return result
-}
-
-function jsonObject(key: string, children: IoShape[] = []): IoShape {
-  return { key, type: "object", children }
-}
-
-function extraOutShapes(catalogId: string, kind: NodeKind): IoShape[] {
-  if (catalogId === "webhook") {
-    return [
-      jsonObject("headers", [
-        { key: "content-type", type: "string" },
-        { key: "authorization", type: "string", secret: true },
-      ]),
-      jsonObject("query", [{ key: "id", type: "string" }]),
-      jsonObject("body", [
-        { key: "id", type: "string" },
-        jsonObject("data"),
-      ]),
-    ]
-  }
-  if (catalogId === "rss") {
-    return [
-      {
-        key: "items",
-        type: "array",
-        children: [
-          jsonObject("item", [
-            { key: "title", type: "string" },
-            { key: "url", type: "string" },
-            { key: "publishedAt", type: "string" },
-          ]),
-        ],
-      },
-    ]
-  }
-  if (catalogId.startsWith("slack")) {
-    return [
-      { key: "ok", type: "boolean" },
-      { key: "ts", type: "string" },
-    ]
-  }
-  if (catalogId === "http" || catalogId.startsWith("http-")) {
-    return [
-      { key: "status", type: "number" },
-      { key: "ok", type: "boolean" },
-      jsonObject("body", [
-        { key: "id", type: "string" },
-        jsonObject("data"),
-      ]),
-    ]
-  }
-  if (catalogId === "loop") {
-    return [
-      jsonObject("item", [{ key: "id", type: "string" }]),
-      { key: "index", type: "number" },
-      { key: "ok", type: "boolean" },
-    ]
-  }
-  if (kind === "trigger") {
-    return [
-      jsonObject("payload", [
-        { key: "id", type: "string" },
-        jsonObject("data"),
-      ]),
-    ]
-  }
-  return [
-    { key: "ok", type: "boolean" },
-    jsonObject("result", [
-      { key: "id", type: "string" },
-      jsonObject("data"),
-    ]),
-  ]
-}
-
-function makeVarsFromShapes(shapes: IoShape[]): NodeVar[] {
-  return shapes.map((shape) =>
-    makeVar(shape.key, "", {
-      secret: shape.secret === true || isSecretIoKey(shape.key),
-      type: shape.type,
-      children: shape.children?.length
-        ? makeVarsFromShapes(shape.children)
-        : undefined,
+function schemaToVars(fields: readonly IoSchemaField[] | undefined): NodeVar[] {
+  return (fields ?? [])
+    .filter((field) => !isSecretSetupKey(field.key) && field.secret !== true)
+    .map((field) => {
+      const nested = field.fields?.length
+        ? schemaToVars(field.fields)
+        : field.items
+          ? schemaToVars([{ ...field.items, key: field.items.key || "item" }])
+          : undefined
+      return makeVar(field.key, "", {
+        secret: field.secret === true,
+        type: field.type,
+        children: nested?.length ? nested : undefined,
+      })
     })
-  )
-}
-
-function makeVarsFromFields(fields: readonly NodeField[]): NodeVar[] {
-  return uniqueKeys(fields.map((field) => field.key)).map((key) => {
-    const field = fields.find((item) => item.key === key)
-    return makeVar(key, "", {
-      secret: field?.secret === true || isSecretIoKey(key),
-      type: field ? typeFromField(field) : "string",
-    })
-  })
 }
 
 export function defaultNodeIo(catalogId: string): {
@@ -276,22 +168,20 @@ export function defaultNodeIo(catalogId: string): {
   outVars: NodeVar[]
 } {
   const catalog = getNodeType(catalogId)
-  const kind = catalog?.kind ?? "action"
-  const fields = catalog?.fields ?? []
-  const extras = makeVarsFromShapes(extraOutShapes(catalogId, kind))
-  const extraKeys = new Set(extras.map((item) => item.key))
-  const fieldVars = makeVarsFromFields(fields).filter((item) => !extraKeys.has(item.key))
+  const kind: NodeKind = catalog?.kind ?? "action"
+  const outputs = catalog?.outputs ?? []
+  const inputs = catalog?.inputs ?? []
 
   if (kind === "trigger") {
     return {
       inVars: [],
-      outVars: [...fieldVars, ...extras],
+      outVars: schemaToVars(outputs),
     }
   }
 
   return {
-    inVars: fieldVars,
-    outVars: extras,
+    inVars: schemaToVars(inputs),
+    outVars: schemaToVars(outputs),
   }
 }
 

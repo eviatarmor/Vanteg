@@ -18,16 +18,16 @@ describe("node in/out", () => {
     expect(webhook.data.outVars.map((item) => item.key)).toEqual(
       expect.arrayContaining(["body", "method", "path"])
     )
-    expect(slack.data.inVars.map((item) => item.key)).toEqual(
-      expect.arrayContaining(["channel", "message"])
-    )
+    expect(webhook.data.outVars.map((item) => item.key)).not.toContain("secret")
+    expect(slack.data.inVars.map((item) => item.key)).not.toContain("channel")
+    expect(slack.data.inVars.map((item) => item.key)).not.toContain("message")
     expect(slack.data.outVars.map((item) => item.key)).toEqual(
-      expect.arrayContaining(["ts", "ok"])
+      expect.arrayContaining(["ts", "ok", "messageId"])
     )
-    expect(webhook.data.outVars.find((item) => item.key === "body")?.type).toBe("object")
+    expect(webhook.data.outVars.find((item) => item.key === "body")?.type).toBe("any")
     expect(webhook.data.outVars.find((item) => item.key === "method")?.type).toBe("string")
     expect(createVantegNode("http", { x: 0, y: 0 }).data.outVars.find((item) => item.key === "status")?.type).toBe(
-      "number"
+      "integer"
     )
     expect(slack.data.outVars.find((item) => item.key === "ok")?.type).toBe("boolean")
   })
@@ -38,7 +38,7 @@ describe("node in/out", () => {
     const wired = mapUpstreamOutputs(webhook, slack)
 
     expect(wired.inVars.map((item) => item.key)).toEqual(
-      expect.arrayContaining(["body", "channel", "message"])
+      expect.arrayContaining(["body"])
     )
     expect(wired.inVars.find((item) => item.key === "body")?.value).toBe(
       '{{Webhook.body}}'

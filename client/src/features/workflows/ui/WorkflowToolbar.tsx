@@ -4,6 +4,8 @@ import { toast } from "sonner"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 
+import { getNodeTypeForEditor } from "../model/auth-fields"
+import { validateWorkflow } from "../model/node-validation"
 import { startMockRun } from "../model/run-store"
 import { getWorkflow, saveWorkflow, useWorkflows } from "../model/store"
 import { workflowStatusLabel } from "../model/status-labels"
@@ -32,6 +34,11 @@ export function WorkflowRunBar({
   const workflow = getWorkflow(workflowId)
   const status = workflow?.status ?? "draft"
   const isPublished = status === "prod"
+  const blocking = workflow
+    ? validateWorkflow(workflow, getNodeTypeForEditor)
+    : []
+  const blocked = blocking.length > 0
+  const blockedReason = blocked ? blocking[0]?.message : undefined
 
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border bg-background p-1 shadow-sm">
@@ -65,6 +72,8 @@ export function WorkflowRunBar({
         type="button"
         variant="outline"
         size="sm"
+        disabled={blocked}
+        title={blockedReason}
         onClick={() => toast.message(`Tested ${workflowName}`)}
       >
         <FlaskConical />
@@ -92,6 +101,8 @@ export function WorkflowRunBar({
         type="button"
         size="sm"
         variant={isPublished ? "outline" : "default"}
+        disabled={blocked}
+        title={blockedReason}
         onClick={() => {
           saveWorkflow(workflowId, { status: "prod" })
           toast.success(

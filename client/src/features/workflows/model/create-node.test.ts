@@ -10,7 +10,7 @@ describe("createVantegNode", () => {
     expect(node.position).toEqual({ x: 12, y: 24 })
     expect(node.data.catalogId).toBe("webhook")
     expect(node.data.label).toBe("Webhook")
-    expect(node.data.config).toEqual({ method: "POST" })
+    expect(node.data.config.method).toBe("POST")
     expect(node.data.outVars.map((item) => item.key)).toContain("body")
   })
 
@@ -19,10 +19,11 @@ describe("createVantegNode", () => {
     expect(slack.data.config.unfurlLinks).toBe("true")
   })
 
-  it("defaults If/Filter operators and Delay unit from select placeholders", () => {
-    expect(createVantegNode("if", { x: 0, y: 0 }).data.config.operator).toBe("eq")
-    expect(createVantegNode("filter", { x: 0, y: 0 }).data.config.operator).toBe("gt")
+  it("defaults If/Filter conditions and Delay unit from select placeholders", () => {
+    expect(createVantegNode("if", { x: 0, y: 0 }).data.config.conditions).toContain("join")
+    expect(createVantegNode("filter", { x: 0, y: 0 }).data.config.conditions).toContain("join")
     expect(createVantegNode("delay", { x: 0, y: 0 }).data.config.unit).toBe("minutes")
+    expect(createVantegNode("delay", { x: 0, y: 0 }).data.config.delayMode).toBe("duration")
   })
 
   it("defaults Code language and Merge mode from select placeholders", () => {

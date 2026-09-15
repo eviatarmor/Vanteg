@@ -13,8 +13,10 @@ import {
 import "@xyflow/react/dist/style.css"
 
 import { createVantegNode } from "../model/create-node"
+import { getNodeType } from "../model/node-catalog"
 import { wireConnection } from "../model/node-io"
 import { saveWorkflow } from "../model/store"
+import { normalizeWorkflow } from "../model/workflow-migrate"
 import type {
   NodeVar,
   VantegEdge,
@@ -142,8 +144,9 @@ function EmptyCanvasHint({ empty }: { empty: boolean }) {
 }
 
 function useWorkflowGraph(workflow: Workflow) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(workflow.nodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(workflow.edges)
+  const seeded = normalizeWorkflow(workflow, getNodeType)
+  const [nodes, setNodes, onNodesChange] = useNodesState(seeded.nodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(seeded.edges)
   const onConnect = useCallback(
     (connection: Connection) => {
       setEdges((current) => addEdge({ ...connection, animated: true }, current))
@@ -338,6 +341,7 @@ function WorkflowCanvasOverlays({
         node={sheetNode}
         nodes={graph.nodes}
         edges={graph.edges}
+        workflow={workflow}
         onClose={() => session.setSheetId(null)}
         onChange={onUpdate}
       />

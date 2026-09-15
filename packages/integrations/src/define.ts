@@ -1,14 +1,29 @@
 import { templates } from "./templates.ts"
+import type { IoSchemaField } from "./io-schema.ts"
 import type { AppAuth, IntegrationApp, Method, MethodField, MethodKind, Toggle } from "./types.ts"
+
+export interface MethodIo {
+  inputs?: IoSchemaField[]
+  outputs?: IoSchemaField[]
+}
 
 export function method(
   id: string,
   kind: MethodKind,
   label: string,
   description: string,
-  fields: MethodField[]
+  fields: MethodField[],
+  io?: MethodIo
 ): Method {
-  return { id, kind, label, description, fields }
+  return {
+    id,
+    kind,
+    label,
+    description,
+    fields,
+    inputs: io?.inputs,
+    outputs: io?.outputs,
+  }
 }
 
 export function field(

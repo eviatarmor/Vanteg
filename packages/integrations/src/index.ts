@@ -6,8 +6,15 @@ export type {
   ConnectorAuth,
   ConnectorCategory,
   FieldControl,
+  FieldMode,
+  FieldSection,
+  FieldShowWhen,
+  FieldValidationKind,
+  FieldValidationRule,
   FieldVariant,
   IntegrationApp,
+  IoSchemaField,
+  IoValueType,
   Method,
   MethodField,
   MethodKind,
@@ -21,6 +28,16 @@ export type {
   Toggle,
   ToggleType,
 } from "./types.ts"
+
+export {
+  findIoField,
+  flattenIoPaths,
+  io,
+  ioArray,
+  ioObject,
+  isSecretSetupKey,
+} from "./io-schema.ts"
+export * as contracts from "./contracts.ts"
 
 export {
   CONNECTORS,

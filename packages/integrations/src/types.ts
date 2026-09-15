@@ -1,3 +1,22 @@
+import type {
+  FieldMode,
+  FieldSection,
+  FieldShowWhen,
+  FieldValidationRule,
+  IoSchemaField,
+  IoValueType,
+} from "./io-schema.ts"
+
+export type {
+  FieldMode,
+  FieldSection,
+  FieldShowWhen,
+  FieldValidationKind,
+  FieldValidationRule,
+  IoSchemaField,
+  IoValueType,
+} from "./io-schema.ts"
+
 export type FieldVariant =
   | "short-text"
   | "long-text"
@@ -68,6 +87,15 @@ export type FieldControl =
   | "resource"
   | "number"
   | "datetime"
+  | "credential"
+  | "expression"
+  | "conditions"
+  | "keyValue"
+  | "mapping"
+  | "schema"
+  | "cron"
+  | "routes"
+  | "multiselect"
 
 export interface MethodField {
   key: string
@@ -75,10 +103,21 @@ export interface MethodField {
   placeholder: string
   help?: string
   control?: FieldControl
-  language?: "javascript" | "json"
+  language?: "javascript" | "json" | "python"
   options?: readonly { value: string; label: string }[]
   /** Connection-scoped resource catalog key, e.g. "slack.channel". Used when control is "resource". */
   resourceType?: string
+  valueType?: IoValueType
+  required?: boolean
+  defaultValue?: string
+  mode?: FieldMode
+  section?: FieldSection
+  showWhen?: FieldShowWhen | readonly FieldShowWhen[]
+  validation?: readonly FieldValidationRule[]
+  secret?: boolean
+  inlineAuth?: boolean
+  sensitive?: boolean
+  repeatable?: boolean
 }
 
 export interface Method {
@@ -87,6 +126,8 @@ export interface Method {
   label: string
   description: string
   fields: MethodField[]
+  inputs?: IoSchemaField[]
+  outputs?: IoSchemaField[]
 }
 
 export type ToggleType = "boolean" | "string" | "select"

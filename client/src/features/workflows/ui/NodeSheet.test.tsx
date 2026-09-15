@@ -100,7 +100,7 @@ describe("NodeSheet", () => {
     const tree = screen.getByRole("tree", { name: "Out" })
     expect(tree).toHaveAttribute("aria-readonly", "true")
     expect(screen.getByRole("treeitem", { name: "Webhook" })).toBeInTheDocument()
-    expect(screen.getByRole("treeitem", { name: "body object" })).toBeInTheDocument()
+    expect(screen.getByRole("treeitem", { name: "body any" })).toBeInTheDocument()
     expect(screen.getByRole("treeitem", { name: "method string" })).toBeInTheDocument()
     expect(tree.querySelector(".lucide-braces")).toBeInTheDocument()
     expect(tree.querySelector(".lucide-folder-open, .lucide-folder")).toBeInTheDocument()
@@ -123,7 +123,7 @@ describe("NodeSheet", () => {
 
     expect(screen.getByRole("tree", { name: "In" })).toBeInTheDocument()
     expect(screen.getByRole("treeitem", { name: "Webhook" })).toBeInTheDocument()
-    expect(screen.getByRole("treeitem", { name: "body object" })).toBeInTheDocument()
+    expect(screen.getByRole("treeitem", { name: "body any" })).toBeInTheDocument()
   })
 
   it("renders Slack message as a textarea and unfurl as a switch", async () => {
@@ -133,7 +133,7 @@ describe("NodeSheet", () => {
 
     renderSheet(node, onChange)
 
-    expect(screen.getByLabelText("Message").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Message")).toBeInTheDocument()
     expect(screen.getByRole("switch", { name: "Unfurl links" })).toBeChecked()
     expect(node.data.config.unfurlLinks).toBe("true")
 
@@ -173,7 +173,7 @@ describe("NodeSheet", () => {
 
     renderSheet(node)
 
-    expect(screen.getByLabelText("Message").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Message")).toBeInTheDocument()
     expect(await screen.findByRole("combobox", { name: "Team" })).toBeInTheDocument()
     expect(screen.getByRole("combobox", { name: "Channel" })).toBeInTheDocument()
     expect(screen.queryByRole("textbox", { name: "Team" })).not.toBeInTheDocument()
@@ -203,7 +203,7 @@ describe("NodeSheet", () => {
 
     renderSheet(node)
 
-    expect(screen.getByLabelText("Query").tagName).toBe("TEXTAREA")
+    expect(screen.getByText("Query")).toBeInTheDocument()
     expect(screen.getByLabelText("Timeout (ms)")).toBeInTheDocument()
     expect(screen.getByLabelText("Bearer token / API key")).toBeInTheDocument()
   })
@@ -306,7 +306,7 @@ describe("NodeSheet", () => {
 
     const set = createVantegNode("set", { x: 0, y: 0 })
     const { unmount: unmountSet } = renderSheet(set)
-    expect(screen.getByLabelText("Mapping").tagName).toBe("TEXTAREA")
+    expect(screen.getByRole("group", { name: "Mapping" })).toBeInTheDocument()
     unmountSet()
 
     const merge = createVantegNode("merge", { x: 0, y: 0 })
@@ -316,39 +316,36 @@ describe("NodeSheet", () => {
 
     const loop = createVantegNode("loop", { x: 0, y: 0 })
     const { unmount: unmountLoop } = renderSheet(loop)
-    expect(screen.getByLabelText("Items").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Items")).toBeInTheDocument()
     expect(screen.getByLabelText("Concurrency")).toBeInTheDocument()
     unmountLoop()
 
     const transform = createVantegNode("transform", { x: 0, y: 0 })
     renderSheet(transform)
-    expect(screen.getByLabelText("Expression").tagName).toBe("TEXTAREA")
+    expect(screen.getByRole("group", { name: "Expression" })).toBeInTheDocument()
   })
 
   it("renders If/Switch/Filter/Delay Setup field controls", () => {
     const ifNode = createVantegNode("if", { x: 0, y: 0 })
     const { unmount: unmountIf } = renderSheet(ifNode)
-    expect(screen.getByLabelText("Condition").tagName).toBe("TEXTAREA")
-    expect(screen.getByLabelText("Operator")).toHaveTextContent("Equals")
+    expect(screen.getByRole("group", { name: "Conditions" })).toBeInTheDocument()
     unmountIf()
 
     const filter = createVantegNode("filter", { x: 0, y: 0 })
     const { unmount: unmountFilter } = renderSheet(filter)
-    expect(screen.getByLabelText("Condition").tagName).toBe("TEXTAREA")
-    expect(screen.getByLabelText("Operator")).toHaveTextContent("Greater than")
+    expect(screen.getByRole("group", { name: "Conditions" })).toBeInTheDocument()
     unmountFilter()
 
     const sw = createVantegNode("switch", { x: 0, y: 0 })
     const { unmount: unmountSwitch } = renderSheet(sw)
     expect(screen.getByLabelText("Expression")).toBeInTheDocument()
-    expect(screen.getByLabelText("Cases").tagName).toBe("TEXTAREA")
+    expect(screen.getByRole("group", { name: "Cases" })).toBeInTheDocument()
     unmountSwitch()
 
     const delay = createVantegNode("delay", { x: 0, y: 0 })
     renderSheet(delay)
     expect(screen.getByLabelText("Duration")).toBeInTheDocument()
     expect(screen.getByLabelText("Unit")).toHaveTextContent("Minutes")
-    expect(screen.getByLabelText("Until")).toBeInTheDocument()
   })
 
   it("shows the inline secret again when the saved credential is gone", async () => {
@@ -386,13 +383,12 @@ describe("NodeSheet", () => {
     expect(rss.data.config.interval).toBe("15m")
   })
 
-  it("keeps Manual setup minimal with a clear empty state", () => {
+  it("keeps Manual setup focused on an optional example payload", () => {
     const node = createVantegNode("manual", { x: 0, y: 0 })
     renderSheet(node)
 
     expect(screen.getByRole("dialog", { name: "Manual" })).toBeInTheDocument()
-    expect(screen.getByText(/no extra settings/i)).toBeInTheDocument()
-    expect(screen.queryByText("Configuration")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Example payload")).toBeInTheDocument()
   })
 
   it("renders Notification/File/Respond-webhook Setup field controls", () => {
@@ -400,7 +396,7 @@ describe("NodeSheet", () => {
     const { unmount: unmountNotification } = renderSheet(notification)
     expect(screen.getByLabelText("Channel")).toBeInTheDocument()
     expect(screen.getByLabelText("Title")).toBeInTheDocument()
-    expect(screen.getByLabelText("Message").tagName).toBe("TEXTAREA")
+    expect(screen.getByLabelText("Message")).toBeInTheDocument()
     expect(screen.getByLabelText("Severity")).toHaveTextContent("Info")
     unmountNotification()
 
@@ -408,14 +404,14 @@ describe("NodeSheet", () => {
     const { unmount: unmountFile } = renderSheet(file)
     expect(screen.getByLabelText("Path")).toBeInTheDocument()
     expect(screen.getByLabelText("Operation")).toHaveTextContent("Read")
-    expect(screen.getByLabelText("Content").tagName).toBe("TEXTAREA")
+    expect(screen.queryByLabelText("Content")).not.toBeInTheDocument()
     unmountFile()
 
     const respond = createVantegNode("respond-webhook", { x: 0, y: 0 })
     renderSheet(respond)
     expect(screen.getByLabelText("Status")).toHaveTextContent("200 OK")
     expect(screen.getByRole("textbox", { name: "Body" }).tagName).toBe("TEXTAREA")
-    expect(screen.getByRole("textbox", { name: "Headers" }).tagName).toBe("TEXTAREA")
+    expect(screen.getByRole("group", { name: "Headers" })).toBeInTheDocument()
   })
 
   it("renders GitHub Repository as a resource-select combobox", async () => {
@@ -471,13 +467,13 @@ describe("NodeSheet", () => {
     )
     unmount()
 
-    const delay = createVantegNode("delay", { x: 40, y: 0 })
-    renderSheet(delay, onChange)
+    const event = createVantegNode("google-calendar-create-event", { x: 40, y: 0 })
+    renderSheet(event, onChange)
     const until = screen.getByLabelText("Until")
     expect(until).toHaveAttribute("type", "datetime-local")
     fireEvent.change(until, { target: { value: "2026-09-08T09:00" } })
     expect(onChange).toHaveBeenCalledWith(
-      delay.id,
+      event.id,
       expect.objectContaining({
         config: expect.objectContaining({ until: "2026-09-08T09:00" }),
       })

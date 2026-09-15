@@ -391,7 +391,7 @@ describe("integrations registry", () => {
       "solved",
       "closed",
     ])
-    expect(status?.help).toMatch(/generic family statuses/i)
+    expect(status?.help).toMatch(/optional/i)
 
     const zendeskUpdate = getApp("zendesk")?.methods.find(
       (method) => method.id === "zendesk-update-ticket-status"
@@ -586,10 +586,10 @@ describe("integrations registry", () => {
     expect(sheet?.help).toMatch(/pick a spreadsheet/i)
     expect(
       createRow?.fields.find((field) => field.key === "values")?.control
-    ).toBe("textarea")
+    ).toBe("mapping")
     expect(
       updateRow?.fields.find((field) => field.key === "values")?.control
-    ).toBe("textarea")
+    ).toBe("mapping")
     expect(updateRow?.fields.find((field) => field.key === "row")?.key).toBe(
       "row"
     )
@@ -598,8 +598,8 @@ describe("integrations registry", () => {
     const folder = drive?.methods
       .flatMap((method) => method.fields)
       .find((field) => field.key === "folder")
-    expect(folder?.control ?? "input").toBe("input")
-    expect(folder?.help).toMatch(/resource select later/i)
+    expect(folder?.control).toBe("resource")
+    expect(folder?.help).toMatch(/pick a drive folder/i)
 
     const docs = getApp("google-docs")
     expect(
@@ -615,11 +615,8 @@ describe("integrations registry", () => {
     expect(page?.resourceType).toBe("notion.page")
     expect(page?.help).toMatch(/pick a notion page/i)
     expect(
-      createPage?.fields.find((field) => field.key === "properties")
-    ).toMatchObject({
-      control: "code",
-      language: "json",
-    })
+      createPage?.fields.find((field) => field.key === "properties")?.control
+    ).toBe("mapping")
     expect(
       notion?.methods
         .find((method) => method.id === "notion-update-page")
@@ -630,10 +627,10 @@ describe("integrations registry", () => {
     )
     expect(
       createItem?.fields.find((field) => field.key === "database")?.label
-    ).toBe("Database ID")
+    ).toBe("Database")
     expect(
       createItem?.fields.find((field) => field.key === "properties")?.control
-    ).toBe("code")
+    ).toBe("mapping")
 
     const airtable = getApp("airtable")
     const create = airtable?.methods.find((method) => method.id === "airtable")
@@ -641,23 +638,20 @@ describe("integrations registry", () => {
       (method) => method.id === "airtable-find-records"
     )
     expect(create?.fields.find((field) => field.key === "base")?.label).toBe(
-      "Base ID"
+      "Base"
     )
     expect(create?.fields.find((field) => field.key === "base")?.help).toMatch(
-      /resource select later/i
+      /pick an airtable base/i
     )
     expect(create?.fields.find((field) => field.key === "table")?.label).toBe(
-      "Table ID"
+      "Table"
     )
     expect(create?.fields.find((field) => field.key === "table")?.help).toMatch(
-      /resource select later/i
+      /pick an airtable table/i
     )
     expect(
-      create?.fields.find((field) => field.key === "fields")
-    ).toMatchObject({
-      control: "code",
-      language: "json",
-    })
+      create?.fields.find((field) => field.key === "fields")?.control
+    ).toBe("mapping")
     expect(find?.fields.find((field) => field.key === "formula")?.control).toBe(
       "textarea"
     )

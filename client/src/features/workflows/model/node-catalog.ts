@@ -6,17 +6,37 @@ import {
   type Method,
 } from "@workspace/integrations"
 
-import type { WorkflowNodeType } from "./types"
+import type { NodeField, WorkflowNodeType } from "./types"
+import { ACTION_EXECUTION } from "./io-contracts"
 import { platformNodes } from "./platform-nodes"
 
+function connectorCredentialField(): NodeField {
+  return {
+    key: "credentialId",
+    label: "Credential",
+    placeholder: "None",
+    control: "credential",
+    section: "connection",
+    mode: "fixed",
+    help: "Saved connection used for this step.",
+  }
+}
+
 function toNode(item: Method): WorkflowNodeType {
+  const fields: NodeField[] = item.fields.map((field) => ({ ...field }))
+  if (!fields.some((field) => field.key === "credentialId")) {
+    fields.unshift(connectorCredentialField())
+  }
   return {
     id: item.id,
     label: item.label,
     description: item.description,
     kind: item.kind,
     category: item.kind === "trigger" ? "Triggers" : "Apps",
-    fields: item.fields.map((field) => ({ ...field })),
+    fields,
+    inputs: item.inputs ? [...item.inputs] : [],
+    outputs: item.outputs ? [...item.outputs] : [],
+    executionOptions: item.kind === "action" ? [...ACTION_EXECUTION] : undefined,
   }
 }
 
