@@ -21,6 +21,8 @@ export function customCredentialAuthFields(options?: {
       label: "Credential",
       placeholder: "None",
       control: "credential",
+      section: "connection",
+      mode: "fixed",
       help:
         options?.credentialHelp ??
         "Prefer a saved custom credential over pasting secrets into this step.",
@@ -31,6 +33,8 @@ export function customCredentialAuthFields(options?: {
       placeholder: options?.inlinePlaceholder ?? "Paste only if not using a credential",
       secret: true,
       inlineAuth: true,
+      section: "connection",
+      mode: "fixed",
       help:
         options?.inlineHelp ??
         "Inline secret used only when no custom credential is selected.",
@@ -71,12 +75,17 @@ export function patchConfigForCredential(
 
 function authFieldsFor(catalogId: string): NodeField[] {
   if (catalogId === "webhook") {
-    return customCredentialAuthFields({
-      inlineLabel: "Shared secret",
-      inlinePlaceholder: "Optional webhook verification secret",
-      inlineHelp: "Inline secret used only when no custom credential is selected.",
-      credentialHelp: "Optional credential used to verify inbound webhook requests.",
-    })
+    return [
+      {
+        key: "credentialId",
+        label: "Credential",
+        placeholder: "None",
+        control: "credential",
+        section: "connection",
+        mode: "fixed",
+        help: "Optional credential used to verify inbound webhook requests.",
+      },
+    ]
   }
   if (HTTP_AUTH_NODE_IDS.has(catalogId)) {
     return customCredentialAuthFields()

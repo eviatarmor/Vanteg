@@ -16,6 +16,9 @@ function aiPromptField(placeholder: string): NodeField {
     label: "Prompt",
     placeholder,
     control: "textarea",
+    section: "parameters",
+    mode: "expression",
+    required: true,
   }
 }
 
@@ -25,6 +28,8 @@ function aiModelField(placeholder = "grok-4.6"): NodeField {
     label: "Model",
     placeholder,
     control: "select",
+    section: "parameters",
+    mode: "fixed",
     options: AI_MODELS.map((value) => ({ value, label: value })),
   }
 }
@@ -35,6 +40,8 @@ function aiTemperatureField(): NodeField {
     label: "Temperature",
     placeholder: "0.7",
     control: "number",
+    section: "options",
+    validation: [{ kind: "min", value: 0 }, { kind: "max", value: 2 }],
     help: "Sampling temperature from 0 (deterministic) to 2 (more random).",
   }
 }
@@ -45,6 +52,8 @@ function databaseOperationField(placeholder = "select"): NodeField {
     label: "Operation",
     placeholder,
     control: "select",
+    section: "parameters",
+    mode: "fixed",
     options: DATABASE_OPERATIONS.map((value) => ({
       value,
       label: value.charAt(0).toUpperCase() + value.slice(1),
@@ -58,14 +67,23 @@ function databaseQueryField(): NodeField {
     label: "Query",
     placeholder: "SELECT * FROM jobs WHERE status = 'open'",
     control: "textarea",
+    section: "parameters",
+    mode: "either",
+    showWhen: { key: "operation", equals: "select" },
     help: "SQL or filter expression for the selected operation.",
   }
 }
 
 function databaseTableField(placeholder = "jobs"): NodeField {
-  return { key: "table", label: "Table", placeholder }
+  return {
+    key: "table",
+    label: "Table",
+    placeholder,
+    section: "parameters",
+    mode: "either",
+    required: true,
+  }
 }
-
 
 export {
   aiPromptField,

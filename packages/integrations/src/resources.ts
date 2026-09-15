@@ -70,12 +70,55 @@ const FORMS: readonly ResourceOption[] = [
   { value: "feedback", label: "Product feedback" },
 ]
 
+const SPREADSHEETS: readonly ResourceOption[] = [
+  { value: "1vanteg-demo-sheet", label: "Leads workbook" },
+  { value: "1vanteg-pipeline", label: "Pipeline" },
+  { value: "1vanteg-customers", label: "Customers" },
+]
+
+const DRIVE_FOLDERS: readonly ResourceOption[] = [
+  { value: "Inbox", label: "Inbox" },
+  { value: "Clients", label: "Clients" },
+  { value: "Docs", label: "Docs" },
+  { value: "Exports", label: "Exports" },
+]
+
+const GITHUB_BRANCHES: readonly ResourceOption[] = [
+  { value: "main", label: "main" },
+  { value: "develop", label: "develop" },
+  { value: "release", label: "release" },
+]
+
+const NOTION_DATABASES: readonly ResourceOption[] = [
+  { value: "Tasks", label: "Tasks" },
+  { value: "CRM", label: "CRM" },
+  { value: "Specs", label: "Specs" },
+]
+
+const AIRTABLE_BASES: readonly ResourceOption[] = [
+  { value: "CRM", label: "CRM" },
+  { value: "Ops", label: "Ops" },
+  { value: "Hiring", label: "Hiring" },
+]
+
+const AIRTABLE_TABLES: readonly ResourceOption[] = [
+  { value: "Leads", label: "Leads" },
+  { value: "Deals", label: "Deals" },
+  { value: "Companies", label: "Companies" },
+]
+
 const CATALOG: Record<string, readonly ResourceOption[]> = {
   "slack.channel": SLACK_CHANNELS,
   "github.repo": GITHUB_REPOS,
+  "github.branch": GITHUB_BRANCHES,
   "sheets.sheet": SHEETS,
+  "sheets.spreadsheet": SPREADSHEETS,
+  "drive.folder": DRIVE_FOLDERS,
   "discord.channel": DISCORD_CHANNELS,
   "notion.page": NOTION_PAGES,
+  "notion.database": NOTION_DATABASES,
+  "airtable.base": AIRTABLE_BASES,
+  "airtable.table": AIRTABLE_TABLES,
   "calendar.calendar": CALENDARS,
   "forms.form": FORMS,
   "teams.team": TEAMS_TEAMS,

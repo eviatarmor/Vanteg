@@ -18,11 +18,11 @@ describe("node in/out", () => {
     expect(webhook.data.outVars.map((item) => item.key)).toEqual(
       expect.arrayContaining(["body", "method", "path"])
     )
-    expect(slack.data.inVars.map((item) => item.key)).toEqual(
-      expect.arrayContaining(["channel", "message"])
-    )
+    expect(webhook.data.outVars.map((item) => item.key)).not.toContain("secret")
+    expect(slack.data.inVars.map((item) => item.key)).not.toContain("channel")
+    expect(slack.data.inVars.map((item) => item.key)).not.toContain("message")
     expect(slack.data.outVars.map((item) => item.key)).toEqual(
-      expect.arrayContaining(["ts", "ok"])
+      expect.arrayContaining(["ts", "ok", "messageId"])
     )
   })
 
@@ -32,7 +32,7 @@ describe("node in/out", () => {
     const wired = mapUpstreamOutputs(webhook, slack)
 
     expect(wired.inVars.map((item) => item.key)).toEqual(
-      expect.arrayContaining(["body", "channel", "message"])
+      expect.arrayContaining(["body"])
     )
     expect(wired.inVars.find((item) => item.key === "body")?.value).toBe(
       '{{Webhook.body}}'

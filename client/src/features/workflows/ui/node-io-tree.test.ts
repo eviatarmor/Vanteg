@@ -49,7 +49,7 @@ describe("node io explorer trees", () => {
 
     const status = children.find((c) => c.label === "status")
     expect(status?.icon).toBe("variable")
-    expect(status?.hint).toBe('{{HTTP Request.status}}')
+    expect(status?.hint).toBe("200")
 
     const token = children.find((c) => c.label === "token")
     expect(token?.icon).toBe("secret")
@@ -71,7 +71,7 @@ describe("node io explorer trees", () => {
 
     const nextToken = children.find((c) => c.label === "nextToken")
     expect(nextToken?.icon).toBe("variable")
-    expect(nextToken?.hint).toBe('{{HTTP Request.nextToken}}')
+    expect(nextToken?.hint).toBe("page-2")
 
     const slack = createVantegNode("slack", { x: 80, y: 0 })
     const inbound = inExplorerNodes(slack.id, [http, slack], [

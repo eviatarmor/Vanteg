@@ -51,7 +51,7 @@ export const VantegNode = memo(function VantegNode({
 }: NodeProps<VantegNodeType>) {
   const catalog = getNodeType(data.catalogId)
   const kind = catalog?.kind ?? "action"
-  const ports = getNodePorts(data.catalogId)
+  const ports = getNodePorts(data.catalogId, data.config)
   const targets = ports.filter((port) => port.type === "target")
   const sources = ports.filter((port) => port.type === "source")
 

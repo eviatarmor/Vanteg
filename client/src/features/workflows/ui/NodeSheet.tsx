@@ -21,7 +21,7 @@ import { ExplorerTree } from "@/features/data/ui/ExplorerTree"
 
 import { getNodeTypeForEditor } from "../model/auth-fields"
 import { getNodePorts, portColorValue } from "../model/node-ports"
-import type { VantegEdge, VantegNode, VantegNodePatch } from "../model/types"
+import type { VantegEdge, VantegNode, VantegNodePatch, Workflow } from "../model/types"
 import { NodeConfigFields } from "./NodeConfigFields"
 import { WebhookTestPanel } from "./WebhookTestPanel"
 import { NodeIcon } from "./node-icons"
@@ -61,17 +61,19 @@ export function NodeSheet({
   node,
   nodes = [],
   edges = [],
+  workflow,
   onClose,
   onChange,
 }: {
   node: VantegNode | null
   nodes?: VantegNode[]
   edges?: VantegEdge[]
+  workflow?: Workflow
   onClose: () => void
   onChange: (nodeId: string, patch: VantegNodePatch) => void
 }) {
   const catalog = node ? getNodeTypeForEditor(node.data.catalogId) : undefined
-  const ports = node ? getNodePorts(node.data.catalogId) : []
+  const ports = node ? getNodePorts(node.data.catalogId, node.data.config) : []
 
   return (
     <Sheet
@@ -178,6 +180,9 @@ export function NodeSheet({
                     <NodeConfigFields
                       node={node}
                       catalog={catalog}
+                      nodes={nodes}
+                      edges={edges}
+                      workflow={workflow}
                       onChange={onChange}
                     />
                   ) : null}

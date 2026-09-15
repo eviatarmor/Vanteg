@@ -1,3 +1,11 @@
+import {
+  chatChannelOutputs,
+  chatMessageActionOutputs,
+  chatMessageOutputs,
+  chatReactionActionOutputs,
+  chatReactionOutputs,
+  chatUserOutputs,
+} from "../contracts.ts"
 import { field, integrationApp, method, oauth, selectField } from "../define.ts"
 import type { MethodField } from "../types.ts"
 
@@ -41,35 +49,35 @@ export const discord = integrationApp({
   methods: [
     method("discord-new-message", "trigger", "New message", "Start when a Discord message is posted.", [
       channelField(),
-    ]),
+    ], { outputs: chatMessageOutputs }),
     method("discord-new-reaction", "trigger", "New reaction", "Start when someone reacts in Discord.", [
       channelField(),
-    ]),
+    ], { outputs: chatReactionOutputs }),
     method("discord-member-joined", "trigger", "Member joined", "Start when a member joins a Discord server.", [
       field("server", "Server", "Acme"),
-    ]),
+    ], { outputs: chatUserOutputs }),
     method("discord-member-left", "trigger", "Member left", "Start when a member leaves a Discord server.", [
       field("server", "Server", "Acme"),
-    ]),
+    ], { outputs: chatUserOutputs }),
     method("discord", "action", "Send message", "Send a Discord channel message.", [
       channelField(),
       discordMessageField("Workflow finished"),
-    ]),
+    ], { outputs: chatMessageActionOutputs }),
     method("discord-update-message", "action", "Update message", "Edit a Discord channel message.", [
       channelField(),
       discordMessageField("Updated text"),
-    ]),
+    ], { outputs: chatMessageActionOutputs }),
     method("discord-add-reaction", "action", "Add reaction", "React to a Discord message.", [
       channelField(),
       discordEmojiField(),
-    ]),
+    ], { outputs: chatReactionActionOutputs }),
     method("discord-delete-message", "action", "Delete message", "Delete a Discord channel message.", [
       channelField(),
-      field("messageId", "Message ID", "123"),
-    ]),
+      field("messageId", "Message ID", "123", { required: true, mode: "either", validation: [{ kind: "destructive" }] }),
+    ], { outputs: chatMessageActionOutputs }),
     method("discord-create-channel", "action", "Create channel", "Create a Discord channel.", [
       field("server", "Server", "Acme"),
-      field("name", "Name", "event-kickoff"),
-    ]),
+      field("name", "Name", "event-kickoff", { mode: "either" }),
+    ], { outputs: chatChannelOutputs }),
   ],
 })

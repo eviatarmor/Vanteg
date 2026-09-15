@@ -1,3 +1,5 @@
+import { isSecretSetupKey, type IoSchemaField } from "@workspace/integrations"
+
 import { getNodeType } from "./node-catalog"
 import type { VantegNode, VantegNodeData, NodeKind, NodeField, NodeVar } from "./types"
 
@@ -17,6 +19,7 @@ const SECRET_KEY_TOKENS = new Set([
   "accesstoken",
   "refreshtoken",
   "sharedsecret",
+  "signingsecret",
 ])
 
 const TOKEN_PREFIX_DENY = new Set(["next", "page", "continuation", "cursor"])
@@ -40,7 +43,7 @@ export function isSecretIoKey(key: string): boolean {
   if (!compact) {
     return false
   }
-  if (SECRET_KEY_TOKENS.has(compact)) {
+  if (SECRET_KEY_TOKENS.has(compact) || isSecretSetupKey(key)) {
     return true
   }
   const parts = splitKeyTokens(key)
@@ -74,7 +77,7 @@ export function isSecretNodeVar(
 }
 
 export function sanitizeIoVarValue(secret: boolean, value: string): string {
-  if (secret && value && !(value.includes('{{') && value.includes('}}'))) {
+  if (secret && value && !(value.includes("{{") && value.includes("}}"))) {
     return ""
   }
   return value
@@ -92,49 +95,10 @@ function makeVar(
     : { id: crypto.randomUUID(), key, value: safeValue }
 }
 
-function uniqueKeys(keys: string[]): string[] {
-  const seen = new Set<string>()
-  const result: string[] = []
-  for (const key of keys) {
-    if (!key || seen.has(key)) {
-      continue
-    }
-    seen.add(key)
-    result.push(key)
-  }
-  return result
-}
-
-function extraOutKeys(catalogId: string, kind: NodeKind): string[] {
-  if (catalogId === "webhook") {
-    return ["body", "headers", "query"]
-  }
-  if (catalogId.startsWith("slack")) {
-    return ["ts", "ok"]
-  }
-  if (catalogId === "http" || catalogId.startsWith("http-")) {
-    return ["status", "body", "ok"]
-  }
-  return kind === "trigger" ? ["payload"] : ["result", "ok"]
-}
-
-function fieldSecretMap(fields: readonly NodeField[] | undefined): Map<string, boolean> {
-  const map = new Map<string, boolean>()
-  for (const field of fields ?? []) {
-    if (field.secret) {
-      map.set(field.key, true)
-    }
-  }
-  return map
-}
-
-function makeVarsFromKeys(
-  keys: string[],
-  fieldSecrets: Map<string, boolean>
-): NodeVar[] {
-  return keys.map((key) =>
-    makeVar(key, "", { secret: fieldSecrets.get(key) === true || isSecretIoKey(key) })
-  )
+function schemaToVars(fields: readonly IoSchemaField[] | undefined): NodeVar[] {
+  return (fields ?? [])
+    .filter((field) => !isSecretSetupKey(field.key) && field.secret !== true)
+    .map((field) => makeVar(field.key, "", { secret: field.secret === true }))
 }
 
 export function defaultNodeIo(catalogId: string): {
@@ -142,24 +106,20 @@ export function defaultNodeIo(catalogId: string): {
   outVars: NodeVar[]
 } {
   const catalog = getNodeType(catalogId)
-  const kind = catalog?.kind ?? "action"
-  const fields = catalog?.fields ?? []
-  const fieldKeys = fields.map((field) => field.key)
-  const fieldSecrets = fieldSecretMap(fields)
+  const kind: NodeKind = catalog?.kind ?? "action"
+  const outputs = catalog?.outputs ?? []
+  const inputs = catalog?.inputs ?? []
 
   if (kind === "trigger") {
     return {
       inVars: [],
-      outVars: makeVarsFromKeys(
-        uniqueKeys([...fieldKeys, ...extraOutKeys(catalogId, kind)]),
-        fieldSecrets
-      ),
+      outVars: schemaToVars(outputs),
     }
   }
 
   return {
-    inVars: makeVarsFromKeys(uniqueKeys(fieldKeys), fieldSecrets),
-    outVars: makeVarsFromKeys(uniqueKeys(extraOutKeys(catalogId, kind)), fieldSecrets),
+    inVars: schemaToVars(inputs),
+    outVars: schemaToVars(outputs),
   }
 }
 
@@ -171,7 +131,7 @@ export function mapUpstreamOutputs(
   const mapped = source.data.outVars
     .filter((item) => item.key && !existing.has(item.key))
     .map((item) =>
-      makeVar(item.key, '{{' + source.data.label + '.' + item.key + '}}', {
+      makeVar(item.key, "{{" + source.data.label + "." + item.key + "}}", {
         secret: isSecretNodeVar(item),
       })
     )

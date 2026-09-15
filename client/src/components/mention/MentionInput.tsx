@@ -34,6 +34,7 @@ import type { MentionItem, MentionKindMeta, MentionSegment } from "./types"
 const ZWSP = "\u200b"
 
 export type MentionInputProps = {
+  id?: string
   items: MentionItem[]
   kinds: MentionKindMeta[]
   segments: MentionSegment[]
@@ -167,6 +168,7 @@ function createMentionUid(): string {
 }
 
 export function MentionInput({
+  id,
   items,
   kinds,
   segments,
@@ -482,6 +484,7 @@ export function MentionInput({
         </span>
       ) : null}
       <div
+        id={id}
         ref={editorRef}
         role="textbox"
         aria-multiline="true"

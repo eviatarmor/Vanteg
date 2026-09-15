@@ -1,3 +1,12 @@
+import {
+  chatChannelOutputs,
+  chatFileOutputs,
+  chatMessageActionOutputs,
+  chatMessageOutputs,
+  chatReactionActionOutputs,
+  chatReactionOutputs,
+  chatUserOutputs,
+} from "../contracts.ts"
 import { booleanField, field, integrationApp, method, oauth, selectField } from "../define.ts"
 import type { MethodField } from "../types.ts"
 
@@ -62,50 +71,50 @@ export const slack = integrationApp({
   methods: [
     method("slack-new-message", "trigger", "New message", "Start when a Slack message is posted.", [
       channelField(),
-    ]),
+    ], { outputs: chatMessageOutputs }),
     method("slack-reaction", "trigger", "New reaction", "Start when someone reacts in Slack.", [
       channelField(),
-    ]),
+    ], { outputs: chatReactionOutputs }),
     method("slack-new-channel", "trigger", "New channel", "Start when a Slack channel is created.", [
       field("name", "Name contains", "incidents"),
-    ]),
+    ], { outputs: chatChannelOutputs }),
     method("slack-app-mentioned", "trigger", "App mentioned", "Start when this app is mentioned in Slack.", [
       channelField(),
-    ]),
+    ], { outputs: chatMessageOutputs }),
     method("slack-user-joined", "trigger", "User joined workspace", "Start when someone joins the Slack workspace.", [
       field("team", "Workspace", "Acme"),
-    ]),
+    ], { outputs: chatUserOutputs }),
     method("slack", "action", "Send message", "Post a Slack message.", [
       channelField(),
       slackMessageField("Workflow finished"),
       unfurlLinksField(),
-    ]),
+    ], { outputs: chatMessageActionOutputs }),
     method("slack-update-message", "action", "Update message", "Edit an existing Slack message.", [
       channelField(),
       slackMessageField("Updated text"),
       unfurlLinksField(),
-    ]),
+    ], { outputs: chatMessageActionOutputs }),
     method("slack-upload-file", "action", "Upload file", "Upload a file to a Slack channel.", [
       channelField(),
-      field("path", "File path", "/tmp/report.pdf"),
-    ]),
+      field("path", "File path", "/tmp/report.pdf", { mode: "either" }),
+    ], { outputs: chatFileOutputs }),
     method("slack-add-reaction", "action", "Add reaction", "React to a Slack message.", [
       channelField(),
       slackEmojiField(),
-      field("ts", "Message ts", "{{Webhook.ts}}"),
-    ]),
+      field("ts", "Message ts", "{{Webhook.ts}}", { mode: "either" }),
+    ], { outputs: chatReactionActionOutputs }),
     method("slack-create-channel", "action", "Create channel", "Create a Slack channel.", [
-      field("name", "Name", "deal-acme"),
-      field("topic", "Topic", "Acme renewal"),
-    ]),
+      field("name", "Name", "deal-acme", { mode: "either" }),
+      field("topic", "Topic", "Acme renewal", { mode: "either" }),
+    ], { outputs: chatChannelOutputs }),
     method("slack-remove-reaction", "action", "Remove reaction", "Remove a reaction from a Slack message.", [
       channelField(),
       slackEmojiField(),
-      field("ts", "Message ts", "{{Webhook.ts}}"),
-    ]),
+      field("ts", "Message ts", "{{Webhook.ts}}", { mode: "either" }),
+    ], { outputs: chatReactionActionOutputs }),
     method("slack-invite-user", "action", "Invite user to channel", "Invite a user to a Slack channel.", [
       channelField(),
-      field("user", "User", "@ada"),
-    ]),
+      field("user", "User", "@ada", { mode: "either" }),
+    ], { outputs: chatUserOutputs }),
   ],
 })

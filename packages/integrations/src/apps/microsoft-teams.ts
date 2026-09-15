@@ -1,3 +1,10 @@
+import {
+  chatChannelListOutputs,
+  chatChannelOutputs,
+  chatMessageActionOutputs,
+  chatUserOutputs,
+  teamsMessageOutputs,
+} from "../contracts.ts"
 import { field, integrationApp, method, oauth } from "../define.ts"
 import type { MethodField } from "../types.ts"
 
@@ -39,21 +46,24 @@ export const microsoftTeams = integrationApp({
       "trigger",
       "Message received",
       "Start when a Microsoft Teams channel or chat message is posted.",
-      [teamField(), channelField()]
+      [teamField(), channelField()],
+      { outputs: teamsMessageOutputs }
     ),
     method(
       "microsoft-teams-channel-created",
       "trigger",
       "Channel created",
       "Start when a channel is created in a Microsoft Teams team.",
-      [teamField(), field("name", "Name contains", "incidents")]
+      [teamField(), field("name", "Name contains", "incidents")],
+      { outputs: chatChannelOutputs }
     ),
     method(
       "microsoft-teams-member-added",
       "trigger",
       "Member added",
       "Start when a member is added to a Microsoft Teams team.",
-      [teamField()]
+      [teamField()],
+      { outputs: chatUserOutputs }
     ),
     method(
       "microsoft-teams",
@@ -67,7 +77,8 @@ export const microsoftTeams = integrationApp({
         field("mentions", "Mentions (optional)", "@ada,@ops", {
           help: "Comma-separated user or tag mentions.",
         }),
-      ]
+      ],
+      { outputs: chatMessageActionOutputs }
     ),
     method(
       "microsoft-teams-reply-in-thread",
@@ -80,7 +91,8 @@ export const microsoftTeams = integrationApp({
         field("replyTo", "Reply to message ID", "{{Webhook.messageId}}"),
         field("message", "Message", "Following up", { control: "textarea" }),
         field("mentions", "Mentions (optional)", "@ada"),
-      ]
+      ],
+      { outputs: chatMessageActionOutputs }
     ),
     method(
       "microsoft-teams-update-message",
@@ -92,14 +104,16 @@ export const microsoftTeams = integrationApp({
         channelField(),
         field("messageId", "Message ID", "{{Webhook.messageId}}"),
         field("message", "Message", "Updated text", { control: "textarea" }),
-      ]
+      ],
+      { outputs: chatMessageActionOutputs }
     ),
     method(
       "microsoft-teams-list-channels",
       "action",
       "List channels",
       "List channels in a Microsoft Teams team.",
-      [teamField()]
+      [teamField()],
+      { outputs: chatChannelListOutputs }
     ),
     method(
       "microsoft-teams-create-channel",
@@ -110,7 +124,8 @@ export const microsoftTeams = integrationApp({
         teamField(),
         field("name", "Name", "deal-acme"),
         field("description", "Description", "Acme renewal"),
-      ]
+      ],
+      { outputs: chatChannelOutputs }
     ),
   ],
 })

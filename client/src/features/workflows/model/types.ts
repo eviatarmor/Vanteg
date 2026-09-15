@@ -1,4 +1,21 @@
 import type { Edge, Node } from "@xyflow/react"
+import type {
+  FieldMode,
+  FieldSection,
+  FieldShowWhen,
+  FieldValidationRule,
+  IoSchemaField,
+  IoValueType,
+} from "@workspace/integrations"
+
+export type {
+  FieldMode,
+  FieldSection,
+  FieldShowWhen,
+  FieldValidationRule,
+  IoSchemaField,
+  IoValueType,
+}
 
 export type WorkflowStatus = "draft" | "dev" | "prod"
 
@@ -14,6 +31,14 @@ export type FieldControl =
   | "resource"
   | "number"
   | "datetime"
+  | "expression"
+  | "conditions"
+  | "keyValue"
+  | "mapping"
+  | "schema"
+  | "cron"
+  | "routes"
+  | "multiselect"
 
 export interface NodeFieldOption {
   value: string
@@ -26,7 +51,7 @@ export interface NodeField {
   placeholder: string
   help?: string
   control?: FieldControl
-  language?: "javascript" | "json"
+  language?: "javascript" | "json" | "python"
   options?: readonly NodeFieldOption[]
   /** Render with SecretInput (never type=password). */
   secret?: boolean
@@ -37,6 +62,38 @@ export interface NodeField {
   inlineAuth?: boolean
   /** Connection-scoped resource catalog key, e.g. "slack.channel". Used when control is "resource". */
   resourceType?: string
+  valueType?: IoValueType
+  required?: boolean
+  defaultValue?: string
+  mode?: FieldMode
+  section?: FieldSection
+  showWhen?: FieldShowWhen | readonly FieldShowWhen[]
+  validation?: readonly FieldValidationRule[]
+  sensitive?: boolean
+  repeatable?: boolean
+}
+
+export type ExecutionOptionId =
+  | "onlyRunIf"
+  | "retry"
+  | "attempts"
+  | "retryDelay"
+  | "backoff"
+  | "timeout"
+  | "continueOnFail"
+  | "alwaysOutputData"
+  | "errorOutput"
+  | "itemMode"
+  | "rawResponse"
+  | "pagination"
+  | "returnAll"
+  | "maxItems"
+
+export interface DynamicPortSource {
+  fieldKey: string
+  type: "source" | "target"
+  color?: PortColor
+  fallbackPorts: NodePort[]
 }
 
 export type PortColor =
@@ -63,6 +120,13 @@ export interface WorkflowNodeType {
   kind: NodeKind
   category: string
   fields: NodeField[]
+  inputs?: IoSchemaField[]
+  outputs: IoSchemaField[]
+  ports?: NodePort[]
+  dynamicPorts?: DynamicPortSource
+  outputByPort?: Record<string, IoSchemaField[]>
+  executionOptions?: ExecutionOptionId[]
+  testable?: boolean
 }
 
 export type NodeVar = {

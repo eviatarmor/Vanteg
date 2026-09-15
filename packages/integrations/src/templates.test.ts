@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest"
 
 import { getConnector } from "./registry.ts"
 import { templates } from "./templates.ts"
+import type { SheetField } from "./types.ts"
 
-function fieldById(fields: { id: string }[], id: string) {
+function fieldById(fields: readonly SheetField[], id: string) {
   return fields.find((field) => field.id === id)
 }
 

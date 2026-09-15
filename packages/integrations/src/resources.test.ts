@@ -39,12 +39,18 @@ describe("listResources", () => {
 
   it("lists registered resource types", () => {
     expect(listResourceTypes()).toEqual([
+      "airtable.base",
+      "airtable.table",
       "calendar.calendar",
       "discord.channel",
+      "drive.folder",
       "forms.form",
+      "github.branch",
       "github.repo",
+      "notion.database",
       "notion.page",
       "sheets.sheet",
+      "sheets.spreadsheet",
       "slack.channel",
       "teams.channel",
       "teams.team",
