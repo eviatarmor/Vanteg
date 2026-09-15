@@ -436,7 +436,7 @@ export function NodeConfigFields({
   if (visible.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        This step has no extra settings. Rename it or add notes below.
+        This step has no extra settings.
       </p>
     )
   }

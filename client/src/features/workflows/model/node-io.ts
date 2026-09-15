@@ -1,7 +1,14 @@
 import { isSecretSetupKey, type IoSchemaField } from "@workspace/integrations"
 
 import { getNodeType } from "./node-catalog"
-import type { VantegNode, VantegNodeData, NodeKind, NodeField, NodeVar } from "./types"
+import type {
+  VantegNode,
+  VantegNodeData,
+  NodeKind,
+  NodeField,
+  NodeVar,
+  NodeVarType,
+} from "./types"
 
 /** Keys (and header names) treated as secret-sensitive workflow I/O. */
 const SECRET_KEY_TOKENS = new Set([
@@ -83,22 +90,77 @@ export function sanitizeIoVarValue(secret: boolean, value: string): string {
   return value
 }
 
+const OBJECT_KEYS = new Set(["payload", "body", "headers", "query", "result", "data"])
+const NUMBER_KEYS = new Set(["status", "index", "concurrency", "amount", "timeout"])
+const BOOLEAN_KEYS = new Set(["ok"])
+
+export function nodeVarType(item: Pick<NodeVar, "key" | "type" | "children">): NodeVarType {
+  if (item.type) {
+    return item.type
+  }
+  if (item.children?.length) {
+    return "object"
+  }
+  if (BOOLEAN_KEYS.has(item.key)) {
+    return "boolean"
+  }
+  if (NUMBER_KEYS.has(item.key)) {
+    return "number"
+  }
+  if (OBJECT_KEYS.has(item.key)) {
+    return "object"
+  }
+  return "string"
+}
+
 function makeVar(
   key: string,
   value = "",
-  options?: { secret?: boolean }
+  options?: { secret?: boolean; type?: NodeVarType; children?: NodeVar[] }
 ): NodeVar {
   const secret = options?.secret === true || isSecretIoKey(key)
   const safeValue = sanitizeIoVarValue(secret, value)
-  return secret
-    ? { id: crypto.randomUUID(), key, value: safeValue, secret: true }
-    : { id: crypto.randomUUID(), key, value: safeValue }
+  const type = options?.type ?? nodeVarType({ key, type: options?.type, children: options?.children })
+  const node: NodeVar = { id: crypto.randomUUID(), key, value: safeValue, type }
+  if (secret) {
+    node.secret = true
+  }
+  if (options?.children) {
+    node.children = options.children
+  }
+  return node
+}
+
+function cloneVarTree(item: NodeVar, value: string): NodeVar {
+  return makeVar(item.key, value, {
+    secret: isSecretNodeVar(item),
+    type: nodeVarType(item),
+    children: item.children?.map((child) =>
+      cloneVarTree(
+        child,
+        value.endsWith("}}")
+          ? `${value.slice(0, -2)}.${child.key}}}`
+          : value
+      )
+    ),
+  })
 }
 
 function schemaToVars(fields: readonly IoSchemaField[] | undefined): NodeVar[] {
   return (fields ?? [])
     .filter((field) => !isSecretSetupKey(field.key) && field.secret !== true)
-    .map((field) => makeVar(field.key, "", { secret: field.secret === true }))
+    .map((field) => {
+      const nested = field.fields?.length
+        ? schemaToVars(field.fields)
+        : field.items
+          ? schemaToVars([{ ...field.items, key: field.items.key || "item" }])
+          : undefined
+      return makeVar(field.key, "", {
+        secret: field.secret === true,
+        type: field.type,
+        children: nested?.length ? nested : undefined,
+      })
+    })
 }
 
 export function defaultNodeIo(catalogId: string): {
@@ -131,9 +193,7 @@ export function mapUpstreamOutputs(
   const mapped = source.data.outVars
     .filter((item) => item.key && !existing.has(item.key))
     .map((item) =>
-      makeVar(item.key, "{{" + source.data.label + "." + item.key + "}}", {
-        secret: isSecretNodeVar(item),
-      })
+      cloneVarTree(item, "{{" + source.data.label + "." + item.key + "}}")
     )
 
   return {

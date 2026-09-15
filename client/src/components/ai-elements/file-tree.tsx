@@ -133,11 +133,13 @@ const FileTreeFolderContext = createContext<FileTreeFolderContextType>({
 export type FileTreeFolderProps = HTMLAttributes<HTMLDivElement> & {
   path: string;
   name: string;
+  hint?: string;
 };
 
 export const FileTreeFolder = ({
   path,
   name,
+  hint,
   className,
   children,
   ...props
@@ -201,6 +203,11 @@ export const FileTreeFolder = ({
                 )}
               </FileTreeIcon>
               <FileTreeName>{name}</FileTreeName>
+              {hint ? (
+                <span className="ml-auto max-w-[45%] truncate font-mono text-xs text-muted-foreground">
+                  {hint}
+                </span>
+              ) : null}
             </button>
           </div>
           <CollapsibleContent>

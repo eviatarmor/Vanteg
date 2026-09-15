@@ -66,7 +66,8 @@ function TreeNodes({
               key={node.id}
               path={node.id}
               name={node.label}
-              aria-label={node.label}
+              hint={node.hint}
+              aria-label={node.hint ? `${node.label} ${node.hint}` : node.label}
               aria-selected={selectedId === node.id}
               aria-expanded={expanded.has(node.id)}
             >
@@ -84,7 +85,7 @@ function TreeNodes({
             key={node.id}
             path={node.id}
             name={node.label}
-            aria-label={node.label}
+            aria-label={node.hint ? `${node.label} ${node.hint}` : node.label}
             aria-selected={selectedId === node.id}
             icon={<Icon className="size-4 text-muted-foreground" />}
           >

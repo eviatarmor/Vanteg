@@ -15,7 +15,12 @@ describe("node io explorer trees", () => {
     expect(tree[0]?.icon).toBe("folder")
     const body = tree[0]?.children?.find((child) => child.label === "body")
     expect(body?.icon).toBe("variable")
-    expect(body?.hint).toBe('{{Webhook.body}}')
+    expect(body?.hint).toBe("any")
+    const headers = tree[0]?.children?.find((child) => child.label === "headers")
+    expect(headers?.hint).toBe("object")
+    const method = tree[0]?.children?.find((child) => child.label === "method")
+    expect(method?.icon).toBe("variable")
+    expect(method?.hint).toBe("string")
   })
 
   it("groups incoming variables under previous nodes", () => {
@@ -29,8 +34,22 @@ describe("node io explorer trees", () => {
     expect(tree[0]?.label).toBe("Webhook")
     expect(tree[0]?.icon).toBe("folder")
     const body = tree[0]?.children?.find((child) => child.label === "body")
-    expect(body?.icon).toBe("variable")
-    expect(body?.hint).toBe('{{Webhook.body}}')
+    expect(body?.hint).toBe("any")
+  })
+
+  it("labels payload as an object and rss feed as a nested object", () => {
+    const manual = createVantegNode("manual", { x: 0, y: 0 })
+    const payload = outExplorerNodes(manual)[0]?.children?.find(
+      (child) => child.label === "payload"
+    )
+    expect(payload?.hint).toBe("object")
+    expect(payload?.icon).toBe("variable")
+
+    const rss = createVantegNode("rss", { x: 0, y: 0 })
+    const feed = outExplorerNodes(rss)[0]?.children?.find((child) => child.label === "feed")
+    expect(feed?.hint).toBe("object")
+    expect(feed?.icon).toBe("folder")
+    expect(feed?.children?.find((child) => child.label === "url")?.hint).toBe("string")
   })
 
   it("masks secret leaves with secret icon and leaves non-secrets unchanged", () => {
@@ -49,7 +68,7 @@ describe("node io explorer trees", () => {
 
     const status = children.find((c) => c.label === "status")
     expect(status?.icon).toBe("variable")
-    expect(status?.hint).toBe("200")
+    expect(status?.hint).toBe("integer")
 
     const token = children.find((c) => c.label === "token")
     expect(token?.icon).toBe("secret")
@@ -71,7 +90,7 @@ describe("node io explorer trees", () => {
 
     const nextToken = children.find((c) => c.label === "nextToken")
     expect(nextToken?.icon).toBe("variable")
-    expect(nextToken?.hint).toBe("page-2")
+    expect(nextToken?.hint).toBe("string")
 
     const slack = createVantegNode("slack", { x: 80, y: 0 })
     const inbound = inExplorerNodes(slack.id, [http, slack], [

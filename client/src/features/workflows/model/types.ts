@@ -129,25 +129,28 @@ export interface WorkflowNodeType {
   testable?: boolean
 }
 
+export type NodeVarType = IoValueType
+
 export type NodeVar = {
   id: string
   key: string
   value: string
   /** When true, ExplorerTree masks the value/hint and uses the secret icon. */
   secret?: boolean
+  type?: NodeVarType
+  children?: NodeVar[]
 }
 
 export type VantegNodeData = {
   catalogId: string
   label: string
-  notes: string
   config: Record<string, string>
   inVars: NodeVar[]
   outVars: NodeVar[]
 }
 
 export type VantegNodePatch = Partial<
-  Pick<VantegNodeData, "label" | "notes" | "config" | "inVars" | "outVars">
+  Pick<VantegNodeData, "label" | "config" | "inVars" | "outVars">
 >
 
 export type VantegNode = Node<VantegNodeData, "vanteg">
